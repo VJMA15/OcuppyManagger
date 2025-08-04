@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Calendar, 
@@ -10,6 +10,20 @@ import {
   CheckCircle,
   AlertCircle 
 } from "lucide-react";
+import { verificarDisponibilidadAmbiente, verificarDisponibilidadFutura, notificarCambioDisponibilidad } from "@/utils/ambienteUtils";
+import useAmbientes from "@/hooks/useAmbientes";
+import useReservas from "@/hooks/useReservas";
+import ConnectionStatus from "@/components/ConnectionStatus";
+
+// Función helper para convertir jornada a hora representativa
+const getHoraFromJornada = (jornada) => {
+  switch (jornada) {
+    case 'mañana': return '08:00';
+    case 'tarde': return '14:00';
+    case 'noche': return '20:00';
+    default: return '08:00';
+  }
+};
 
 export default function Reserva() {
   const [form, setForm] = useState({
@@ -17,16 +31,28 @@ export default function Reserva() {
     documento: "",
     ambiente: "",
     fecha: "",
-    hora: "",
-    duracion: "",
+    jornada: "",
     motivo: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Usar hooks para conectar con el backend
+  const { ambientes, isLoading: ambientesLoading, error: ambientesError } = useAmbientes();
+  const { createReserva, reservas } = useReservas();
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    
+    // Si cambia la fecha o jornada, forzar re-render para actualizar disponibilidad
+    if (e.target.name === 'fecha' || e.target.name === 'jornada') {
+      // Forzar actualización del estado para re-renderizar los ambientes
+      setTimeout(() => {
+        setForm(prev => ({ ...prev }));
+      }, 100);
+    }
   };
 
   const navigate = useNavigate();
@@ -34,42 +60,46 @@ export default function Reserva() {
   const handleSubmit = async e => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
     
-    // Simular delay para mostrar loading
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Crear nueva reserva con estado pendiente
-    const nuevaReserva = {
-      ...form,
-      estado: "pendiente", // Estado inicial: pendiente de aprobación
-      fechaCreacion: new Date().toISOString(),
-      aprobadaPor: null,
-      fechaAprobacion: null,
-      motivoRechazo: null,
-      motivoCancelacion: null
-    };
-    
-    // Guardar en localStorage
-    const reservasGuardadas = JSON.parse(localStorage.getItem("reservas") || "[]");
-    const nuevasReservas = [...reservasGuardadas, nuevaReserva];
-    localStorage.setItem("reservas", JSON.stringify(nuevasReservas));
-    
-    setIsSubmitting(false);
-    setShowSuccess(true);
-    
-    // Redirigir después de mostrar éxito
-    setTimeout(() => {
-    navigate("/ver-reservas");
-    }, 2000);
+    try {
+      // Crear nueva reserva con estado pendiente
+      const nuevaReserva = {
+        ...form,
+        hora: getHoraFromJornada(form.jornada), // Convertir jornada a hora representativa
+        duracion: "6", // Duración fija de 6 horas por jornada
+        estado: "pendiente", // Estado inicial: pendiente de aprobación
+        fechaCreacion: new Date().toISOString(),
+        aprobadaPor: null,
+        fechaAprobacion: null,
+        motivoRechazo: null,
+        motivoCancelacion: null
+      };
+      
+      // Enviar al backend
+      await createReserva(nuevaReserva);
+      
+      // Notificar cambio de disponibilidad y disparar eventos
+      notificarCambioDisponibilidad();
+      window.dispatchEvent(new CustomEvent('reserva-created', {
+        detail: { reserva: nuevaReserva }
+      }));
+      
+      setShowSuccess(true);
+      
+      // Redirigir después de mostrar éxito
+      setTimeout(() => {
+        navigate("/ver-reservas");
+      }, 2000);
+    } catch (err) {
+      setError(err.message || 'Error al crear la reserva');
+      console.error('Error creating reserva:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const ambientes = [
-    { id: "101", nombre: "Ambiente 101", capacidad: "25 personas", tipo: "Aula" },
-    { id: "102", nombre: "Ambiente 102", capacidad: "30 personas", tipo: "Laboratorio" },
-    { id: "103", nombre: "Ambiente 103", capacidad: "20 personas", tipo: "Sala de reuniones" },
-    { id: "104", nombre: "Ambiente 104", capacidad: "40 personas", tipo: "Auditorio" },
-    { id: "105", nombre: "Ambiente 105", capacidad: "15 personas", tipo: "Oficina" },
-  ];
+  // Usar la función centralizada de verificación de disponibilidad
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
@@ -93,10 +123,7 @@ export default function Reserva() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-slate-600 dark:text-slate-400">Sistema Activo</span>
-            </div>
+            <ConnectionStatus />
           </div>
         </div>
       </div>
@@ -167,15 +194,31 @@ export default function Reserva() {
             required
           >
             <option value="">Selecciona un ambiente</option>
-                    {ambientes.map(ambiente => (
-                      <option key={ambiente.id} value={ambiente.nombre}>
-                        {ambiente.nombre} - {ambiente.tipo} ({ambiente.capacidad})
-                      </option>
-                    ))}
+                    {ambientes.map(ambiente => {
+                      // Verificar disponibilidad para la fecha y jornada seleccionadas
+                      const disponible = form.fecha && form.jornada 
+                        ? verificarDisponibilidadFutura(ambiente._id, form.fecha, getHoraFromJornada(form.jornada), reservas)
+                        : verificarDisponibilidadAmbiente(ambiente._id, reservas);
+                      
+                      return (
+                        <option 
+                          key={ambiente._id} 
+                          value={ambiente._id}
+                          disabled={!disponible}
+                          className={!disponible ? "text-red-500" : ""}
+                        >
+                          {ambiente.nombre} - {ambiente.tipo} ({ambiente.capacidad}) 
+                          {!disponible ? " - OCUPADO" : " - Disponible"}
+                        </option>
+                      );
+                    })}
           </select>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Los ambientes marcados como "OCUPADO" no están disponibles para reserva
+          </p>
         </div>
 
-                {/* Fecha y Hora */}
+                {/* Fecha y Jornada */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -195,34 +238,21 @@ export default function Reserva() {
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                       <Clock className="inline w-4 h-4 mr-2" />
-                      Hora de Inicio
+                      Jornada
                     </label>
-                    <input
-                      type="time"
-                      name="hora"
-                      value={form.hora}
+                    <select
+                      name="jornada"
+                      value={form.jornada}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:ring-sena-light transition-all duration-200"
                       required
-                    />
+                    >
+                      <option value="">Selecciona una jornada</option>
+                      <option value="mañana">Mañana (6:00 AM - 12:00 PM)</option>
+                      <option value="tarde">Tarde (12:30 PM - 6:00 PM)</option>
+                      <option value="noche">Noche (6:30 PM - 10:00 PM)</option>
+                    </select>
                   </div>
-                </div>
-
-                {/* Duración */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    <Clock className="inline w-4 h-4 mr-2" />
-                    Duración de la Reserva (en horas)
-                  </label>
-                  <input
-                    type="number"
-                    name="duracion"
-                    value={form.duracion || ""}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:ring-sena-light transition-all duration-200"
-                    placeholder="Ej: 1.5"
-                    required
-                  />
                 </div>
 
                 {/* Motivo */}
@@ -242,6 +272,23 @@ export default function Reserva() {
                   />
                 </div>
 
+                {/* Mensaje de Error */}
+                {error && (
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5 text-red-500" />
+                      <div>
+                        <h4 className="font-medium text-red-800 dark:text-red-200">
+                          Error al crear reserva
+                        </h4>
+                        <p className="text-sm text-red-600 dark:text-red-300">
+                          {error}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Botones */}
                 <div className="flex gap-4 pt-4">
                   <button
@@ -253,7 +300,7 @@ export default function Reserva() {
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || ambientesLoading}
                     className="flex-1 px-6 py-3 bg-gradient-to-r from-sena to-sena-dark text-white rounded-xl hover:from-sena-dark hover:to-sena focus:ring-2 focus:ring-sena focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
                     {isSubmitting ? (
@@ -272,31 +319,55 @@ export default function Reserva() {
 
           {/* Panel Lateral */}
           <div className="space-y-6">
+            {/* Estado de Conexión */}
+            {ambientesError && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                  <div>
+                    <h4 className="font-medium text-red-800 dark:text-red-200">
+                      Error de Conexión
+                    </h4>
+                    <p className="text-sm text-red-600 dark:text-red-300">
+                      {ambientesError}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Información de Ambientes */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:bg-slate-900/80 dark:border-slate-700/50 p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                 Ambientes Disponibles
               </h3>
-              <div className="space-y-3">
-                {ambientes.map(ambiente => (
-                  <div key={ambiente.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium text-slate-900 dark:text-white">
-                          {ambiente.nombre}
-                        </h4>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {ambiente.tipo} • {ambiente.capacidad}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-xs text-green-600 dark:text-green-400">Disponible</span>
+              {ambientesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sena"></div>
+                  <span className="ml-2 text-slate-600 dark:text-slate-400">Cargando ambientes...</span>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {ambientes.map(ambiente => (
+                    <div key={ambiente._id || ambiente.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-slate-900 dark:text-white">
+                            {ambiente.nombre}
+                          </h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            {ambiente.tipo} • {ambiente.capacidad}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-xs text-green-600 dark:text-green-400">Disponible</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Información de Horarios */}
@@ -365,4 +436,4 @@ export default function Reserva() {
       )}
     </div>
   );
-}
+}    

@@ -1,15 +1,11 @@
-// Configuración de la API
 const API_CONFIG = {
-  // URL base de la API
   BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
   
-  // Endpoints específicos
   ENDPOINTS: {
     AUTH: {
-      LOGIN: '/auth/login',
-      REGISTER: '/auth/register',
-      LOGOUT: '/auth/logout',
-      REFRESH: '/auth/refresh',
+      VERIFY: '/auth/verify',  // Nuevo endpoint
+      REGISTER: '/auth/signup',
+      USER_BY_CC: (cc) => `/auth/user/${cc}`,
     },
     USERS: {
       PROFILE: '/users/profile',
@@ -42,13 +38,11 @@ const API_CONFIG = {
     },
   },
   
-  // Configuración de headers por defecto
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
   },
   
-  // Timeout para las peticiones (en ms)
-  TIMEOUT: 10000,
+  TIMEOUT: 30000, // Aumentado a 30 segundos
 };
 
-export default API_CONFIG; 
+export default API_CONFIG;

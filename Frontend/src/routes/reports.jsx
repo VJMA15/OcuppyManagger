@@ -19,18 +19,25 @@ import {
   BarChart3,
   TrendingUp,
   Users,
-  MapPin
+  MapPin,
+  Trash2,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import { useReportGeneration } from "@/hooks/useReportGeneration";
 
 export default function Reports() {
   const navigate = useNavigate();
-  const { reports } = useReportGeneration();
+  const { reports, deleteReport, deleteMultipleReports } = useReportGeneration();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTipo, setFilterTipo] = useState("todos");
   const [filterAmbiente, setFilterAmbiente] = useState("todos");
   const [selectedReport, setSelectedReport] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedReports, setSelectedReports] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState(null);
 
   // Obtener lista única de ambientes para el filtro
   const ambientes = [...new Set(reports.map(r => r.ambiente))];
@@ -98,6 +105,50 @@ export default function Reports() {
     }
   };
 
+  // Funciones para manejo de selección y eliminación
+  const handleSelectReport = (reportId) => {
+    setSelectedReports(prev => 
+      prev.includes(reportId) 
+        ? prev.filter(id => id !== reportId)
+        : [...prev, reportId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedReports.length === filteredReports.length) {
+      setSelectedReports([]);
+    } else {
+      setSelectedReports(filteredReports.map(report => report.id));
+    }
+  };
+
+  const handleDeleteReport = (report) => {
+    setReportToDelete(report);
+    setShowDeleteModal(true);
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedReports.length > 0) {
+      setShowBulkDeleteModal(true);
+    }
+  };
+
+  const confirmDeleteReport = () => {
+    if (reportToDelete) {
+      deleteReport(reportToDelete.id);
+      setShowDeleteModal(false);
+      setReportToDelete(null);
+    }
+  };
+
+  const confirmBulkDelete = () => {
+    if (selectedReports.length > 0) {
+      deleteMultipleReports(selectedReports);
+      setSelectedReports([]);
+      setShowBulkDeleteModal(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Header */}
@@ -121,6 +172,15 @@ export default function Reports() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {selectedReports.length > 0 && (
+                <button
+                  onClick={handleBulkDelete}
+                  className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Eliminar ({selectedReports.length})
+                </button>
+              )}
               <button className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
                 <Download className="w-4 h-4" />
                 Exportar
@@ -226,6 +286,18 @@ export default function Reports() {
                 <thead className="bg-slate-50 dark:bg-slate-800">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      <button
+                        onClick={handleSelectAll}
+                        className="flex items-center justify-center w-4 h-4"
+                      >
+                        {selectedReports.length === filteredReports.length && filteredReports.length > 0 ? (
+                          <CheckSquare className="w-4 h-4 text-sena" />
+                        ) : (
+                          <Square className="w-4 h-4 text-slate-400" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       <User className="inline w-4 h-4 mr-2" />
                       Usuario
                     </th>
@@ -235,7 +307,7 @@ export default function Reports() {
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       <Calendar className="inline w-4 h-4 mr-2" />
-                      Fecha/Hora
+                      Fecha/Jornada
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Estado
@@ -248,7 +320,7 @@ export default function Reports() {
                 <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-700">
                   {filteredReports.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center">
+                      <td colSpan={6} className="px-6 py-12 text-center">
                         <div className="flex flex-col items-center">
                           <FileText className="w-12 h-12 text-slate-400 mb-4" />
                           <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
@@ -271,6 +343,18 @@ export default function Reports() {
                       return (
                         <tr key={report.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                           <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() => handleSelectReport(report.id)}
+                              className="flex items-center justify-center w-4 h-4"
+                            >
+                              {selectedReports.includes(report.id) ? (
+                                <CheckSquare className="w-4 h-4 text-sena" />
+                              ) : (
+                                <Square className="w-4 h-4 text-slate-400" />
+                              )}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <div>
                               <div className="text-sm font-medium text-slate-900 dark:text-white">
                                 {report.usuario.nombre}
@@ -291,7 +375,7 @@ export default function Reports() {
                                 {report.fechaReserva}
                               </div>
                               <div className="text-sm text-slate-500 dark:text-slate-400">
-                                {report.horaInicio} ({report.duracion}h)
+                                {report.jornada || 'N/A'}
                               </div>
                             </div>
                           </td>
@@ -302,16 +386,25 @@ export default function Reports() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button
-                              onClick={() => {
-                                setSelectedReport(report);
-                                setShowDetailModal(true);
-                              }}
-                              className="p-2 text-slate-600 hover:text-sena dark:text-slate-400 dark:hover:text-sena-light transition-colors"
-                              title="Ver detalles"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedReport(report);
+                                  setShowDetailModal(true);
+                                }}
+                                className="p-2 text-slate-600 hover:text-sena dark:text-slate-400 dark:hover:text-sena-light transition-colors"
+                                title="Ver detalles"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteReport(report)}
+                                className="p-2 text-slate-600 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
+                                title="Eliminar informe"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -374,10 +467,10 @@ export default function Reports() {
                     <p className="text-sm text-slate-600 dark:text-slate-400">Fecha</p>
                     <p className="font-medium text-slate-900 dark:text-white">{selectedReport.fechaReserva}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Hora Inicio</p>
-                    <p className="font-medium text-slate-900 dark:text-white">{selectedReport.horaInicio}</p>
-                  </div>
+                                      <div>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Jornada</p>
+                      <p className="font-medium text-slate-900 dark:text-white">{selectedReport.jornada || 'N/A'}</p>
+                    </div>
                   <div>
                     <p className="text-sm text-slate-600 dark:text-slate-400">Duración</p>
                     <p className="font-medium text-slate-900 dark:text-white">{selectedReport.duracion} horas</p>
@@ -452,6 +545,96 @@ export default function Reports() {
               <div className="text-xs text-slate-500 dark:text-slate-400 text-center">
                 Informe generado el {formatDate(selectedReport.fecha)}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Eliminación Individual */}
+      {showDeleteModal && reportToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md mx-4">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Eliminar Informe
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400">
+                  ¿Estás seguro de que quieres eliminar este informe?
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 mb-6">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                <strong>Usuario:</strong> {reportToDelete.usuario.nombre}
+              </p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                <strong>Ambiente:</strong> {reportToDelete.ambiente}
+              </p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                <strong>Fecha:</strong> {reportToDelete.fechaReserva}
+              </p>
+            </div>
+            
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDeleteReport}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Eliminación Múltiple */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md mx-4">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Eliminar Informes
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400">
+                  ¿Estás seguro de que quieres eliminar {selectedReports.length} informe{selectedReports.length !== 1 ? 's' : ''}?
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+              <p className="text-sm text-red-700 dark:text-red-300">
+                ⚠️ Esta acción no se puede deshacer. Los informes se eliminarán permanentemente.
+              </p>
+            </div>
+            
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowBulkDeleteModal(false)}
+                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmBulkDelete}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Eliminar {selectedReports.length}
+              </button>
             </div>
           </div>
         </div>

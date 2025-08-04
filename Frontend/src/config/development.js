@@ -1,21 +1,22 @@
-// Configuración para desarrollo
+// Configuración de desarrollo
 export const DEV_CONFIG = {
-  // URL de la API en desarrollo
+  // URL base de la API en desarrollo
   API_URL: 'http://localhost:5000/api/v1',
   
   // Configuración de la aplicación
   APP_NAME: 'Occupy Manager',
   APP_VERSION: '1.0.0',
   
-  // Configuración de desarrollo
-  DEV_MODE: true,
+  // Configuración de debug
+  DEBUG: true,
+  LOG_LEVEL: 'debug',
   
-  // Timeout para peticiones (ms)
+  // Configuración de timeouts
   REQUEST_TIMEOUT: 10000,
   
-  // Configuración de logs
-  ENABLE_LOGS: true,
-  
-  // Configuración de errores
-  SHOW_ERROR_DETAILS: true,
-}; 
+  // Configuración de reintentos
+  MAX_RETRIES: 3,
+  RETRY_DELAY: 1000,
+};
+
+export default DEV_CONFIG; 

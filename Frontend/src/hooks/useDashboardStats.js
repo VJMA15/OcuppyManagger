@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { obtenerAmbientesOcupados } from '@/utils/ambienteUtils';
 
 export const useDashboardStats = () => {
     // Calcular automáticamente basándose en ambientes y reservas
@@ -33,9 +34,10 @@ export const useDashboardStats = () => {
     const [reservasRechazadas, setReservasRechazadas] = useState(0);
     const [reservasActivas, setReservasActivas] = useState(0); // Reservas aprobadas y en curso
 
-    // Calcular automáticamente disponibles y ocupados
-    const disponibles = Math.max(0, ambientes - reservasActivas);
-    const ocupados = reservasActivas;
+    // Obtener ambientes ocupados directamente
+    const ambientesOcupados = obtenerAmbientesOcupados();
+    const ocupados = ambientesOcupados.length;
+    const disponibles = Math.max(0, ambientes - ocupados);
 
     const [edit, setEdit] = useState(null);
 
@@ -107,12 +109,58 @@ export const useDashboardStats = () => {
         const onReservasUpdated = () => {
             syncData();
         };
+        
+        // Escuchar eventos específicos de reservas
+        const onReservaApproved = () => {
+            console.log('🔄 Evento de reserva aprobada detectado en dashboard stats');
+            syncData();
+        };
+        const onReservaRejected = () => {
+            console.log('🔄 Evento de reserva rechazada detectado en dashboard stats');
+            syncData();
+        };
+        const onReservaCancelled = () => {
+            console.log('🔄 Evento de reserva cancelada detectado en dashboard stats');
+            syncData();
+        };
+        const onReservaCreated = () => {
+            console.log('🔄 Evento de reserva creada detectado en dashboard stats');
+            syncData();
+        };
+        const onDisponibilidadChanged = () => {
+            console.log('🔄 Evento de cambio de disponibilidad detectado en dashboard stats');
+            syncData();
+        };
+        
+        // Forzar actualización inmediata cuando cambien los ambientes ocupados
+        const forceUpdate = () => {
+            console.log('🔄 Forzando actualización de dashboard stats...');
+            syncData();
+        };
+        
         window.addEventListener('storage', onStorage);
         window.addEventListener('reservas-updated', onReservasUpdated);
+        window.addEventListener('reserva-created', onReservaCreated);
+        window.addEventListener('reserva-approved', onReservaApproved);
+        window.addEventListener('reserva-rejected', onReservaRejected);
+        window.addEventListener('reserva-cancelled', onReservaCancelled);
+        window.addEventListener('disponibilidad-cambiada', onDisponibilidadChanged);
+        window.addEventListener('ambientes-updated', onDisponibilidadChanged);
+        
+        // Actualizar cada 5 segundos para cambios en tiempo real
+        const quickInterval = setInterval(forceUpdate, 5000);
+        
         return () => {
             clearInterval(interval);
+            clearInterval(quickInterval);
             window.removeEventListener('storage', onStorage);
             window.removeEventListener('reservas-updated', onReservasUpdated);
+            window.removeEventListener('reserva-created', onReservaCreated);
+            window.removeEventListener('reserva-approved', onReservaApproved);
+            window.removeEventListener('reserva-rejected', onReservaRejected);
+            window.removeEventListener('reserva-cancelled', onReservaCancelled);
+            window.removeEventListener('disponibilidad-cambiada', onDisponibilidadChanged);
+            window.removeEventListener('ambientes-updated', onDisponibilidadChanged);
         };
     }, []);
 
@@ -125,6 +173,7 @@ export const useDashboardStats = () => {
         reservasAprobadas,
         reservasRechazadas,
         reservasActivas,
+        ambientesOcupados,
         edit,
         setEdit
     };

@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
 
+// Función helper para convertir hora a jornada
+const getJornadaFromHora = (hora) => {
+  if (!hora) return 'N/A';
+  const horaNum = parseInt(hora.split(':')[0]);
+  if (horaNum >= 6 && horaNum < 12) return 'Mañana';
+  if (horaNum >= 12 && horaNum < 18) return 'Tarde';
+  return 'Noche';
+};
+
 export const useReportGeneration = () => {
   const [reports, setReports] = useState([]);
 
@@ -14,8 +23,8 @@ export const useReportGeneration = () => {
         documento: reserva.documento
       },
       fechaReserva: reserva.fecha,
-      horaInicio: reserva.hora,
-      duracion: reserva.duracion || 1,
+      jornada: getJornadaFromHora(reserva.hora),
+      duracion: reserva.duracion || 6,
       estado: reserva.estado,
       motivo: reserva.motivo,
       aprobadaPor: reserva.aprobadaPor,
@@ -46,8 +55,8 @@ export const useReportGeneration = () => {
         documento: reserva.documento
       },
       fechaReserva: reserva.fecha,
-      horaInicio: reserva.hora,
-      duracion: reserva.duracion || 1,
+      jornada: getJornadaFromHora(reserva.hora),
+      duracion: reserva.duracion || 6,
       estado: 'cancelada',
       motivo: reserva.motivo,
       motivoCancelacion: reserva.motivoCancelacion,
@@ -76,8 +85,8 @@ export const useReportGeneration = () => {
         documento: reserva.documento
       },
       fechaReserva: reserva.fecha,
-      horaInicio: reserva.hora,
-      duracion: reserva.duracion || 1,
+      jornada: getJornadaFromHora(reserva.hora),
+      duracion: reserva.duracion || 6,
       estado: 'rechazada',
       motivo: reserva.motivo,
       motivoRechazo: reserva.motivoRechazo,
@@ -136,10 +145,28 @@ export const useReportGeneration = () => {
     };
   }, []);
 
+  // Función para eliminar un informe individual
+  const deleteReport = (reportId) => {
+    const reportsGuardados = JSON.parse(localStorage.getItem('reports') || '[]');
+    const nuevosReports = reportsGuardados.filter(report => report.id !== reportId);
+    localStorage.setItem('reports', JSON.stringify(nuevosReports));
+    setReports(nuevosReports);
+  };
+
+  // Función para eliminar múltiples informes
+  const deleteMultipleReports = (reportIds) => {
+    const reportsGuardados = JSON.parse(localStorage.getItem('reports') || '[]');
+    const nuevosReports = reportsGuardados.filter(report => !reportIds.includes(report.id));
+    localStorage.setItem('reports', JSON.stringify(nuevosReports));
+    setReports(nuevosReports);
+  };
+
   return {
     reports,
     generateReport,
     generateCancellationReport,
-    generateRejectionReport
+    generateRejectionReport,
+    deleteReport,
+    deleteMultipleReports
   };
 }; 

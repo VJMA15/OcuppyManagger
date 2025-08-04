@@ -21,6 +21,16 @@ import {
   Clock as ClockIcon,
   CalendarCheck
 } from "lucide-react";
+import { notificarCambioDisponibilidad } from "@/utils/ambienteUtils";
+
+// Función helper para convertir hora a jornada
+const getJornadaFromHora = (hora) => {
+  if (!hora) return 'N/A';
+  const horaNum = parseInt(hora.split(':')[0]);
+  if (horaNum >= 6 && horaNum < 12) return 'Mañana';
+  if (horaNum >= 12 && horaNum < 18) return 'Tarde';
+  return 'Noche';
+};
 
 export default function VerReservas() {
   const [reservas, setReservas] = useState([]);
@@ -103,8 +113,13 @@ export default function VerReservas() {
           motivoRechazo: action === 'reject' ? 'Reserva rechazada por el administrador' : null
         };
         
-        // Disparar evento para generar informe si es rechazada
-        if (action === 'reject') {
+        // Notificar cambio de disponibilidad y disparar eventos
+        notificarCambioDisponibilidad();
+        if (action === 'approve') {
+          window.dispatchEvent(new CustomEvent('reserva-approved', {
+            detail: { reserva: reservaActualizada }
+          }));
+        } else if (action === 'reject') {
           window.dispatchEvent(new CustomEvent('reserva-rejected', {
             detail: { reserva: reservaActualizada }
           }));
@@ -127,7 +142,8 @@ export default function VerReservas() {
           motivoCancelacion: 'Cancelada por el administrador'
         };
         
-        // Disparar evento para generar informe de cancelación
+        // Notificar cambio de disponibilidad y disparar evento para generar informe de cancelación
+        notificarCambioDisponibilidad();
         window.dispatchEvent(new CustomEvent('reserva-cancelled', {
           detail: { reserva: reservaCancelada }
         }));
@@ -343,7 +359,7 @@ export default function VerReservas() {
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       <Calendar className="inline w-4 h-4 mr-2" />
-                      Fecha/Hora
+                      Fecha/Jornada
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Estado
@@ -409,7 +425,7 @@ export default function VerReservas() {
                                 {reserva.fecha}
                               </div>
                               <div className="text-sm text-slate-500 dark:text-slate-400">
-                                {reserva.hora}
+                                {getJornadaFromHora(reserva.hora)}
                               </div>
                             </div>
                         </td>

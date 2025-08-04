@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuthContext } from "@/contexts/auth-context";
 import { useNavigate } from "react-router-dom";
 import { 
   User, 
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export default function Settings() {
-  const { logout } = useAuth();
+  const { logout } = useAuthContext();
   const navigate = useNavigate();
   
   // Permite cambiar el tema (oscuro/claro)

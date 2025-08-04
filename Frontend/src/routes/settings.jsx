@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuthContext } from "@/contexts/auth-context";
 import { useNavigate } from "react-router-dom";
 import { 
   User, 
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export default function Settings() {
-  const { logout } = useAuth();
+  const { logout } = useAuthContext();
   const navigate = useNavigate();
   
   // Permite cambiar el tema (oscuro/claro)
@@ -53,32 +53,19 @@ export default function Settings() {
   const [showRestore, setShowRestore] = useState(false);
 
   const handleClearData = () => {
-    localStorage.removeItem("ambientes");
-    localStorage.removeItem("reservas");
-    localStorage.removeItem("informes");
+    // Limpiar solo datos locales que no están en el backend
+    localStorage.removeItem("theme");
+    localStorage.removeItem("systemName");
+    localStorage.removeItem("logoSena");
     setConfirmClear(false);
     setShowRestore(true);
-    // No recargar aún, para dar opción de restaurar
   };
 
   const handleRestoreData = () => {
-    // Datos de ejemplo para ambientes, reservas e informes
-    const ambientesEjemplo = [
-      { nombre: "Ambiente 101", estado: "Desocupado", equipos: 10 },
-      { nombre: "Ambiente 102", estado: "Desocupado", equipos: 8 },
-      { nombre: "Ambiente 103", estado: "Desocupado", equipos: 12 },
-      { nombre: "Ambiente 104", estado: "Desocupado", equipos: 9 },
-    ];
-    const reservasEjemplo = [
-      { nombre: "Juan Perez", documento: "123456", ambiente: "Ambiente 101", fecha: "2025-07-10", hora: "08:00", motivo: "Clase de informática" },
-      { nombre: "Ana Gómez", documento: "654321", ambiente: "Ambiente 102", fecha: "2025-07-11", hora: "10:00", motivo: "Reunión de proyecto" }
-    ];
-    const informesEjemplo = [
-      { turno: "Mañana", responsable: "Pedro Ruiz", fecha: "2025-07-09", equiposEntregados: "10 laptops", equiposRecibidos: "10 laptops", observaciones: "Todo en orden" }
-    ];
-    localStorage.setItem("ambientes", JSON.stringify(ambientesEjemplo));
-    localStorage.setItem("reservas", JSON.stringify(reservasEjemplo));
-    localStorage.setItem("informes", JSON.stringify(informesEjemplo));
+    // Restaurar configuración por defecto
+    localStorage.setItem("theme", "light");
+    localStorage.setItem("systemName", "OCCUPY MANAGER");
+    localStorage.removeItem("logoSena");
     setShowRestore(false);
     window.location.reload();
   };
@@ -269,13 +256,13 @@ export default function Settings() {
                 className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg transition-all duration-200 font-medium"
         >
                 <Database className="w-5 h-5" />
-          Borrar todos los datos
+          Borrar configuración local
         </button>
               
         {confirmClear && (
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <p className="text-red-800 dark:text-red-200 font-medium mb-3">
-                    ¿Seguro que quieres borrar todos los ambientes, reservas e informes? Esta acción no se puede deshacer.
+                    ¿Seguro que quieres borrar la configuración local del sistema? Esta acción no se puede deshacer.
                   </p>
                   <div className="flex gap-3">
                     <button 
@@ -297,13 +284,13 @@ export default function Settings() {
         {showRestore && (
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                   <p className="text-green-800 dark:text-green-200 font-medium mb-3">
-                    Los datos han sido borrados. ¿Quieres restaurar los datos de ejemplo?
+                    La configuración ha sido borrada. ¿Quieres restaurar la configuración por defecto?
                   </p>
                   <button 
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium" 
                     onClick={handleRestoreData}
                   >
-                    Restaurar datos de ejemplo
+                    Restaurar configuración por defecto
                   </button>
                 </div>
               )}

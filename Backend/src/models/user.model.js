@@ -7,6 +7,13 @@ const userSchema = new mongoose.Schema({
     required: [true, 'El nombre es obligatorio'],
     trim: true
   },
+  cc: {
+    type: String,
+    required: [true, 'La cédula de ciudadanía es obligatoria'],
+    unique: true,
+    trim: true,
+    match: [/^\d{8,12}$/, 'La cédula debe tener entre 8 y 12 dígitos']
+  },
   email: {
     type: String,
     required: [true, 'El correo es obligatorio'],

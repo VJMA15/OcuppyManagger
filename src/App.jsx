@@ -2,7 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import { ThemeProvider } from "@/contexts/theme-context";
-import { AuthProvider, useAuth } from "@/contexts/auth-context";
+import { AuthProvider, useAuthContext } from "@/contexts/auth-context";
 import { useAutoCompleteReservations } from "@/hooks/useAutoCompleteReservations";
 import { useReportGeneration } from "@/hooks/useReportGeneration";
 import Layout from "@/routes/layout";
@@ -16,7 +16,7 @@ import Login from "@/routes/login";
 import RequireAdmin from "@/routes/RequireAdmin";
 
 function AppRoutes() {
-    const { isAuthenticated, isLoading, logout } = useAuth();
+    const { isAuthenticated, isLoading, logout } = useAuthContext();
     
     // Usar el hook de finalización automática de reservas
     useAutoCompleteReservations();

@@ -7,17 +7,10 @@ class ApiService {
     this.timeout = API_CONFIG.TIMEOUT;
   }
 
-  // Obtener token de localStorage
-  getToken() {
-    return localStorage.getItem('token');
-  }
-
-  // Configurar headers con token si existe
+  // Configurar headers básicos (sin token)
   getHeaders() {
-    const token = this.getToken();
     return {
       ...this.defaultHeaders,
-      ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
 
@@ -26,20 +19,39 @@ class ApiService {
     const url = `${this.baseURL}${endpoint}`;
     const config = {
       headers: this.getHeaders(),
-      timeout: this.timeout,
       ...options,
     };
 
+    console.log('🌐 API Request:', {
+      url,
+      method: options.method || 'GET',
+      headers: config.headers,
+      timeout: this.timeout
+    });
+
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+      
+      // Configurar timeout
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Request timeout, aborting...');
+        controller.abort();
+      }, this.timeout);
       
       const response = await fetch(url, {
-        ...config,
+        method: options.method || 'GET',
+        headers: config.headers,
+        body: options.body,
         signal: controller.signal,
       });
       
       clearTimeout(timeoutId);
+
+      console.log('✅ API Response:', {
+        status: response.status,
+        ok: response.ok,
+        url: response.url
+      });
 
       // Manejar errores HTTP
       if (!response.ok) {
@@ -47,16 +59,26 @@ class ApiService {
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log('📦 API Data:', data);
+      return data;
     } catch (error) {
+      console.error('❌ API Error:', error);
+      
       if (error.name === 'AbortError') {
-        throw new Error('Request timeout');
+        throw new Error('La solicitud tardó demasiado tiempo. Verifica tu conexión.');
       }
+      
+      // Manejar errores de red
+      if (error.message.includes('Failed to fetch')) {
+        throw new Error('Error de conexión. Verifica que el servidor esté ejecutándose.');
+      }
+      
       throw error;
     }
   }
 
-  // Métodos HTTP
+  // Métodos HTTP básicos
   async get(endpoint) {
     return this.request(endpoint, { method: 'GET' });
   }
@@ -86,40 +108,139 @@ class ApiService {
     return this.request(endpoint, { method: 'DELETE' });
   }
 
-  // Métodos específicos para autenticación
-  async login(credentials) {
-    const response = await this.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, credentials);
-    if (response.data?.token) {
-      localStorage.setItem('token', response.data.token);
+  // ===== MÉTODOS DE AUTENTICACIÓN SIMPLIFICADA =====
+  
+  // Método simplificado para verificar usuario
+  async verifyUser(cc, password) {
+    const response = await this.post(API_CONFIG.ENDPOINTS.AUTH.VERIFY, { cc, password });
+    
+    if (response.status === 'success' && response.data?.user) {
+      // Guardar datos del usuario en localStorage
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('isLoggedIn', 'true');
     }
+    
     return response;
   }
 
-  async logout() {
-    try {
-      await this.post(API_CONFIG.ENDPOINTS.AUTH.LOGOUT, {});
-    } catch (error) {
-      console.warn('Error during logout:', error);
-    } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-    }
-  }
-
-  // Verificar si el usuario está autenticado
+  // Verificar si está "logueado" (datos guardados)
   isAuthenticated() {
-    return !!this.getToken();
+    return localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('user');
   }
 
-  // Obtener información del usuario
+  // Obtener datos del usuario guardados
   getUser() {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    const userData = localStorage.getItem('user');
+    return userData ? JSON.parse(userData) : null;
+  }
+
+  // Limpiar datos de autenticación
+  logout() {
+    localStorage.removeItem('user');
+    localStorage.removeItem('isLoggedIn');
+  }
+
+  // ===== MÉTODOS PARA AMBIENTES =====
+  async getAmbientes() {
+    return this.get(API_CONFIG.ENDPOINTS.AMBIENTES.ALL);
+  }
+
+  async getAmbienteById(id) {
+    return this.get(API_CONFIG.ENDPOINTS.AMBIENTES.BY_ID(id));
+  }
+
+  async createAmbiente(ambienteData) {
+    return this.post(API_CONFIG.ENDPOINTS.AMBIENTES.CREATE, ambienteData);
+  }
+
+  async updateAmbiente(id, ambienteData) {
+    return this.put(API_CONFIG.ENDPOINTS.AMBIENTES.UPDATE(id), ambienteData);
+  }
+
+  async deleteAmbiente(id) {
+    return this.delete(API_CONFIG.ENDPOINTS.AMBIENTES.DELETE(id));
+  }
+
+  // ===== MÉTODOS PARA RESERVAS =====
+  async getReservas() {
+    return this.get(API_CONFIG.ENDPOINTS.RESERVAS.ALL);
+  }
+
+  async getReservaById(id) {
+    return this.get(API_CONFIG.ENDPOINTS.RESERVAS.BY_ID(id));
+  }
+
+  async createReserva(reservaData) {
+    return this.post(API_CONFIG.ENDPOINTS.RESERVAS.CREATE, reservaData);
+  }
+
+  async updateReserva(id, reservaData) {
+    return this.put(API_CONFIG.ENDPOINTS.RESERVAS.UPDATE(id), reservaData);
+  }
+
+  async deleteReserva(id) {
+    return this.delete(API_CONFIG.ENDPOINTS.RESERVAS.DELETE(id));
+  }
+
+  async getMyReservas() {
+    return this.get(API_CONFIG.ENDPOINTS.RESERVAS.MY_RESERVAS);
+  }
+
+  // ===== MÉTODOS PARA USUARIOS =====
+  async getUsers() {
+    return this.get(API_CONFIG.ENDPOINTS.USERS.ALL);
+  }
+
+  async getUserById(id) {
+    return this.get(API_CONFIG.ENDPOINTS.USERS.BY_ID(id));
+  }
+
+  async getUserProfile() {
+    return this.get(API_CONFIG.ENDPOINTS.USERS.PROFILE);
+  }
+
+  // ===== MÉTODOS PARA REGISTROS =====
+  async getRegistros() {
+    return this.get(API_CONFIG.ENDPOINTS.REGISTROS.ALL);
+  }
+
+  async getRegistroById(id) {
+    return this.get(API_CONFIG.ENDPOINTS.REGISTROS.BY_ID(id));
+  }
+
+  async createRegistro(registroData) {
+    return this.post(API_CONFIG.ENDPOINTS.REGISTROS.CREATE, registroData);
+  }
+
+  // ===== MÉTODOS PARA BITÁCORA =====
+  async getBitacora() {
+    return this.get(API_CONFIG.ENDPOINTS.BITACORA.ALL);
+  }
+
+  async getBitacoraById(id) {
+    return this.get(API_CONFIG.ENDPOINTS.BITACORA.BY_ID(id));
+  }
+
+  // ===== MÉTODO DE PRUEBA DE CONEXIÓN =====
+  async testConnection() {
+    try {
+      const response = await this.get('/');
+      return {
+        success: true,
+        data: response,
+        message: 'Conexión exitosa con el backend'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        message: 'Error de conexión con el backend'
+      };
+    }
   }
 }
 
 // Crear instancia única del servicio
 const apiService = new ApiService();
 
-export default apiService; 
+export default apiService;

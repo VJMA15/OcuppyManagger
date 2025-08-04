@@ -1,27 +1,22 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, Lock, User, Building2 } from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
+import { Eye, EyeOff, Lock, CreditCard, Building2 } from "lucide-react";
+import { useAuthContext } from "@/contexts/auth-context";
 import logoSena from '@/assets/logo-sena.png';
 
 export default function Login() {
-  const [form, setForm] = useState({ usuario: "", password: "" });
+  const [form, setForm] = useState({ cc: "", password: "" });
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuthContext();
 
-  // Credenciales simples (puedes cambiarlas en el futuro)
-  const adminUser = "admin";
-  const adminPass = "admin123";
-
-  // Log del estado inicial
-  console.log('Estado inicial del formulario:', form);
-  console.log('Credenciales esperadas:', { adminUser, adminPass });
+  // Redirigir si ya está autenticado
+  if (isAuthenticated) {
+    window.location.href = '/dashboard';
+  }
 
   const handleChange = e => {
     const newForm = { ...form, [e.target.name]: e.target.value };
-    console.log('Campo cambiado:', e.target.name, 'Valor:', e.target.value);
-    console.log('Nuevo estado del formulario:', newForm);
     setForm(newForm);
     if (error) setError(""); // Limpiar error cuando el usuario escribe
   };
@@ -29,32 +24,17 @@ export default function Login() {
   const handleSubmit = async e => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
     
-    // Logs de depuración
-    console.log('Valores del formulario:', form);
-    console.log('Usuario ingresado:', form.usuario);
-    console.log('Contraseña ingresada:', form.password);
-    console.log('Usuario esperado:', adminUser);
-    console.log('Contraseña esperada:', adminPass);
-    console.log('¿Usuario coincide?', form.usuario === adminUser);
-    console.log('¿Contraseña coincide?', form.password === adminPass);
-    
-    // Verificación simplificada
-    const usuarioCorrecto = form.usuario === adminUser;
-    const passwordCorrecto = form.password === adminPass;
-    
-    console.log('Usuario correcto:', usuarioCorrecto);
-    console.log('Password correcto:', passwordCorrecto);
-    
-    if (usuarioCorrecto && passwordCorrecto) {
-      console.log('✅ Autenticación exitosa');
-      login(); // Usar la función del contexto
-    } else {
-      console.log('❌ Autenticación fallida');
-      console.log('Razón: Usuario correcto =', usuarioCorrecto, ', Password correcto =', passwordCorrecto);
-      setError("Usuario o contraseña incorrectos");
+    try {
+      await login(form.cc, form.password);
+      // Si llega aquí, el login fue exitoso
+      window.location.href = '/dashboard';
+    } catch (err) {
+      setError(err.message || "C.C. o contraseña incorrectos");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
@@ -88,21 +68,23 @@ export default function Login() {
 
           {/* Formulario */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Campo Usuario */}
+            {/* Campo C.C. */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Usuario
+                Cédula de Ciudadanía
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-slate-400" />
+                  <CreditCard className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
-                  name="usuario"
-                  value={form.usuario}
+                  name="cc"
+                  value={form.cc}
                   onChange={handleChange}
                   className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:ring-sena-light transition-all duration-200"
-                  placeholder="Ingresa tu usuario"
+                  placeholder="Ingresa tu C.C."
+                  pattern="[0-9]{8,12}"
+                  title="Ingresa un número de cédula válido (8-12 dígitos)"
                   autoFocus
                   required
                 />
@@ -173,17 +155,27 @@ export default function Login() {
               )}
             </button>
 
-            {/* Botón de prueba - siempre funciona */}
-            <button
-              type="button"
-              onClick={() => {
-                console.log('🔧 Botón de prueba clickeado');
-                login();
-              }}
-              className="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-blue-700 transition-all duration-200 mt-2"
-            >
-              🔧 Login de Prueba (Siempre funciona)
-            </button>
+                         {/* Enlace para registrarse */}
+             <div className="text-center">
+               <p className="text-sm text-slate-600 dark:text-slate-400">
+                 ¿No tienes cuenta?{' '}
+                 <a href="/register" className="text-sena hover:text-sena-dark font-medium">
+                   Regístrate aquí
+                 </a>
+               </p>
+             </div>
+
+             {/* Botón de prueba para desarrollo */}
+             <button
+               type="button"
+               onClick={() => {
+                 localStorage.setItem("isAdmin", "true");
+                 window.location.href = '/dashboard';
+               }}
+               className="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-blue-700 transition-all duration-200 mt-2"
+             >
+               🔧 Login de Prueba (Desarrollo)
+             </button>
           </form>
 
           {/* Footer */}
@@ -206,10 +198,10 @@ export default function Login() {
               <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
                 Credenciales de Desarrollo
               </h3>
-              <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                <p><strong>Usuario:</strong> admin</p>
-                <p><strong>Contraseña:</strong> admin123</p>
-              </div>
+                           <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+               <p><strong>C.C:</strong> 1038647805</p>
+               <p><strong>Contraseña:</strong> admin123</p>
+             </div>
             </div>
           </div>
         </div>

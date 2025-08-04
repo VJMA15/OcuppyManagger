@@ -5,6 +5,7 @@ import { CheckCircle, AlertCircle, CreditCard, Package, TrendingUp, CalendarIcon
 import { overviewData } from "@/constants";
 import { Footer } from "@/layouts/footer";
 
+
 // Componentes
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsCard from "@/components/dashboard/StatsCard";
@@ -25,7 +26,8 @@ const DashboardPage = () => {
         reservasPendientes,
         reservasAprobadas,
         reservasRechazadas,
-        reservasActivas
+        reservasActivas,
+        ambientesOcupados
     } = useDashboardStats();
     
     const reservasRecientes = useUpcomingReservations();
@@ -46,15 +48,15 @@ const DashboardPage = () => {
         },
         {
             title: "Ocupados",
-            value: ocupados,
+            value: ambientesOcupados.length,
             icon: AlertCircle,
             color: {
                 bg: "bg-red-100 dark:bg-red-900/30",
                 icon: "text-red-600 dark:text-red-400",
                 text: "text-red-600 dark:text-red-400"
             },
-            subtitle: "Reservas activas actualmente",
-            onClick: () => navigate('/ver-reservas')
+            subtitle: "Ambientes ocupados actualmente",
+            onClick: () => navigate('/ambientes?filter=ocupados')
         },
         {
             title: "Pendientes",
@@ -86,6 +88,9 @@ const DashboardPage = () => {
         <div className="flex flex-col gap-8">
             {/* Header del Dashboard */}
             <DashboardHeader />
+
+            {/* Botones de prueba para desarrollo */}
+
 
             {/* Tarjetas de Estadísticas */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -155,6 +160,61 @@ const DashboardPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Sección de Ambientes Ocupados */}
+            {ocupados > 0 && (
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                                <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Ambientes Ocupados</h3>
+                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                    {ocupados} ambiente{ocupados !== 1 ? 's' : ''} actualmente en uso
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => navigate('/ambientes?filter=ocupados')}
+                            className="px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg transition-colors"
+                        >
+                            Ver Ambientes Ocupados
+                        </button>
+                    </div>
+                    
+                    {/* Lista de ambientes ocupados */}
+                    <div className="space-y-3">
+                        {ambientesOcupados.map((ambiente, index) => (
+                            <div key={ambiente.id} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-red-200 dark:bg-red-800 rounded-full flex items-center justify-center">
+                                        <Building2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-slate-900 dark:text-white">{ambiente.nombre}</p>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                                            {ambiente.tipo} • {ambiente.capacidad} personas
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="px-2 py-1 bg-red-200 dark:bg-red-800 text-red-700 dark:text-red-300 text-xs font-medium rounded-full">
+                                        OCUPADO
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="mt-4 bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+                        <p className="text-sm text-red-700 dark:text-red-300">
+                            ⚠️ Estos ambientes no están disponibles para nuevas reservas hasta que terminen las reservas actuales.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Sección de Reservas Próximas */}
             <UpcomingReservations reservations={reservasRecientes} />
