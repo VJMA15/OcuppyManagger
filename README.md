@@ -6,7 +6,6 @@ Sistema completo para la gestión de reservas de ambientes con frontend en React
 
 - **Frontend**: React + Vite + Tailwind CSS
 - **Backend**: Node.js + Express + MongoDB
-- **Autenticación**: JWT
 - **API RESTful**: Documentada con Swagger
 - **Interfaz moderna**: Diseño responsive y dark mode
 
