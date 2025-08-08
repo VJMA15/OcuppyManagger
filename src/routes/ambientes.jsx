@@ -105,14 +105,21 @@ const ambientesEjemplo = [
   }
 ];
 
+import { useAmbientes } from "@/hooks/useAmbientes"; // ✅ AGREGAR
+
 export default function Ambientes() {
-  const [ambientes, setAmbientes] = useState([]);
+  // ✅ CAMBIAR: Usar hook de API en lugar de localStorage
+  const { ambientes, isLoading, createAmbiente, updateAmbiente, deleteAmbiente } = useAmbientes();
+  
   const [selectedAmbiente, setSelectedAmbiente] = useState(null);
   const [showPanel, setShowPanel] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTipo, setFilterTipo] = useState("todos");
   const [filterEstado, setFilterEstado] = useState("todos");
 
+  // ❌ ELIMINAR: Todo el useEffect que maneja localStorage
+  // ❌ ELIMINAR: ambientesEjemplo
+  
   // Cargar ambientes desde localStorage o usar datos de ejemplo
   useEffect(() => {
     const ambientesGuardados = localStorage.getItem("ambientes");

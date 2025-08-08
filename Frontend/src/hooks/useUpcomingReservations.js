@@ -1,58 +1,70 @@
 import { useState, useEffect } from 'react';
 
+/**
+ * Hook para obtener y manejar reservas próximas
+ */
 export const useUpcomingReservations = () => {
-    const [reservasRecientes, setReservasRecientes] = useState(() => {
-        const stored = localStorage.getItem("reservas");
-        if (!stored) return [];
-        const now = new Date();
-        return JSON.parse(stored).filter(r => {
-            if (!r.fecha || !r.hora) return false;
-            const reservaDate = new Date(`${r.fecha}T${r.hora}`);
-            return reservaDate > now;
-        });
-    });
+  const [upcomingReservations, setUpcomingReservations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    // Actualizar reservas recientes al montar y cuando cambian las reservas en localStorage
-    useEffect(() => {
-        function updateRecientes() {
-            const stored = localStorage.getItem("reservas");
-            if (!stored) {
-                setReservasRecientes([]);
-                return;
-            }
-            const now = new Date();
-            const recientes = JSON.parse(stored).filter(r => {
-                if (!r.fecha || !r.hora) return false;
-                const reservaDate = new Date(`${r.fecha}T${r.hora}`);
-                return reservaDate > now;
-            });
-            setReservasRecientes(recientes);
+  const fetchUpcomingReservations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Simular llamada a API para obtener reservas próximas
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Datos simulados
+      const mockReservations = [
+        {
+          id: '1',
+          environmentName: 'Sala de Conferencias A',
+          startDate: new Date(Date.now() + 2 * 60 * 60 * 1000), // En 2 horas
+          endDate: new Date(Date.now() + 4 * 60 * 60 * 1000), // En 4 horas
+          purpose: 'Reunión de equipo',
+          userName: 'Juan Pérez'
+        },
+        {
+          id: '2',
+          environmentName: 'Laboratorio B',
+          startDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Mañana
+          endDate: new Date(Date.now() + 26 * 60 * 60 * 1000),
+          purpose: 'Práctica de laboratorio',
+          userName: 'María García'
         }
-        updateRecientes();
-        const interval = setInterval(updateRecientes, 60000);
-        const onStorage = (e) => {
-            if (e.key === "reservas") updateRecientes();
-        };
-        window.addEventListener("storage", onStorage);
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener("storage", onStorage);
-        };
-    }, []);
+      ];
+      
+      setUpcomingReservations(mockReservations);
+      
+    } catch (err) {
+      setError(err.message);
+      console.error('❌ Error al obtener reservas próximas:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // También actualiza inmediatamente cuando se agrega una reserva en la misma pestaña
-    useEffect(() => {
-        const originalSetItem = localStorage.setItem;
-        localStorage.setItem = function(key, value) {
-            originalSetItem.apply(this, arguments);
-            if (key === "reservas") {
-                window.dispatchEvent(new Event("storage"));
-            }
-        };
-        return () => {
-            localStorage.setItem = originalSetItem;
-        };
-    }, []);
+  useEffect(() => {
+    fetchUpcomingReservations();
+    
+    // Actualizar cada 10 minutos
+    const interval = setInterval(fetchUpcomingReservations, 10 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
-    return reservasRecientes;
-}; 
+  const refreshReservations = () => {
+    fetchUpcomingReservations();
+  };
+
+  return {
+    upcomingReservations,
+    loading,
+    error,
+    refreshReservations
+  };
+};
+
+export default useUpcomingReservations;

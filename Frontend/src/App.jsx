@@ -7,56 +7,35 @@ import { useAutoCompleteReservations } from "@/hooks/useAutoCompleteReservations
 import { useReportGeneration } from "@/hooks/useReportGeneration";
 import Layout from "@/routes/layout";
 import DashboardPage from "@/routes/dashboard/page";
-import Ambientes from "@/routes/ambientes";
-import Reserva from "@/routes/reserva";
-import VerReservas from "@/routes/ver-reservas";
-import Reports from "@/routes/reports";
-import Settings from "@/routes/settings";
-import Login from "@/routes/login";
 import Register from "@/routes/register";
 import RequireAdmin from "@/routes/RequireAdmin";
 
+// Importaciones corregidas - solo páginas migradas
+import ReservaPage from '@/pages/ReservaPage';
+import AmbientesPage from './pages/AmbientesPage';
+import VerReservasPage from './pages/VerReservasPage';
+import ReportsPage from "@/pages/ReportsPage";
+import SettingsPage from "@/pages/SettingsPage";
+import LoginPage from "@/pages/LoginPage";
+
 function AppRoutes() {
-    const { isAuthenticated, isLoading, logout } = useAuthContext();
+    // Eliminar verificación de autenticación
+    // const { isAuthenticated, isLoading, logout } = useAuthContext();
     
-    // Usar el hook de finalización automática de reservas
-    useAutoCompleteReservations();
-    
-    // Usar el hook de generación de informes
-    useReportGeneration();
-
-    // Mostrar loading mientras verifica autenticación
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-green-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sena mx-auto mb-4"></div>
-                    <p className="text-slate-600 dark:text-slate-400">Cargando...</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <BrowserRouter>
             <Routes>
-                {!isAuthenticated ? (
-                    <>
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
-                        <Route path="/*" element={<Navigate to="/login" />} />
-                    </>
-                ) : (
-                    <Route element={<RequireAdmin><Layout onLogout={logout} /></RequireAdmin>}>
-                        <Route index element={<DashboardPage />} />
-                        <Route path="settings" element={<Settings />} />
-                        <Route path="ambientes" element={<Ambientes />} />
-                        <Route path="reserva" element={<Reserva />} />
-                        <Route path="ver-reservas" element={<VerReservas />} />
-                        <Route path="reports" element={<Reports />} />
-                        <Route path="*" element={<Navigate to="/" />} />
-                    </Route>
-                )}
+                {/* Todas las rutas accesibles sin autenticación */}
+                <Route element={<Layout />}>
+                    <Route index element={<DashboardPage />} />
+                    <Route path="ambientes" element={<AmbientesPage />} />
+                    <Route path="reserva" element={<ReservaPage />} />
+                    <Route path="ver-reservas" element={<VerReservasPage />} />
+                    <Route path="reports" element={<ReportsPage />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                </Route>
+                {/* Mantener login como opción */}
+                <Route path="/login" element={<LoginPage />} />
             </Routes>
         </BrowserRouter>
     );
@@ -65,11 +44,11 @@ function AppRoutes() {
 function App() {
     return (
         <ThemeProvider storageKey="theme">
-            <AuthProvider>
-                <AppRoutes />
-            </AuthProvider>
+            {/* Eliminar AuthProvider si no se usa */}
+            <AppRoutes />
         </ThemeProvider>
     );
 }
 
 export default App;
+

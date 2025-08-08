@@ -11,6 +11,18 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
+            "lodash": "lodash-es"
         },
     },
+    define: {
+        __DEV__: process.env.NODE_ENV !== 'production',
+        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+    },
+    esbuild: {
+        logOverride: { 'this-is-undefined-in-esm': 'silent' }
+    },
+    optimizeDeps: {
+        include: ['lodash-es'],
+        exclude: []
+    }
 });

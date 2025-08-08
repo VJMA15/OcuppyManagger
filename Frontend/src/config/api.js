@@ -1,9 +1,9 @@
 const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
-  
+  BASE_URL: 'http://localhost:5000/api/v1',
+  TIMEOUT: 5000, // ✅ REDUCIDO: 5 segundos para respuestas más rápidas
   ENDPOINTS: {
     AUTH: {
-      VERIFY: '/auth/verify',  // Nuevo endpoint
+      VERIFY: '/auth/verify',
       REGISTER: '/auth/signup',
       USER_BY_CC: (cc) => `/auth/user/${cc}`,
     },
@@ -41,8 +41,9 @@ const API_CONFIG = {
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
   },
-  
-  TIMEOUT: 30000, // Aumentado a 30 segundos
 };
 
 export default API_CONFIG;
+
+// ❌ ELIMINAR: Esta línea duplicada que causa confusión
+// export const TIMEOUT = 3000;

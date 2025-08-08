@@ -7,8 +7,9 @@ import { useAutoCompleteReservations } from "@/hooks/useAutoCompleteReservations
 import { useReportGeneration } from "@/hooks/useReportGeneration";
 import Layout from "@/routes/layout";
 import DashboardPage from "@/routes/dashboard/page";
-import Ambientes from "@/routes/ambientes";
-import Reserva from "@/routes/reserva";
+// Cambiar esta importación:
+import AmbientesPage from "@/pages/AmbientesPage"; // En lugar de Ambientes
+import ReservaPage from "@/pages/ReservaPage";
 import VerReservas from "@/routes/ver-reservas";
 import Reports from "@/routes/reports";
 import Settings from "@/routes/settings";
@@ -45,8 +46,9 @@ function AppRoutes() {
                     <Route element={<RequireAdmin><Layout onLogout={logout} /></RequireAdmin>}>
                         <Route index element={<DashboardPage />} />
                         <Route path="settings" element={<Settings />} />
-                        <Route path="ambientes" element={<Ambientes />} />
-                        <Route path="reserva" element={<Reserva />} />
+                        {/* Cambiar esta línea: */}
+                        <Route path="ambientes" element={<AmbientesPage />} />
+                        <Route path="reserva" element={<ReservaPage />} />
                         <Route path="ver-reservas" element={<VerReservas />} />
                         <Route path="reports" element={<Reports />} />
                         <Route path="*" element={<Navigate to="/" />} />

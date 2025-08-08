@@ -4,14 +4,18 @@ const reservaController = require('../controllers/reserva.controller');
 
 const router = express.Router();
 
-// Aplicar autenticación a todas las rutas
-router.use(authenticate);
+// ANTES: Rutas protegidas con JWT
+// router.use(authenticate);
 
-// Rutas que requieren autenticación
-router.get('/reservas', reservaController.getReservas);
-router.post('/reservas', reservaController.createReserva);
+// DESPUÉS: Sin autenticación por ahora
+const express = require('express');
+const reservaController = require('../controllers/reserva.controller');
 
-// Rutas que requieren rol específico
-router.delete('/reservas/:id', authorize('admin'), reservaController.deleteReserva);
+const router = express.Router();
+
+// Rutas sin autenticación (temporalmente)
+router.get('/reservas', reservaController.obtenerReservas);
+router.post('/reservas', reservaController.crearReserva);
+router.delete('/reservas/:id', reservaController.eliminarReserva);
 
 module.exports = router;

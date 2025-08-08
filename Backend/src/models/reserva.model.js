@@ -1,48 +1,35 @@
 const mongoose = require('mongoose');
 
 const reservaSchema = new mongoose.Schema({
-  ambiente: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Ambiente',
-    required: [true, 'El ambiente es obligatorio']
-  },
-  usuario: {
-    type: mongoose.Schema.ObjectId,
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'El usuario es obligatorio']
+    required: true
   },
-  fechaInicio: {
+  environmentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Environment',
+    required: true
+  },
+  startDate: {
     type: Date,
-    required: [true, 'La fecha de inicio es obligatoria']
+    required: true
   },
-  fechaFin: {
+  endDate: {
     type: Date,
-    required: [true, 'La fecha de fin es obligatoria']
+    required: true
   },
-  motivo: {
+  status: {
     type: String,
-    required: [true, 'El motivo es obligatorio'],
-    trim: true
+    enum: ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'],
+    default: 'PENDING'
   },
-  estado: {
+  purpose: {
     type: String,
-    enum: ['pendiente', 'aprobada', 'rechazada', 'cancelada', 'finalizada'],
-    default: 'pendiente'
-  },
-  aprobadoPor: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'User'
-  },
-  fechaAprobacion: Date,
-  comentarios: String
+    required: true
+  }
 }, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  timestamps: true
 });
-
-// Índices para mejorar el rendimiento de las consultas
-reservaSchema.index({ ambiente: 1, fechaInicio: 1, fechaFin: 1 });
-reservaSchema.index({ usuario: 1 });
 
 module.exports = mongoose.model('Reserva', reservaSchema);

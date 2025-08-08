@@ -11,6 +11,12 @@
  */
 export const verificarDisponibilidadAmbiente = (ambienteId, reservas = []) => {
     try {
+        // Ensure reservas is an array
+        if (!Array.isArray(reservas)) {
+            console.warn('reservas is not an array:', reservas);
+            return true; // Default to available if reservas is not valid
+        }
+
         const ahora = new Date();
         const fechaActual = ahora.toISOString().split('T')[0]; // Solo la fecha (YYYY-MM-DD)
         
@@ -78,6 +84,16 @@ export const verificarDisponibilidadAmbiente = (ambienteId, reservas = []) => {
  */
 export const obtenerAmbientesOcupados = (ambientes = [], reservas = []) => {
     try {
+        // Ensure both parameters are arrays
+        if (!Array.isArray(ambientes)) {
+            console.warn('ambientes is not an array:', ambientes);
+            return [];
+        }
+        if (!Array.isArray(reservas)) {
+            console.warn('reservas is not an array:', reservas);
+            return [];
+        }
+
         const ahora = new Date();
         const fechaActual = ahora.toISOString().split('T')[0]; // Solo la fecha (YYYY-MM-DD)
 
@@ -162,6 +178,12 @@ export const actualizarEstadosAmbientes = (ambientes = [], reservas = []) => {
  */
 export const verificarDisponibilidadFutura = (ambienteId, fecha, hora, reservas = []) => {
     try {
+        // Ensure reservas is an array
+        if (!Array.isArray(reservas)) {
+            console.warn('reservas is not an array in verificarDisponibilidadFutura:', reservas);
+            return true; // Default to available if reservas is not valid
+        }
+
         const horaReserva = parseInt(hora.split(':')[0]); // Hora de la reserva
         
         // Determinar la jornada de la reserva
@@ -215,4 +237,16 @@ export const notificarCambioDisponibilidad = () => {
     
     // También disparar eventos específicos para compatibilidad
     window.dispatchEvent(new CustomEvent('ambientes-updated'));
-}; 
+};
+
+/**
+ * Utilidades SOLO para ambientes
+ * (Sin dependencias de reservas)
+ */
+export const formatearAmbiente = (ambiente) => {
+  // Formateo de datos de ambiente
+};
+
+export const validarAmbiente = (ambienteData) => {
+  // Validaciones específicas de ambiente
+};

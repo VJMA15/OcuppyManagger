@@ -34,14 +34,23 @@ export const useAuth = () => {
       const response = await apiService.verifyUser(cc, password);
       
       if (response.status === 'success' && response.data?.user) {
+        const userData = response.data.user;
+        
         setIsAuthenticated(true);
-        setUser(response.data.user);
+        setUser(userData);
         
-        // ✅ AGREGAR ESTA LÍNEA:
-        localStorage.setItem('isAdmin', response.data.user.role === 'admin' ? 'true' : 'false');
+        // Asegurar que el rol se guarde correctamente
+        const userRole = userData.role || userData.rol || 'usuario';
+        localStorage.setItem('isAdmin', userRole === 'admin' ? 'true' : 'false');
+        localStorage.setItem('userRole', userRole);
         
-        console.log('✅ Usuario verificado exitosamente');
-        return { success: true, user: response.data.user };
+        console.log('✅ Usuario verificado exitosamente:', {
+          nombre: userData.nombre,
+          rol: userRole,
+          isAdmin: userRole === 'admin'
+        });
+        
+        return { success: true, user: userData };
       } else {
         throw new Error('Respuesta inválida del servidor');
       }
@@ -66,12 +75,20 @@ export const useAuth = () => {
   };
 
   const logout = () => {
+    console.log('🔓 Iniciando logout completo...');
+    
+    // 1. Limpiar servicio API
     apiService.logout();
+    
+    // 2. Limpiar estados locales
     setIsAuthenticated(false);
     setUser(null);
     setError(null);
-    // ✅ AGREGAR ESTA LÍNEA:
-    localStorage.removeItem('isAdmin');
+    
+    // 3. Limpiar localStorage
+    localStorage.clear();
+    
+    console.log('✅ Logout completo ejecutado');
   };
 
   return {

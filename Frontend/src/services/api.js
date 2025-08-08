@@ -29,6 +29,7 @@ class ApiService {
       timeout: this.timeout
     });
 
+    // En el método request, alrededor de la línea 60-75:
     try {
       const controller = new AbortController();
       
@@ -66,12 +67,12 @@ class ApiService {
       console.error('❌ API Error:', error);
       
       if (error.name === 'AbortError') {
-        throw new Error('La solicitud tardó demasiado tiempo. Verifica tu conexión.');
+        throw new Error(`La solicitud tardó más de ${this.timeout/1000} segundos. Verifica tu conexión y que el servidor esté funcionando.`);
       }
       
       // Manejar errores de red
       if (error.message.includes('Failed to fetch')) {
-        throw new Error('Error de conexión. Verifica que el servidor esté ejecutándose.');
+        throw new Error('Error de conexión. Verifica que el servidor esté ejecutándose en http://localhost:5000');
       }
       
       throw error;
@@ -118,6 +119,17 @@ class ApiService {
       // Guardar datos del usuario en localStorage
       localStorage.setItem('user', JSON.stringify(response.data.user));
       localStorage.setItem('isLoggedIn', 'true');
+      
+      // Guardar rol específicamente
+      const userRole = response.data.user.role || response.data.user.rol || 'usuario';
+      localStorage.setItem('isAdmin', userRole === 'admin' ? 'true' : 'false');
+      localStorage.setItem('userRole', userRole);
+      
+      console.log('✅ Usuario autenticado:', {
+        nombre: response.data.user.nombre,
+        rol: userRole,
+        isAdmin: userRole === 'admin'
+      });
     }
     
     return response;
@@ -136,52 +148,60 @@ class ApiService {
 
   // Limpiar datos de autenticación
   logout() {
+    // Limpiar todos los datos de autenticación
     localStorage.removeItem('user');
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    
+    console.log('🔓 API: Datos de autenticación limpiados');
   }
 
+  // ===== MÉTODOS PARA AMBIENTES =====
   // ===== MÉTODOS PARA AMBIENTES =====
   async getAmbientes() {
     return this.get(API_CONFIG.ENDPOINTS.AMBIENTES.ALL);
   }
-
+  
   async getAmbienteById(id) {
     return this.get(API_CONFIG.ENDPOINTS.AMBIENTES.BY_ID(id));
   }
-
+  
   async createAmbiente(ambienteData) {
     return this.post(API_CONFIG.ENDPOINTS.AMBIENTES.CREATE, ambienteData);
   }
-
+  
   async updateAmbiente(id, ambienteData) {
     return this.put(API_CONFIG.ENDPOINTS.AMBIENTES.UPDATE(id), ambienteData);
   }
-
+  
   async deleteAmbiente(id) {
     return this.delete(API_CONFIG.ENDPOINTS.AMBIENTES.DELETE(id));
   }
 
   // ===== MÉTODOS PARA RESERVAS =====
+  // ===== MÉTODOS PARA RESERVAS =====
   async getReservas() {
     return this.get(API_CONFIG.ENDPOINTS.RESERVAS.ALL);
   }
-
+  
   async getReservaById(id) {
     return this.get(API_CONFIG.ENDPOINTS.RESERVAS.BY_ID(id));
   }
-
+  
   async createReserva(reservaData) {
     return this.post(API_CONFIG.ENDPOINTS.RESERVAS.CREATE, reservaData);
   }
-
+  
   async updateReserva(id, reservaData) {
     return this.put(API_CONFIG.ENDPOINTS.RESERVAS.UPDATE(id), reservaData);
   }
-
+  
   async deleteReserva(id) {
     return this.delete(API_CONFIG.ENDPOINTS.RESERVAS.DELETE(id));
   }
-
+  
   async getMyReservas() {
     return this.get(API_CONFIG.ENDPOINTS.RESERVAS.MY_RESERVAS);
   }
@@ -244,3 +264,6 @@ class ApiService {
 const apiService = new ApiService();
 
 export default apiService;
+
+// Mantener todo como está actualmente
+// Agregar comentario: "// DEPRECATED: Use specific services instead"

@@ -1,5 +1,6 @@
 const Registro = require('../models/registro.model');
-const Reserva = require('../models/reserva.model');
+// Cambiar a reservation.model.ts (pero necesitarás compilarlo a JS)
+const { ReservationModel } = require('../models/reservation.model');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 

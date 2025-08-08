@@ -1,143 +1,81 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Calendar, 
-  Clock, 
-  User, 
-  FileText, 
-  Building2, 
-  ArrowLeft, 
-  Plus,
-  Search,
-  Filter,
-  Edit,
-  Trash2,
-  Eye,
-  CheckCircle,
-  AlertCircle,
-  XCircle,
-  Check,
-  X,
-  Clock as ClockIcon,
-  CalendarCheck
-} from "lucide-react";
+import useReservas from "@/hooks/useReservas"; // ✅ AGREGAR: Usar hook de API
+import { getReservaStatus } from "@/utils/ambienteUtils";
 
 export default function VerReservas() {
-  const [reservas, setReservas] = useState([]);
+  // ✅ CAMBIAR: Usar hook de API en lugar de localStorage
+  const { 
+    reservas, 
+    isLoading, 
+    error, 
+    fetchReservas, 
+    updateReserva, 
+    deleteReserva, 
+    approveReserva, 
+    rejectReserva 
+  } = useReservas();
+  
   const [editIdx, setEditIdx] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [showDeleteModal, setShowDeleteModal] = useState({ show: false, idx: null });
   const [showApproveModal, setShowApproveModal] = useState({ show: false, idx: null, action: null });
-
   const navigate = useNavigate();
 
-  // Carga las reservas siempre desde localStorage al montar y después de cambios
-  const cargarReservas = () => {
+  // ❌ ELIMINAR: Toda la función cargarReservas y localStorage
+  // ❌ ELIMINAR: actualizarYRecargar
+  
+  // ✅ CAMBIAR: Los handlers para usar API
+  const handleApprove = async (idx) => {
     try {
-      const stored = localStorage.getItem("reservas");
-      const reservasData = stored ? JSON.parse(stored) : [];
-      
-      // Procesar reservas para agregar estados automáticos
-      const reservasProcesadas = reservasData.map(reserva => {
-        const estado = getReservaStatus(reserva.fecha, reserva.hora);
-        return {
-          ...reserva,
-          estado: reserva.estado || "pendiente", // pendiente, aprobada, rechazada, cancelada
-          estadoAutomatico: estado.status,
-          aprobadaPor: reserva.aprobadaPor || null,
-          fechaAprobacion: reserva.fechaAprobacion || null,
-          motivoRechazo: reserva.motivoRechazo || null
-        };
-      });
-      
-      setReservas(reservasProcesadas);
-    } catch {
-      setReservas([]);
+      const reserva = reservas[idx];
+      await approveReserva(reserva._id);
+      setShowApproveModal({ show: false, idx: null, action: null });
+    } catch (err) {
+      console.error('Error al aprobar reserva:', err);
     }
   };
 
-  useEffect(() => {
-    cargarReservas();
-    // Verificar reservas cada minuto para finalización automática
-    const interval = setInterval(cargarReservas, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const actualizarYRecargar = (nuevas) => {
-    localStorage.setItem("reservas", JSON.stringify(nuevas));
-    cargarReservas();
+  const handleReject = async (idx, motivoRechazo) => {
+    try {
+      const reserva = reservas[idx];
+      await rejectReserva(reserva._id, motivoRechazo);
+      setShowApproveModal({ show: false, idx: null, action: null });
+    } catch (err) {
+      console.error('Error al rechazar reserva:', err);
+    }
   };
 
-  const handleDelete = idx => {
-    const nuevas = reservas.filter((_, i) => i !== idx);
-    actualizarYRecargar(nuevas);
-    setShowDeleteModal({ show: false, idx: null });
+  const handleDelete = async (idx) => {
+    try {
+      const reserva = reservas[idx];
+      await deleteReserva(reserva._id);
+      setShowDeleteModal({ show: false, idx: null });
+    } catch (err) {
+      console.error('Error al eliminar reserva:', err);
+    }
   };
 
-  const handleEdit = idx => {
-    setEditIdx(idx);
-    setEditForm(reservas[idx]);
+  const handleEditSave = async (idx) => {
+    try {
+      const reserva = reservas[idx];
+      await updateReserva(reserva._id, editForm);
+      setEditIdx(null);
+    } catch (err) {
+      console.error('Error al actualizar reserva:', err);
+    }
   };
 
-  const handleEditChange = e => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
-  };
-
-  const handleEditSave = idx => {
-    const nuevas = reservas.map((r, i) => (i === idx ? editForm : r));
-    actualizarYRecargar(nuevas);
-    setEditIdx(null);
-  };
-
-  const handleApproveReject = (idx, action) => {
-    const reserva = reservas[idx];
-    const nuevas = reservas.map((r, i) => {
-      if (i === idx) {
-        const reservaActualizada = {
-          ...r,
-          estado: action === 'approve' ? 'aprobada' : 'rechazada',
-          aprobadaPor: action === 'approve' ? 'Administrador' : null,
-          fechaAprobacion: action === 'approve' ? new Date().toISOString() : null,
-          motivoRechazo: action === 'reject' ? 'Reserva rechazada por el administrador' : null
-        };
-        
-        // Disparar evento para generar informe si es rechazada
-        if (action === 'reject') {
-          window.dispatchEvent(new CustomEvent('reserva-rejected', {
-            detail: { reserva: reservaActualizada }
-          }));
-        }
-        
-        return reservaActualizada;
-      }
-      return r;
-    });
-    actualizarYRecargar(nuevas);
-    setShowApproveModal({ show: false, idx: null, action: null });
-  };
-
-  const handleCancel = (idx) => {
-    const nuevas = reservas.map((r, i) => {
-      if (i === idx) {
-        const reservaCancelada = {
-          ...r,
-          estado: 'cancelada',
-          motivoCancelacion: 'Cancelada por el administrador'
-        };
-        
-        // Disparar evento para generar informe de cancelación
-        window.dispatchEvent(new CustomEvent('reserva-cancelled', {
-          detail: { reserva: reservaCancelada }
-        }));
-        
-        return reservaCancelada;
-      }
-      return r;
-    });
-    actualizarYRecargar(nuevas);
-  };
+  // ✅ AGREGAR: Procesar reservas con estado automático
+  const reservasProcesadas = reservas.map(reserva => {
+    const estado = getReservaStatus(reserva.fechaInicio, reserva.fechaFin);
+    return {
+      ...reserva,
+      estadoAutomatico: estado.status
+    };
+  });
 
   const getReservaStatus = (fecha, hora) => {
     if (!fecha || !hora) return { status: "Pendiente", color: "yellow", icon: AlertCircle };
