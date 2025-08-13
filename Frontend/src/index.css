@@ -18,9 +18,9 @@
     }
 
     .sidebar-item {
-        @apply flex h-10 w-full flex-shrink-0 items-center gap-x-3 rounded-lg px-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white;
+        @apply flex h-10 w-full flex-shrink-0 items-center gap-x-3 rounded-lg px-3 text-sm font-medium text-neutral-soft-700 transition-all duration-200 hover:bg-sena-soft-50 hover:text-sena-soft-800 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white;
         &.active {
-            @apply bg-sena text-white hover:bg-sena-dark dark:bg-sena-dark dark:hover:bg-sena;
+            @apply bg-gradient-to-r from-sena-soft-500 to-sena-soft-600 text-white hover:from-sena-soft-600 hover:to-sena-soft-700 shadow-sm dark:from-sena-soft-600 dark:to-sena-soft-700;
         }
     }
 
@@ -166,4 +166,8 @@
 
 .recharts-tooltip-item {
     @apply text-base font-medium !text-blue-500 dark:!text-blue-600;
+}
+
+.sidebar-group-title {
+    @apply overflow-hidden text-ellipsis text-sm font-medium text-sena-soft-600 dark:text-slate-400 px-2;
 }

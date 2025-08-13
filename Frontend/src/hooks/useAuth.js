@@ -1,26 +1,32 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiService from '@/services/api';
 
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  // Verificar si hay datos guardados al cargar
+  // Verificar autenticación al cargar
   useEffect(() => {
     const checkAuth = () => {
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      const token = localStorage.getItem('token');
       const userData = localStorage.getItem('user');
       
-      if (isLoggedIn && userData) {
-        setIsAuthenticated(true);
-        setUser(JSON.parse(userData));
+      if (token && userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          logout();
+        }
       }
-      
-      setIsLoading(false);
     };
-
+    
     checkAuth();
   }, []);
 
@@ -29,13 +35,19 @@ export const useAuth = () => {
     setError(null);
     
     try {
-      console.log('🔍 Verificando usuario con CC:', cc);
+      console.log('🔍 Iniciando sesión con CC:', cc);
       
-      const response = await apiService.verifyUser(cc, password);
+      const response = await apiService.login({ cc, password });
       
-      if (response.status === 'success' && response.data?.user) {
+      if (response.success && response.data?.user) {
         const userData = response.data.user;
+        const token = response.data.token;
         
+        // Guardar en localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Actualizar estado
         setIsAuthenticated(true);
         setUser(userData);
         
@@ -50,45 +62,57 @@ export const useAuth = () => {
           isAdmin: userRole === 'admin'
         });
         
+        setIsLoading(false);
+        
+        // 🎯 REDIRECCIÓN BASADA EN ROL usando navigate
+        if (userRole === 'admin') {
+          navigate('/dashboard', { replace: true });
+        } else {
+          navigate('/ambientes', { replace: true });
+        }
+        
         return { success: true, user: userData };
       } else {
         throw new Error('Respuesta inválida del servidor');
       }
     } catch (err) {
-      console.error('❌ Error en verificación:', err);
+      console.error('❌ Error en login:', err);
       
-      let errorMessage = 'Error al verificar usuario';
+      let errorMessage = 'Error al iniciar sesión';
       
       if (err.message.includes('404') || err.message.includes('no encontrado')) {
         errorMessage = 'Usuario no encontrado';
       } else if (err.message.includes('401') || err.message.includes('incorrecta')) {
         errorMessage = 'Contraseña incorrecta';
+      } else if (err.message.includes('Credenciales inválidas')) {
+        errorMessage = 'Cédula o contraseña incorrecta';
       }
       
       setError(errorMessage);
       setIsAuthenticated(false);
       setUser(null);
-      throw new Error(errorMessage);
-    } finally {
       setIsLoading(false);
+      throw new Error(errorMessage);
     }
   };
 
   const logout = () => {
-    console.log('🔓 Iniciando logout completo...');
-    
-    // 1. Limpiar servicio API
+    // Limpiar API service
     apiService.logout();
     
-    // 2. Limpiar estados locales
+    // Limpiar estados locales
     setIsAuthenticated(false);
     setUser(null);
     setError(null);
     
-    // 3. Limpiar localStorage
-    localStorage.clear();
+    // Limpiar localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('userRole');
     
-    console.log('✅ Logout completo ejecutado');
+    // Redirigir al login
+    navigate('/login', { replace: true });
   };
 
   return {
@@ -97,7 +121,7 @@ export const useAuth = () => {
     isLoading,
     error,
     login,
-    logout,
+    logout
   };
 };
 

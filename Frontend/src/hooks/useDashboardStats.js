@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import useReservas from './useReservas';
 import { useAmbientes } from './useAmbientes';
+// CORRECCIÓN: Cambiar la importación a la ruta correcta
 import { obtenerAmbientesOcupados } from '@/utils/ambienteUtils';
 
 export const useDashboardStats = () => {
@@ -24,30 +25,24 @@ export const useDashboardStats = () => {
             return;
         }
 
+        console.log('📊 Calculando estadísticas con:', { reservas, ambientes });
+
         // Calcular estadísticas desde los datos de la API
         const totalReservas = reservas.length;
+        // CORRECCIÓN: Usar los estados correctos que existen en los datos mock
         const reservasPendientes = reservas.filter(r => r.estado === 'pendiente').length;
-        const reservasAprobadas = reservas.filter(r => r.estado === 'aprobada').length;
+        const reservasAprobadas = reservas.filter(r => r.estado === 'activa').length; // 'activa' en lugar de 'aprobada'
         const reservasRechazadas = reservas.filter(r => r.estado === 'rechazada').length;
         
-        // Calcular reservas activas (aprobadas y en curso)
-        const ahora = new Date();
-        const reservasActivas = reservas.filter(r => {
-            if (r.estado !== 'aprobada') return false;
-            if (!r.fechaInicio || !r.fechaFin) return false;
-            
-            const inicio = new Date(r.fechaInicio);
-            const fin = new Date(r.fechaFin);
-            
-            return ahora >= inicio && ahora <= fin;
-        }).length;
+        // Calcular reservas activas (usar 'activa' que es el estado en los datos mock)
+        const reservasActivas = reservas.filter(r => r.estado === 'activa').length;
 
-        // Obtener ambientes ocupados usando la utilidad existente
-        const ambientesOcupadosArray = obtenerAmbientesOcupados();
+        // CORRECCIÓN: Usar los datos correctos para calcular ambientes ocupados
+        const ambientesOcupadosArray = obtenerAmbientesOcupados(ambientes, reservas);
         const ambientesOcupados = ambientesOcupadosArray.length;
         const ambientesDisponibles = Math.max(0, ambientes.length - ambientesOcupados);
 
-        setStats({
+        const newStats = {
             totalReservas,
             reservasPendientes,
             reservasAprobadas,
@@ -55,7 +50,10 @@ export const useDashboardStats = () => {
             reservasActivas,
             ambientesDisponibles,
             ambientesOcupados
-        });
+        };
+
+        console.log('📈 Estadísticas calculadas:', newStats);
+        setStats(newStats);
     }, [reservas, ambientes, loadingReservas, loadingAmbientes]);
 
     // Retornar tanto el formato nuevo como compatibilidad con el anterior
@@ -68,7 +66,8 @@ export const useDashboardStats = () => {
         ocupados: stats.ambientesOcupados,
         ambientes: ambientes?.length || 0,
         reservas: stats.totalReservas,
-        ambientesOcupados: obtenerAmbientesOcupados(),
+        // CORRECCIÓN: Pasar parámetros correctos aquí también
+        ambientesOcupados: obtenerAmbientesOcupados(ambientes || [], reservas || []),
         
         // Estados de edición
         edit,
@@ -80,3 +79,4 @@ export const useDashboardStats = () => {
 };
 
 export default useDashboardStats;
+

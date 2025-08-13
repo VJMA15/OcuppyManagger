@@ -20,9 +20,10 @@ export const verificarDisponibilidadAmbiente = (ambienteId, reservas = []) => {
         const ahora = new Date();
         const fechaActual = ahora.toISOString().split('T')[0]; // Solo la fecha (YYYY-MM-DD)
         
-        // Buscar reservas aprobadas para este ambiente en la fecha actual
+        // CORRECCIÓN: Buscar reservas activas para este ambiente en la fecha actual
         const reservaActiva = reservas.find(reserva => {
-            if (reserva.ambiente === ambienteId && reserva.estado === "aprobada") {
+            const ambienteIdReserva = reserva.ambienteId || reserva.ambiente;
+            if (ambienteIdReserva === ambienteId && reserva.estado === "activa") {
                 try {
                     // Verificar si la reserva es para la fecha actual
                     if (reserva.fecha === fechaActual) {
@@ -50,29 +51,22 @@ export const verificarDisponibilidadAmbiente = (ambienteId, reservas = []) => {
                         }
                         
                         // Si es la misma jornada, el ambiente está ocupado
-                        if (jornadaReserva === jornadaActual) {
-                            console.log(`🔴 Ambiente ${ambienteId} ocupado en jornada ${jornadaActual} por reserva:`, {
-                                fecha: reserva.fecha,
-                                hora: reserva.hora,
-                                jornada: jornadaReserva
-                            });
-                            return true;
-                        }
+                        return jornadaReserva === jornadaActual;
                     }
                     
                     return false;
                 } catch (dateError) {
-                    console.error("Error procesando fecha de reserva:", dateError);
                     return false;
                 }
             }
             return false;
         });
-        
-        return !reservaActiva; // Retorna true si NO hay reserva activa (disponible)
+
+        // Si hay una reserva activa, el ambiente NO está disponible
+        return !reservaActiva;
     } catch (error) {
-        console.error("Error verificando disponibilidad:", error);
-        return true; // Por defecto disponible si hay error
+        console.error('Error verificando disponibilidad:', error);
+        return true; // Default to available on error
     }
 };
 
@@ -99,7 +93,11 @@ export const obtenerAmbientesOcupados = (ambientes = [], reservas = []) => {
 
         const ocupados = ambientes.filter(ambiente => {
             const reservaActiva = reservas.find(reserva => {
-                if (reserva.ambiente === ambiente._id && reserva.estado === 'aprobada') {
+                // CORRECCIÓN: Usar ambienteId y estado 'activa' para compatibilidad con mock
+                const ambienteIdReserva = reserva.ambienteId || reserva.ambiente;
+                const ambienteIdComparar = ambiente.id || ambiente._id;
+                
+                if (ambienteIdReserva === ambienteIdComparar && reserva.estado === 'activa') {
                     try {
                         // Verificar si la reserva es para la fecha actual
                         if (reserva.fecha === fechaActual) {
@@ -141,6 +139,7 @@ export const obtenerAmbientesOcupados = (ambientes = [], reservas = []) => {
             return !!reservaActiva;
         });
 
+        console.log('🏢 Ambientes ocupados encontrados:', ocupados);
         return ocupados;
     } catch (error) {
         console.error('Error obteniendo ambientes ocupados:', error);

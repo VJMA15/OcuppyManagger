@@ -30,7 +30,8 @@ const DashboardPage = () => {
         ambientesOcupados
     } = useDashboardStats();
     
-    const reservasRecientes = useUpcomingReservations();
+    // ✅ CORRECTO: Hook dentro del componente
+    const { upcomingReservations, loading: loadingReservations } = useUpcomingReservations();
 
     // Configuración de colores para las tarjetas
     const cardConfigs = [
@@ -217,7 +218,7 @@ const DashboardPage = () => {
             )}
 
             {/* Sección de Reservas Próximas */}
-            <UpcomingReservations reservations={reservasRecientes} />
+            <UpcomingReservations reservations={upcomingReservations || []} />
 
             {/* Gráfico de Actividad */}
             <ActivityChart data={overviewData} />

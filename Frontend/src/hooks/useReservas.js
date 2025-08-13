@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import apiService from '@/services/api';
 
 /**
  * Hook para manejar las reservas del sistema
@@ -15,154 +16,22 @@ const useReservas = () => {
       setLoading(true);
       setError(null);
       
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('🔄 Cargando reservas...');
+      const response = await apiService.getReservas();
+      console.log('📥 Respuesta de reservas:', response);
       
-      // Datos simulados que coinciden con la estructura esperada
-      const mockReservas = [
-        {
-          id: '1',
-          userId: 'user123',
-          environmentId: 'env456',
-          fechaInicio: '2024-01-15T09:00:00Z',
-          fechaFin: '2024-01-15T11:00:00Z',
-          estado: 'pendiente',
-          proposito: 'Reunión de equipo',
-          equipamiento: ['proyector'],
-          fechaCreacion: '2024-01-10T10:00:00Z'
-        },
-        {
-          id: '2',
-          userId: 'user789',
-          environmentId: 'env123',
-          fechaInicio: '2024-01-16T14:00:00Z',
-          fechaFin: '2024-01-16T16:00:00Z',
-          estado: 'aprobada',
-          proposito: 'Presentación de proyecto',
-          equipamiento: ['computadora', 'proyector'],
-          fechaCreacion: '2024-01-11T15:30:00Z',
-          fechaAprobacion: '2024-01-12T09:00:00Z',
-          aprobadoPor: 'admin123'
-        },
-        {
-          id: '3',
-          userId: 'user456',
-          environmentId: 'env789',
-          fechaInicio: '2024-01-17T10:00:00Z',
-          fechaFin: '2024-01-17T12:00:00Z',
-          estado: 'rechazada',
-          proposito: 'Capacitación',
-          equipamiento: [],
-          fechaCreacion: '2024-01-12T14:00:00Z',
-          fechaRechazo: '2024-01-13T10:00:00Z',
-          motivoRechazo: 'Conflicto de horarios'
-        },
-        {
-          id: '4',
-          userId: 'user321',
-          environmentId: 'env456',
-          fechaInicio: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // Hace 30 min
-          fechaFin: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // En 30 min
-          estado: 'aprobada',
-          proposito: 'Reunión activa',
-          equipamiento: ['proyector'],
-          fechaCreacion: '2024-01-14T08:00:00Z',
-          fechaAprobacion: '2024-01-14T09:00:00Z',
-          aprobadoPor: 'admin123'
-        }
-      ];
-      
-      setReservas(mockReservas);
-      
+      if (response.success) {
+        console.log('✅ Reservas cargadas:', response.data);
+        setReservas(response.data || []);
+      } else {
+        console.error('❌ Error en respuesta:', response.message);
+        setError(response.message || 'Error al cargar reservas');
+        setReservas([]);
+      }
     } catch (err) {
-      setError(err.message);
-      console.error('❌ Error al obtener reservas:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Función para crear una nueva reserva
-  const crearReserva = async (nuevaReserva) => {
-    try {
-      setLoading(true);
-      
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const reservaConId = {
-        ...nuevaReserva,
-        id: Date.now().toString(),
-        estado: 'pendiente',
-        fechaCreacion: new Date().toISOString()
-      };
-      
-      setReservas(prev => [...prev, reservaConId]);
-      
-      return reservaConId;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Función para actualizar una reserva
-  const actualizarReserva = async (id, datosActualizados) => {
-    try {
-      setLoading(true);
-      
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setReservas(prev => 
-        prev.map(reserva => 
-          reserva.id === id 
-            ? { ...reserva, ...datosActualizados }
-            : reserva
-        )
-      );
-      
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Función para aprobar una reserva
-  const aprobarReserva = async (id, aprobadoPor) => {
-    await actualizarReserva(id, {
-      estado: 'aprobada',
-      fechaAprobacion: new Date().toISOString(),
-      aprobadoPor
-    });
-  };
-
-  // Función para rechazar una reserva
-  const rechazarReserva = async (id, motivoRechazo) => {
-    await actualizarReserva(id, {
-      estado: 'rechazada',
-      fechaRechazo: new Date().toISOString(),
-      motivoRechazo
-    });
-  };
-
-  // Función para eliminar una reserva
-  const eliminarReserva = async (id) => {
-    try {
-      setLoading(true);
-      
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setReservas(prev => prev.filter(reserva => reserva.id !== id));
-      
-    } catch (err) {
-      setError(err.message);
-      throw err;
+      console.error('💥 Error fetching reservas:', err);
+      setError('Error de conexión');
+      setReservas([]);
     } finally {
       setLoading(false);
     }
@@ -173,21 +42,74 @@ const useReservas = () => {
     fetchReservas();
   }, []);
 
-  // Función para refrescar datos
-  const refrescar = () => {
-    fetchReservas();
+  // Función para crear una nueva reserva
+  const createReserva = async (nuevaReserva) => {
+    try {
+      setLoading(true);
+      const response = await apiService.createReserva(nuevaReserva);
+      
+      if (response.success) {
+        await fetchReservas(); // Recargar la lista
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (err) {
+      console.error('Error creating reserva:', err);
+      return { success: false, message: 'Error de conexión' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para actualizar una reserva
+  const updateReserva = async (id, datosActualizados) => {
+    try {
+      setLoading(true);
+      // Aquí iría la llamada a la API para actualizar
+      // Por ahora, actualizamos localmente
+      setReservas(prev => 
+        prev.map(reserva => 
+          reserva.id === id ? { ...reserva, ...datosActualizados } : reserva
+        )
+      );
+      return { success: true };
+    } catch (err) {
+      console.error('Error updating reserva:', err);
+      return { success: false, message: 'Error al actualizar reserva' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para eliminar una reserva
+  const deleteReserva = async (id) => {
+    try {
+      setLoading(true);
+      // Aquí iría la llamada a la API para eliminar
+      // Por ahora, eliminamos localmente
+      setReservas(prev => prev.filter(reserva => reserva.id !== id));
+      return { success: true };
+    } catch (err) {
+      console.error('Error deleting reserva:', err);
+      return { success: false, message: 'Error al eliminar reserva' };
+    } finally {
+      setLoading(false);
+    }
   };
 
   return {
     reservas,
     loading,
     error,
-    crearReserva,
-    actualizarReserva,
-    aprobarReserva,
-    rechazarReserva,
-    eliminarReserva,
-    refrescar
+    fetchReservas,
+    createReserva,
+    updateReserva,
+    deleteReserva,
+    // Funciones de utilidad
+    getReservaById: (id) => reservas.find(r => r.id === id),
+    getReservasByUser: (userId) => reservas.filter(r => r.userId === userId),
+    getReservasByEstado: (estado) => reservas.filter(r => r.estado === estado)
   };
 };
 

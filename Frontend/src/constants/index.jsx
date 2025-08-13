@@ -10,17 +10,17 @@ export const navbarLinks = [
             {
                 label: "Dashboard",
                 icon: Home,
-                path: "/",
+                path: "/dashboard", // ✅ Cambiado de "/" a "/dashboard"
             },
             {
                 label: "Reservas",
                 icon: NotepadText,
-                path: "/ver-reservas",
+                path: "/dashboard/ver-reservas", // ✅ Agregado prefijo /dashboard
             },
             {
                 label: "Informes",
                 icon: NotepadText,
-                path: "/reports",
+                path: "/dashboard/reports", // ✅ Agregado prefijo /dashboard
             },
         ],
     },
@@ -30,7 +30,7 @@ export const navbarLinks = [
             {
                 label: "Ambientes",
                 icon: Building2,
-                path: "/ambientes",
+                path: "/dashboard/ambientes", // ✅ Agregado prefijo /dashboard
             },
         ],
     },
@@ -40,7 +40,7 @@ export const navbarLinks = [
             {
                 label: "Settings",
                 icon: Settings,
-                path: "/settings",
+                path: "/dashboard/settings", // ✅ Agregado prefijo /dashboard
             },
         ],
     },

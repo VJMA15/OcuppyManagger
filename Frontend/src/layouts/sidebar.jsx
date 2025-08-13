@@ -1,12 +1,8 @@
 import { forwardRef } from "react";
 import { NavLink } from "react-router-dom";
-
 import { navbarLinks } from "@/constants";
-
 import logoSena from "@/assets/logo-sena.png";
-
 import { cn } from "@/utils/cn";
-
 import PropTypes from "prop-types";
 
 export const Sidebar = forwardRef(({ collapsed }, ref) => {
@@ -14,21 +10,21 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
         <aside
             ref={ref}
             className={cn(
-                "fixed z-[100] flex h-full w-[240px] flex-col overflow-x-hidden border-r border-slate-300 bg-white [transition:_width_300ms_cubic-bezier(0.4,_0,_0.2,_1),_left_300ms_cubic-bezier(0.4,_0,_0.2,_1),_background-color_150ms_cubic-bezier(0.4,_0,_0.2,_1),_border_150ms_cubic-bezier(0.4,_0,_0.2,_1)] dark:border-slate-700 dark:bg-slate-900",
+                "fixed z-[100] flex h-full w-[240px] flex-col overflow-x-hidden border-r border-sena-soft-200 bg-gradient-to-b from-sena-soft-50 to-white shadow-lg [transition:_width_300ms_cubic-bezier(0.4,_0,_0.2,_1),_left_300ms_cubic-bezier(0.4,_0,_0.2,_1),_background-color_150ms_cubic-bezier(0.4,_0,_0.2,_1),_border_150ms_cubic-bezier(0.4,_0,_0.2,_1)]",
                 collapsed ? "md:w-[70px] md:items-center" : "md:w-[240px]",
                 collapsed ? "max-md:-left-full" : "max-md:left-0",
             )}
         >
-            {/* Header con Logo */}
+            {/* Header con Logo - Sin espacios blancos */}
             <div className={cn(
-                "flex items-center p-4 border-b border-slate-200 dark:border-slate-700",
+                "flex items-center p-4 border-b border-sena-soft-200 bg-gradient-to-r from-sena-soft-100 to-sena-soft-50",
                 collapsed ? "md:justify-center" : "md:justify-start"
             )}>
                 <div className={cn(
-                    "flex items-center justify-center rounded-full bg-white border-2 border-sena shadow-sm transition-all duration-300",
+                    "flex items-center justify-center rounded-2xl bg-white border-2 border-sena-soft-300 shadow-md transition-all duration-300 hover:shadow-lg hover:border-sena-soft-400",
                     collapsed 
                         ? "w-12 h-12 md:w-10 md:h-10" 
-                        : "w-16 h-16 md:w-14 md:h-14"
+                        : "w-14 h-14 md:w-12 md:h-12"
                 )}>
                     <img
                         src={localStorage.getItem('logoSena') || logoSena}
@@ -37,18 +33,18 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
                             "object-contain transition-all duration-300",
                             collapsed 
                                 ? "w-8 h-8 md:w-6 md:h-6" 
-                                : "w-12 h-12 md:w-10 md:h-10"
+                                : "w-10 h-10 md:w-8 md:h-8"
                         )}
                     />
                 </div>
                 {!collapsed && (
                     <div className="ml-3 flex-1 min-w-0">
-                        <h1 className="text-lg font-bold text-sena truncate">
-                    {localStorage.getItem('systemName') || 'OCCUPY MANAGER'}
+                        <h1 className="text-lg font-bold text-sena-soft-700 truncate">
+                            {localStorage.getItem('systemName') || 'OCCUPY MANAGER'}
                         </h1>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        <p className="text-xs text-sena-soft-500 truncate">
                             Sistema de Gestión
-                  </p>
+                        </p>
                     </div>
                 )}
             </div>
@@ -69,7 +65,7 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
                                 to={link.path}
                                 className={cn(
                                     "sidebar-item",
-                                    collapsed && "md:w-10 md:h-10 md:justify-center md:rounded-lg"
+                                    collapsed && "md:w-10 md:h-10 md:justify-center md:rounded-xl"
                                 )}
                                 title={collapsed ? link.label : undefined}
                             >
@@ -85,14 +81,11 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
                     </nav>
                 ))}
             </div>
-
-
         </aside>
     );
 });
 
 Sidebar.displayName = "Sidebar";
-
 Sidebar.propTypes = {
     collapsed: PropTypes.bool,
 };

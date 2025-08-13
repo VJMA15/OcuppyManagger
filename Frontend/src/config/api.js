@@ -1,5 +1,11 @@
+// Configuración de la API - MODO DESARROLLO SIN BACKEND
 const API_CONFIG = {
-  BASE_URL: 'http://localhost:5000/api/v1',
+  // Comentar la URL real del backend
+  // BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
+  
+  // URL temporal para desarrollo sin backend
+  BASE_URL: 'http://localhost:3001/api/v1', // Puerto que no existe
+  
   TIMEOUT: 5000, // ✅ REDUCIDO: 5 segundos para respuestas más rápidas
   ENDPOINTS: {
     AUTH: {
@@ -41,6 +47,8 @@ const API_CONFIG = {
   DEFAULT_HEADERS: {
     'Content-Type': 'application/json',
   },
+  
+  TIMEOUT: 10000,
 };
 
 export default API_CONFIG;

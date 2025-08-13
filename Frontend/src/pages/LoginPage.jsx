@@ -23,7 +23,6 @@ const LoginPage = () => {
     
     try {
       await login(form.cc, form.password);
-      // If we get here, login was successful
       console.log('✅ Login exitoso');
     } catch (err) {
       console.error('❌ Error en login:', err);
@@ -39,13 +38,8 @@ const LoginPage = () => {
 
   const handleTestLogin = () => {
     console.log('🔧 Botón de prueba clickeado');
-    // Simulate successful login for development
     localStorage.setItem("isAdmin", "true");
     window.location.href = '/dashboard';
-  };
-
-  const handleRegister = () => {
-    window.location.href = '/register';
   };
 
   // If already authenticated, redirect
@@ -71,7 +65,6 @@ const LoginPage = () => {
       
       // Additional actions
       handleTestLogin={handleTestLogin}
-      handleRegister={handleRegister}
     />
   );
 };
