@@ -1,4 +1,4 @@
-import { ChartColumn, Home, NotepadText, Package, PackagePlus, Settings, ShoppingBag, UserCheck, UserPlus, Users, Building2 } from "lucide-react";
+import { ChartColumn, Home, NotepadText, Package, PackagePlus, Settings, ShoppingBag, UserCheck, UserPlus, Users, Building2, Monitor, AlertTriangle, Shield, Calendar } from "lucide-react";
 
 import ProfileImage from "@/assets/profile-image.jpg";
 import ProductImage from "@/assets/product-image.jpg";
@@ -10,17 +10,17 @@ export const navbarLinks = [
             {
                 label: "Dashboard",
                 icon: Home,
-                path: "/dashboard", // ✅ Cambiado de "/" a "/dashboard"
+                path: "/dashboard", // ✅ Esta ruta sí funciona (index route)
             },
             {
                 label: "Reservas",
                 icon: NotepadText,
-                path: "/dashboard/ver-reservas", // ✅ Agregado prefijo /dashboard
+                path: "/dashboard/ver-reservas", // ✅ CORRECTO
             },
             {
                 label: "Informes",
-                icon: NotepadText,
-                path: "/dashboard/reports", // ✅ Agregado prefijo /dashboard
+                icon: ChartColumn,
+                path: "/dashboard/reports", // ✅ CORRECTO
             },
         ],
     },
@@ -30,17 +30,22 @@ export const navbarLinks = [
             {
                 label: "Ambientes",
                 icon: Building2,
-                path: "/dashboard/ambientes", // ✅ Agregado prefijo /dashboard
+                path: "/dashboard/ambientes", // ✅ CORRECTO
+            },
+            {
+                label: "Nueva Reserva",
+                icon: PackagePlus,
+                path: "/dashboard/reserva", // ✅ CORRECTO
             },
         ],
     },
     {
-        title: "Settings",
+        title: "Configuración",
         links: [
             {
-                label: "Settings",
+                label: "Configuración",
                 icon: Settings,
-                path: "/dashboard/settings", // ✅ Agregado prefijo /dashboard
+                path: "/dashboard/settings", // ✅ CORRECTO
             },
         ],
     },
@@ -239,5 +244,44 @@ export const topProducts = [
         price: 79.99,
         status: "Out of Stock",
         rating: 4.5,
+    },
+];
+
+// Navegación específica para el panel de guardia
+export const guardiaNavLinks = [
+    {
+        title: "Monitoreo",
+        links: [
+            {
+                label: "Vista General",
+                icon: Monitor,
+                path: "/guardia", // Ruta principal
+            },
+            {
+                label: "Ambientes",
+                icon: Building2,
+                path: "/guardia/ambientes",
+            },
+        ],
+    },
+    {
+        title: "Gestión",
+        links: [
+            {
+                label: "Incidentes",
+                icon: AlertTriangle,
+                path: "/guardia/incidentes",
+            },
+            {
+                label: "Control de Acceso",
+                icon: Shield,
+                path: "/guardia/accesos",
+            },
+            {
+                label: "Reservas Activas",
+                icon: Calendar,
+                path: "/guardia/reservas",
+            },
+        ],
     },
 ];

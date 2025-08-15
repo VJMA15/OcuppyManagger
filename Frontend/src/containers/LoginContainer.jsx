@@ -35,17 +35,19 @@ const LoginContainer = ({
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Botón de regreso mejorado */}
-        <button
-          onClick={handleBackToHome}
-          className="mb-6 group flex items-center px-4 py-2 bg-white/70 backdrop-blur-sm border border-neutral-soft-200 rounded-xl text-neutral-soft-700 hover:text-neutral-soft-900 hover:bg-white/90 hover:border-neutral-soft-300 transition-all duration-200 shadow-sm hover:shadow-md"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-0.5 transition-transform duration-200" />
-          <span className="text-sm font-medium">Volver al inicio</span>
-        </button>
-
         {/* Main card */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-neutral-soft-200 p-8">
+          {/* Botón de regreso integrado en la tarjeta */}
+          <div className="flex justify-start mb-6">
+            <button
+              onClick={handleBackToHome}
+              className="group flex items-center px-3 py-2 text-neutral-soft-600 hover:text-neutral-soft-800 hover:bg-neutral-soft-50 rounded-lg transition-all duration-200"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-0.5 transition-transform duration-200" />
+              <span className="text-sm font-medium">Volver</span>
+            </button>
+          </div>
+
           {/* Header */}
           <div className="text-center mb-8">
             <div className="relative inline-block mb-6">
@@ -183,7 +185,7 @@ const LoginContainer = ({
                   <button
                     type="button"
                     onClick={handleBackToHome}
-                    className="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
                   >
                     Ver información de contacto →
                   </button>

@@ -24,7 +24,7 @@ import AmbienteDetailPage from "@/pages/AmbienteDetailPage";
 
 // Importar las nuevas páginas
 import InstructorAmbientesPage from "@/pages/InstructorAmbientesPage";
-import GuardiaAmbientesPage from "@/pages/GuardiaAmbientesPage";
+import { GuardiaAmbientesPage } from "@/pages/guardia";
 
 function AppContent() {
   const { isAuthenticated, user } = useAuthContext();
@@ -64,28 +64,28 @@ function AppContent() {
         } 
       />
       
-      {/* Rutas para ADMIN */}
+      {/* Rutas para ADMIN - Corregidas */}
+      {/* ✅ SOLUCIÓN: Rutas anidadas con Layout como padre */}
       <Route
-        path="/dashboard/*"
+        path="/dashboard"
         element={
           isAuthenticated && isAdmin ? (
             <RequireAdmin>
-              <Layout>
-                <Routes>
-                  <Route index element={<DashboardPage />} />
-                  <Route path="reserva" element={<ReservaPage />} />
-                  <Route path="ver-reservas" element={<VerReservasPage />} />
-                  <Route path="ambientes" element={<AmbientesPage />} />
-                  <Route path="reports" element={<ReportsPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                </Routes>
-              </Layout>
+              <Layout />
             </RequireAdmin>
           ) : (
             <Navigate to="/login" replace />
           )
         }
-      />
+      >
+        {/* Rutas hijas que se renderizan en <Outlet /> */}
+        <Route index element={<DashboardPage />} />
+        <Route path="reserva" element={<ReservaPage />} />
+        <Route path="ver-reservas" element={<VerReservasPage />} />
+        <Route path="ambientes" element={<AmbientesPage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+      </Route>
       
       {/* Rutas para INSTRUCTORES */}
       <Route
@@ -99,17 +99,22 @@ function AppContent() {
         }
       />
       
-      {/* Rutas para GUARDIAS */}
-      <Route
-        path="/guardia/ambientes"
-        element={
-          isAuthenticated && isGuardia ? (
-            <GuardiaAmbientesPage />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
+      {/* Rutas para GUARDIAS - Expandidas */}
+      <Route path="/guardia/*" element={
+        isAuthenticated && isGuardia ? (
+          <Routes>
+            <Route index element={<Navigate to="ambientes" replace />} />
+            <Route path="ambientes" element={<GuardiaAmbientesPage />} />
+            {/* TODO: Implementar estas páginas */}
+            {/* <Route path="monitoreo" element={<MonitoreoPage />} /> */}
+            {/* <Route path="incidentes" element={<IncidentesPage />} /> */}
+            {/* <Route path="accesos" element={<AccesosPage />} /> */}
+            {/* <Route path="settings" element={<SettingsPage />} /> */}
+          </Routes>
+        ) : (
+          <Navigate to="/login" replace />
+        )
+      } />
       
       {/* Rutas para USUARIOS NORMALES y GUEST */}
       <Route

@@ -22,8 +22,12 @@ const LoginPage = () => {
     setError("");
     
     try {
-      await login(form.cc, form.password);
-      console.log('✅ Login exitoso');
+      const result = await login({ cc: form.cc, password: form.password });
+      if (result.success) {
+        console.log('✅ Login exitoso');
+      } else {
+        setError(result.message || "C.C o contraseña incorrectos");
+      }
     } catch (err) {
       console.error('❌ Error en login:', err);
       setError(err.message || "C.C o contraseña incorrectos");

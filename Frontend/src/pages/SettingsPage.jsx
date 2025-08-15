@@ -46,8 +46,13 @@ const SettingsPage = () => {
     // Ejecutar logout del contexto
     logout();
     
-    // Navegar directamente sin recarga forzada
-    navigate('/login', { replace: true });
+    // Limpiar cualquier dato adicional del localStorage
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('systemName');
+    
+    // Redirigir a la página principal usando window.location.href
+    // Esto evita que el usuario pueda regresar con las flechas del navegador
+    window.location.href = '/';
   };
 
   const handleConfirmLogout = () => {

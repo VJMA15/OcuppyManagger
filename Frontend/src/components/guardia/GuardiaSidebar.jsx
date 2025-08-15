@@ -1,11 +1,39 @@
 import { forwardRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { navbarLinks } from "@/constants";
+import { Shield, Monitor, AlertTriangle, KeyRound, Calendar } from "lucide-react";
 import logoSena from "@/assets/logo-sena.png";
 import { cn } from "@/utils/cn";
 import PropTypes from "prop-types";
 
-export const Sidebar = forwardRef(({ collapsed }, ref) => {
+const guardiaNavLinks = [
+  {
+    title: "Panel de Guardia",
+    links: [
+      {
+        label: "Monitoreo",
+        path: "/guardia/monitoreo",
+        icon: Monitor
+      },
+      {
+        label: "Incidentes",
+        path: "/guardia/incidentes",
+        icon: AlertTriangle
+      },
+      {
+        label: "Control de Acceso",
+        path: "/guardia/acceso",
+        icon: KeyRound
+      },
+      {
+        label: "Reservas Activas",
+        path: "/guardia/reservas",
+        icon: Calendar
+      }
+    ]
+  }
+];
+
+export const GuardiaSidebar = forwardRef(({ collapsed }, ref) => {
     const location = useLocation();
     
     return (
@@ -19,33 +47,31 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
         >
             {/* Header con Logo */}
             <div className={cn(
-                "flex items-center p-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800 dark:to-slate-900",
+                "flex items-center p-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-green-50 to-white dark:from-green-900/20 dark:to-slate-900",
                 collapsed ? "md:justify-center" : "md:justify-start"
             )}>
                 <div className={cn(
-                    "flex items-center justify-center rounded-xl bg-sena-soft-500 shadow-md transition-all duration-300",
+                    "flex items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/30 shadow-md transition-all duration-300",
                     collapsed 
                         ? "w-10 h-10" 
                         : "w-12 h-12"
                 )}>
-                    <img
-                        src={logoSena}
-                        alt="Logo SENA"
+                    <Shield
                         className={cn(
-                            "object-contain transition-all duration-300",
+                            "text-green-600 dark:text-green-400 transition-all duration-300",
                             collapsed 
-                                ? "w-6 h-6" 
-                                : "w-8 h-8"
+                                ? "w-5 h-5" 
+                                : "w-6 h-6"
                         )}
                     />
                 </div>
                 {!collapsed && (
                     <div className="ml-3 flex-1 min-w-0">
                         <h1 className="text-lg font-bold text-slate-900 dark:text-white truncate">
-                            OCCUPY MANAGER
+                            PANEL GUARDIA
                         </h1>
                         <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                            Panel de Administración
+                            Control y Monitoreo
                         </p>
                     </div>
                 )}
@@ -53,7 +79,7 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
 
             {/* Navegación */}
             <div className="flex-1 flex flex-col gap-y-1 overflow-y-auto overflow-x-hidden p-3">
-                {navbarLinks.map((navbarLink) => (
+                {guardiaNavLinks.map((navbarLink) => (
                     <nav
                         key={navbarLink.title}
                         className={cn("sidebar-group", collapsed && "md:items-center")}
@@ -92,7 +118,7 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
             {!collapsed && (
                 <div className="p-4 border-t border-slate-200 dark:border-slate-700">
                     <div className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                        © 2024 SENA
+                        © 2024 SENA - Guardia
                     </div>
                 </div>
             )}
@@ -100,7 +126,7 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
     );
 });
 
-Sidebar.displayName = "Sidebar";
-Sidebar.propTypes = {
+GuardiaSidebar.displayName = "GuardiaSidebar";
+GuardiaSidebar.propTypes = {
     collapsed: PropTypes.bool,
 };
