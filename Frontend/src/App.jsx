@@ -26,6 +26,9 @@ import AmbienteDetailPage from "@/pages/AmbienteDetailPage";
 import InstructorAmbientesPage from "@/pages/InstructorAmbientesPage";
 import { GuardiaAmbientesPage } from "@/pages/guardia";
 
+// Importar InstructorLayout
+import InstructorLayout from "@/layouts/InstructorLayout";
+
 function AppContent() {
   const { isAuthenticated, user } = useAuthContext();
   const location = useLocation();
@@ -54,7 +57,7 @@ function AppContent() {
           isAuthenticated ? (
             <Navigate to={
               isAdmin ? "/dashboard" : 
-              isInstructor ? "/instructor/ambientes" :
+              isInstructor ? "/instructor" :
               isGuardia ? "/guardia/ambientes" :
               "/ambientes"
             } replace />
@@ -65,7 +68,6 @@ function AppContent() {
       />
       
       {/* Rutas para ADMIN - Corregidas */}
-      {/* ✅ SOLUCIÓN: Rutas anidadas con Layout como padre */}
       <Route
         path="/dashboard"
         element={
@@ -87,17 +89,23 @@ function AppContent() {
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       
-      {/* Rutas para INSTRUCTORES */}
+      {/* Rutas para INSTRUCTORES - Modificadas para usar InstructorLayout */}
       <Route
-        path="/instructor/ambientes"
+        path="/instructor/*"
         element={
           isAuthenticated && isInstructor ? (
-            <InstructorAmbientesPage />
+            <InstructorLayout />
           ) : (
             <Navigate to="/login" replace />
           )
         }
-      />
+      >
+        <Route index element={<Navigate to="ambientes" replace />} />
+        <Route path="ambientes" element={<InstructorAmbientesPage />} />
+        {/* Aquí puedes agregar más rutas para instructor */}
+        {/* <Route path="mis-reservas" element={<MisReservasPage />} /> */}
+        {/* <Route path="crear-reserva" element={<CrearReservaPage />} /> */}
+      </Route>
       
       {/* Rutas para GUARDIAS - Expandidas */}
       <Route path="/guardia/*" element={
@@ -130,7 +138,7 @@ function AppContent() {
           ) : isAuthenticated ? (
             <Navigate to={
               isAdmin ? "/dashboard" :
-              isInstructor ? "/instructor/ambientes" :
+              isInstructor ? "/instructor" :
               isGuardia ? "/guardia/ambientes" :
               "/ambientes"
             } replace />
@@ -152,7 +160,7 @@ function AppContent() {
           isAuthenticated ? (
             <Navigate to={
               isAdmin ? "/dashboard" :
-              isInstructor ? "/instructor/ambientes" :
+              isInstructor ? "/instructor" :
               isGuardia ? "/guardia/ambientes" :
               "/ambientes"
             } replace />
