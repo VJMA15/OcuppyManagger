@@ -1,6 +1,9 @@
 import React from 'react';
 import { Building2, Users, MapPin, User, Monitor } from 'lucide-react';
-import { Button, Input, Select, Card, CardContent } from '@/components/ui';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select.jsx';
+import Card, { CardContent } from '../ui/Card';
 
 const AmbienteForm = ({ 
   formData, 
@@ -70,19 +73,26 @@ const AmbienteForm = ({
               required
             />
             
-            <Select
-              label="Tipo de Ambiente"
-              icon={Building2}
-              name="tipo"
-              value={formData.tipo}
-              onChange={onInputChange}
-              required
-            >
-              <option value="">Selecciona un tipo</option>
-              {tiposAmbiente.map(tipo => (
-                <option key={tipo} value={tipo}>{tipo}</option>
-              ))}
-            </Select>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Tipo de Ambiente
+              </label>
+              <Select 
+                name="tipo"
+                value={formData.tipo} 
+                onValueChange={(value) => onInputChange({ target: { name: 'tipo', value } })}
+                required
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecciona un tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tiposAmbiente.map(tipo => (
+                    <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

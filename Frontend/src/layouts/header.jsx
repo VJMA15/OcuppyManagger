@@ -1,9 +1,9 @@
-import { useTheme } from "@/hooks/use-theme";
+import { useTheme } from "../hooks/use-theme";
 
 import { Bell, ChevronsLeft, Moon, Search, Sun, User } from "lucide-react";
-import { useAuthContext } from "@/contexts/auth-context";
+import { useAuthContext } from "../contexts/auth-context";
 
-import profileImg from "@/assets/profile-image.jpg";
+import profileImg from "../assets/profile-image.jpg";
 
 import PropTypes from "prop-types";
 

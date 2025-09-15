@@ -18,19 +18,16 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 // Use require for packages without TypeScript types
 const xss = require('xss-clean');
 // Importar rutas
-// Usar require para archivos JavaScript
-const authRoutes = require('./routes/auth.routes');
-const userRoutes = require('./routes/user.routes');
-// Cambiar línea 21
+const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
+const user_routes_1 = __importDefault(require("./routes/user.routes"));
 const ambiente_routes_1 = __importDefault(require("./routes/ambiente.routes"));
-// En lugar de:
-// const ambienteRoutes = require('./routes/ambiente.routes');
-const reservaRoutes = require('./routes/reserva.routes');
-const registroRoutes = require('./routes/registro.routes');
-const bitacoraRoutes = require('./routes/bitacora.routes');
+const reserva_routes_1 = __importDefault(require("./routes/reserva.routes"));
+const entrega_routes_1 = __importDefault(require("./routes/entrega.routes"));
+const registros_routes_1 = __importDefault(require("./routes/registros.routes"));
+const bitacora_routes_1 = __importDefault(require("./routes/bitacora.routes"));
 // Importar manejadores de errores
-const AppError = require('./utils/appError');
-const globalErrorHandler = require('./middlewares/errorHandler');
+const appError_1 = __importDefault(require("./utils/appError"));
+const errorHandler_1 = __importDefault(require("./middlewares/errorHandler"));
 // Inicializar la aplicación Express
 const app = (0, express_1.default)();
 // 1) MIDDLEWARES GLOBALES
@@ -44,7 +41,9 @@ const corsOptions = {
             'http://localhost:5173',
             'http://127.0.0.1:5173',
             'http://localhost:4173',
-            'http://127.0.0.1:4173'
+            'http://127.0.0.1:4173',
+            'http://localhost:3003',
+            'http://127.0.0.1:3003'
         ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
@@ -93,15 +92,16 @@ app.use((req, res, next) => {
     next();
 });
 // 3) CONFIGURACIÓN DE SWAGGER
-const setupSwagger = require('./config/swagger');
-setupSwagger(app);
-// 4) RUTAS
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/users', userRoutes);
+// const setupSwagger = require('./config/swagger'); // Archivo no disponible
+// setupSwagger(app); // Comentado temporalmente
+// 3) RUTAS
+app.use('/api/v1/auth', auth_routes_1.default);
+app.use('/api/v1/users', user_routes_1.default);
 app.use('/api/v1/ambientes', ambiente_routes_1.default);
-app.use('/api/v1/reservas', reservaRoutes);
-app.use('/api/v1/registros', registroRoutes);
-app.use('/api/v1/bitacora', bitacoraRoutes);
+app.use('/api/v1/reservas', reserva_routes_1.default);
+app.use('/api/v1/entregas', entrega_routes_1.default);
+app.use('/api/v1/registros', registros_routes_1.default);
+app.use('/api/v1/bitacora', bitacora_routes_1.default);
 // Ruta de información de la API
 app.get('/api/v1', (req, res) => {
     res.json({
@@ -111,7 +111,8 @@ app.get('/api/v1', (req, res) => {
             auth: '/api/v1/auth',
             users: '/api/v1/users',
             ambientes: '/api/v1/ambientes',
-            reservas: '/api/v1/reservas'
+            reservas: '/api/v1/reservas',
+            entregas: '/api/v1/entregas'
         }
     });
 });
@@ -121,10 +122,10 @@ app.get('/', (req, res) => {
 });
 // Manejar rutas no encontradas
 app.all('*', (req, res, next) => {
-    next(new AppError(`No se puede encontrar ${req.originalUrl} en este servidor!`, 404));
+    next(new appError_1.default(`No se puede encontrar ${req.originalUrl} en este servidor!`, 404));
 });
 // Middleware global de manejo de errores
-app.use(globalErrorHandler);
+app.use(errorHandler_1.default);
 // 5) CONFIGURACIÓN DEL SERVIDOR
 const PORT = process.env.PORT || 5000;
 // Conexión a MongoDB

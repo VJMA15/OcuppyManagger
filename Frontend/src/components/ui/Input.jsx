@@ -1,7 +1,7 @@
 import React from 'react';
-import { cn } from '@/utils/cn';
+import { cn } from '../../utils/cn';
 
-const Input = React.forwardRef(({ 
+export const Input = React.forwardRef(({ 
   className, 
   type = 'text', 
   label,
@@ -36,4 +36,4 @@ const Input = React.forwardRef(({
 
 Input.displayName = 'Input';
 
-export { Input };
+export default Input;

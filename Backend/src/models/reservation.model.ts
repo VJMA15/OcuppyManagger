@@ -53,7 +53,7 @@ const reservationSchema = new Schema<Reservation & Document>({
   },
   environmentId: {
     type: Schema.Types.ObjectId,
-    ref: 'Environment',
+    ref: 'Ambiente',
     required: true
   },
   startDate: {

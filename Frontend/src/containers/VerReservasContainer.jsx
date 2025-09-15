@@ -140,10 +140,10 @@ const VerReservasContainer = ({
                             <User className="w-5 h-5 text-slate-400 mr-3" />
                             <div>
                               <div className="text-sm font-medium text-slate-900 dark:text-white">
-                                {reserva.nombre || reserva.usuario}
+                                {reserva.usuario?.nombre || reserva.nombre || 'Usuario desconocido'}
                               </div>
                               <div className="text-sm text-slate-500 dark:text-slate-400">
-                                {reserva.documento || reserva.cc}
+                                {reserva.usuario?.documento || reserva.documento || 'N/A'}
                               </div>
                             </div>
                           </div>
@@ -151,8 +151,13 @@ const VerReservasContainer = ({
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <Building2 className="w-5 h-5 text-slate-400 mr-3" />
-                            <div className="text-sm text-slate-900 dark:text-white">
-                              {reserva.ambiente}
+                            <div>
+                              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                                {reserva.ambiente?.nombre || reserva.ambienteNombre || 'Ambiente desconocido'}
+                              </div>
+                              <div className="text-sm text-slate-500 dark:text-slate-400">
+                                {reserva.ambiente?.tipo || 'N/A'} - {reserva.ambiente?.ubicacion || 'N/A'}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -161,23 +166,24 @@ const VerReservasContainer = ({
                             <Calendar className="w-5 h-5 text-slate-400 mr-3" />
                             <div>
                               <div className="text-sm text-slate-900 dark:text-white">
-                                {reserva.fecha}
+                                {new Date(reserva.startDate || reserva.fecha).toLocaleDateString('es-CO')}
                               </div>
                               <div className="text-sm text-slate-500 dark:text-slate-400">
-                                {reserva.hora} ({reserva.duracion}h)
+                                {new Date(reserva.startDate || reserva.fecha).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })} - 
+                                {new Date(reserva.endDate || reserva.fechaFin).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(reserva.estado)}`}>
-                            {getStatusIcon(reserva.estado)}
-                            {reserva.estado === 'pendiente' ? 'Pendiente' : 
-                             reserva.estado === 'aprobada' ? 'Aprobada' : 'Rechazada'}
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(reserva.status)}`}>
+                            {getStatusIcon(reserva.status)}
+                            {reserva.status === 'PENDING' ? 'Pendiente' : 
+                              reserva.status === 'APPROVED' ? 'Aprobada' : 'Rechazada'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          {reserva.estado === 'pendiente' && (
+                          {reserva.status === 'PENDING' && (
                             <div className="flex gap-2">
                               <button
                                 onClick={() => onAprobar(reserva._id || reserva.id)}

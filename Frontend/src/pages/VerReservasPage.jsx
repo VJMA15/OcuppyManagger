@@ -6,42 +6,33 @@ import {
   Clock as ClockIcon 
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import apiService from "@/services/api";
+import { useAuthContext } from '../contexts/auth-context';
+import { useReservasContext } from '@/contexts/ReservasContext';
+import reservationsService from '../services/reservationsService';
+import { enrichReservasWithDetails } from '../utils/reservasUtils';
 import VerReservasContainer from "@/containers/VerReservasContainer";
 
 const VerReservasPage = () => {
-  const [reservas, setReservas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { user } = useAuthContext();
+  const { reservas, loading, refreshReservas, error: contextError } = useReservasContext();
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
+  // Usar el error del contexto si existe
   useEffect(() => {
-    const fetchReservas = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await apiService.getReservas();
-        setReservas(response.data || []);
-      } catch (err) {
-        console.error('Error fetching reservas:', err);
-        setError('Error al cargar las reservas');
-        setReservas([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReservas();
-  }, []);
+    if (contextError) {
+      setError(contextError);
+    }
+  }, [contextError]);
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'aprobada':
+      case 'APPROVED':
         return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case 'rechazada':
+      case 'REJECTED':
         return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-      case 'pendiente':
+      case 'PENDING':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
@@ -50,11 +41,11 @@ const VerReservasPage = () => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'aprobada':
+      case 'APPROVED':
         return <CheckCircle className="w-4 h-4" />;
-      case 'rechazada':
+      case 'REJECTED':
         return <XCircle className="w-4 h-4" />;
-      case 'pendiente':
+      case 'PENDING':
         return <ClockIcon className="w-4 h-4" />;
       default:
         return <AlertCircle className="w-4 h-4" />;
@@ -63,26 +54,32 @@ const VerReservasPage = () => {
 
   const handleAprobar = async (id) => {
     try {
-      await apiService.updateReserva(id, { estado: 'aprobada' });
-      setReservas(prev => 
-        prev.map(reserva => 
-          reserva._id === id ? { ...reserva, estado: 'aprobada' } : reserva
-        )
-      );
+      setError(null);
+      const response = await reservationsService.approveReservation(id, user?.id);
+      if (response.success) {
+        console.log('✅ Reserva aprobada, refrescando contexto...');
+        // Solo refrescar el contexto global - no manejar estado local
+        await refreshReservas();
+      } else {
+        setError(response.message || 'Error al aprobar la reserva');
+      }
     } catch (err) {
       console.error('Error al aprobar reserva:', err);
       setError('Error al aprobar la reserva');
     }
   };
 
-  const handleRechazar = async (id) => {
+  const handleRechazar = async (id, reason = 'Rechazada por el administrador') => {
     try {
-      await apiService.updateReserva(id, { estado: 'rechazada' });
-      setReservas(prev => 
-        prev.map(reserva => 
-          reserva._id === id ? { ...reserva, estado: 'rechazada' } : reserva
-        )
-      );
+      setError(null);
+      const response = await reservationsService.rejectReservation(id, reason);
+      if (response.success) {
+        console.log('✅ Reserva rechazada, refrescando contexto...');
+        // Solo refrescar el contexto global - no manejar estado local
+        await refreshReservas();
+      } else {
+        setError(response.message || 'Error al rechazar la reserva');
+      }
     } catch (err) {
       console.error('Error al rechazar reserva:', err);
       setError('Error al rechazar la reserva');
@@ -99,7 +96,13 @@ const VerReservasPage = () => {
 
   const filteredReservas = reservas.filter(reserva => {
     if (filter === 'all') return true;
-    return reserva.estado === filter;
+    // Mapear los filtros del frontend a los valores del backend
+    const statusMap = {
+      'pendiente': 'PENDING',
+      'aprobada': 'APPROVED', 
+      'rechazada': 'REJECTED'
+    };
+    return reserva.status === statusMap[filter];
   });
 
   return (

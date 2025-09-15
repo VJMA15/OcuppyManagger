@@ -1,5 +1,5 @@
 import ApiService from './apiService';
-import API_CONFIG from '@/config/api';
+import { API_CONFIG } from '@/config/api';
 
 class ReservasService extends ApiService {
   async getReservas() {

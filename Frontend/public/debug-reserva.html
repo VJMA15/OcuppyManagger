@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Reserva - Estado del Usuario</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .field-test {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Reserva - Estado del Usuario</h1>
+        <p>Esta página simula el comportamiento de la página de reservas para debuggear el auto-llenado de campos.</p>
+        
+        <div id="status"></div>
+        
+        <h3>📊 Estado Actual</h3>
+        <div id="userInfo"></div>
+        
+        <h3>🧪 Simulación de Campos</h3>
+        <div class="field-test">
+            <label>Nombre:</label>
+            <input type="text" id="nombreField" placeholder="Campo nombre (debe llenarse automáticamente)">
+            
+            <label>Documento:</label>
+            <input type="text" id="documentoField" placeholder="Campo documento (debe llenarse automáticamente)">
+            
+            <button onclick="simulateAutoFill()">🔄 Simular Auto-llenado</button>
+            <button onclick="clearFields()">🗑️ Limpiar Campos</button>
+        </div>
+        
+        <h3>🔧 Acciones de Debug</h3>
+        <button onclick="checkAuthStatus()">🔍 Verificar Autenticación</button>
+        <button onclick="testApiConnection()">🌐 Probar Conexión API</button>
+        <button onclick="refreshUserData()">🔄 Refrescar Datos Usuario</button>
+        <button onclick="simulateLogin()">🔑 Simular Login</button>
+        
+        <h3>📋 Log de Eventos</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        let userData = null;
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `status ${type}`;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+        
+        function updateUserInfo() {
+            const userInfoDiv = document.getElementById('userInfo');
+            
+            // Verificar localStorage
+            const tokenData = localStorage.getItem('tokenData');
+            const userDataLS = localStorage.getItem('userData');
+            
+            // Verificar cookies
+            const cookies = document.cookie;
+            
+            const info = {
+                localStorage: {
+                    tokenData: tokenData ? JSON.parse(tokenData) : null,
+                    userData: userDataLS ? JSON.parse(userDataLS) : null
+                },
+                cookies: cookies,
+                currentUser: userData
+            };
+            
+            userInfoDiv.innerHTML = `<pre>${JSON.stringify(info, null, 2)}</pre>`;
+            
+            // Verificar si tenemos los datos necesarios
+            if (userData && userData.nombre && userData.cc) {
+                updateStatus('✅ Usuario autenticado con datos completos', 'success');
+                log(`Usuario encontrado: ${userData.nombre} (${userData.cc})`, 'success');
+            } else if (userData) {
+                updateStatus('⚠️ Usuario autenticado pero faltan datos', 'warning');
+                log('Usuario autenticado pero faltan nombre o cc', 'warning');
+            } else {
+                updateStatus('❌ Usuario no autenticado', 'error');
+                log('No se encontraron datos de usuario', 'error');
+            }
+        }
+        
+        function simulateAutoFill() {
+            const nombreField = document.getElementById('nombreField');
+            const documentoField = document.getElementById('documentoField');
+            
+            if (userData && userData.nombre && userData.cc) {
+                nombreField.value = userData.nombre;
+                documentoField.value = userData.cc;
+                log(`Campos llenados: ${userData.nombre}, ${userData.cc}`, 'success');
+            } else {
+                log('No se pueden llenar los campos - faltan datos de usuario', 'error');
+            }
+        }
+        
+        function clearFields() {
+            document.getElementById('nombreField').value = '';
+            document.getElementById('documentoField').value = '';
+            log('Campos limpiados', 'info');
+        }
+        
+        async function checkAuthStatus() {
+            try {
+                log('Verificando estado de autenticación...', 'info');
+                const response = await fetch('http://localhost:3001/api/v1/auth/verify', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    userData = data.user;
+                    log('✅ Verificación exitosa', 'success');
+                    updateUserInfo();
+                } else {
+                    log(`❌ Error en verificación: ${response.status}`, 'error');
+                    userData = null;
+                    updateUserInfo();
+                }
+            } catch (error) {
+                log(`❌ Error de conexión: ${error.message}`, 'error');
+                userData = null;
+                updateUserInfo();
+            }
+        }
+        
+        async function testApiConnection() {
+            try {
+                log('Probando conexión con API...', 'info');
+                const response = await fetch('http://localhost:3001/api/v1/health', {
+                    method: 'GET'
+                });
+                
+                if (response.ok) {
+                    log('✅ API respondiendo correctamente', 'success');
+                } else {
+                    log(`⚠️ API responde con error: ${response.status}`, 'warning');
+                }
+            } catch (error) {
+                log(`❌ No se puede conectar con API: ${error.message}`, 'error');
+            }
+        }
+        
+        function refreshUserData() {
+            // Simular la carga de datos desde localStorage como lo haría React
+            const tokenData = localStorage.getItem('tokenData');
+            const userDataLS = localStorage.getItem('userData');
+            
+            if (tokenData && userDataLS) {
+                try {
+                    userData = JSON.parse(userDataLS);
+                    log('Datos de usuario cargados desde localStorage', 'success');
+                } catch (error) {
+                    log('Error al parsear datos de localStorage', 'error');
+                }
+            } else {
+                userData = null;
+                log('No se encontraron datos en localStorage', 'warning');
+            }
+            
+            updateUserInfo();
+        }
+        
+        async function simulateLogin() {
+            const email = prompt('Email para login de prueba:', 'admin@test.com');
+            const password = prompt('Password:', 'admin123');
+            
+            if (!email || !password) return;
+            
+            try {
+                log(`Intentando login con ${email}...`, 'info');
+                const response = await fetch('http://localhost:3001/api/v1/auth/login', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Guardar datos como lo haría la aplicación
+                    localStorage.setItem('tokenData', JSON.stringify({ token: data.token }));
+                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    
+                    userData = data.user;
+                    log('✅ Login exitoso', 'success');
+                    updateUserInfo();
+                } else {
+                    const errorData = await response.json();
+                    log(`❌ Error en login: ${errorData.message}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error de conexión en login: ${error.message}`, 'error');
+            }
+        }
+        
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Página de debug cargada', 'info');
+            refreshUserData();
+            
+            // Auto-verificar cada 5 segundos
+            setInterval(() => {
+                if (!userData) {
+                    checkAuthStatus();
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

@@ -1,3 +1,4 @@
+import { Request } from 'express';
 export interface Ambiente {
     _id?: string;
     nombre: string;

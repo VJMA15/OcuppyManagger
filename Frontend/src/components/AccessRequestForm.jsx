@@ -85,10 +85,10 @@ const AccessRequestForm = ({ onCancel }) => {
         <CardContent className="pt-6">
           <div className="text-center">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h3 className="text-2xl font-semibold text-neutral-soft-800 mb-2">
+            <h3 className="text-2xl font-semibold text-gray-800 mb-2">
               ¡Solicitud Enviada!
             </h3>
-            <p className="text-neutral-soft-600 mb-4">
+            <p className="text-gray-600 mb-4">
               Tu solicitud de acceso ha sido enviada al administrador del sistema.
               Recibirás una respuesta en tu correo electrónico en un plazo de 24-48 horas.
             </p>
@@ -124,41 +124,40 @@ const AccessRequestForm = ({ onCancel }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 py-16 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header con colores SENA */}
-        <div className="text-center mb-12">
-          <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <Building className="h-12 w-12 text-white" />
+    <div className="min-h-screen bg-white py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        {/* Header con identidad SENA */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-white border border-green-500 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <Building className="h-7 w-7 text-green-600" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-3">
+          <h1 className="text-2xl font-semibold text-gray-800 mb-1">
             Solicitud de Acceso
           </h1>
-          <div className="w-20 h-1 bg-gradient-to-r from-orange-500 to-green-600 mx-auto mb-4 rounded-full"></div>
-          <p className="text-gray-600 text-lg">
-            Sistema OccupyManager - SENA
+          <p className="text-gray-500 text-sm">
+            SENA CTPGA - Gestión de Ambientes
           </p>
         </div>
 
-        <Card className="shadow-2xl border-0 bg-white overflow-hidden">
+        <Card className="shadow-sm border border-gray-100 bg-white overflow-hidden">
           <CardContent className="p-0">
             {/* Notification */}
             {notification && (
-              <div className={`mx-8 mt-8 p-4 rounded-lg border-l-4 ${
+              <div className={`mx-6 mt-6 p-4 rounded-lg border-l-4 ${
                 notification.type === 'success' 
                   ? 'bg-green-50 border-green-600 text-green-800' 
                   : 'bg-red-50 border-red-500 text-red-800'
               }`}>
                 <div className="flex items-center">
                   {notification.type === 'success' ? (
-                    <CheckCircle className="h-5 w-5 mr-3" />
+                    <CheckCircle className="h-5 w-5 mr-3 text-green-600" />
                   ) : (
-                    <AlertCircle className="h-5 w-5 mr-3" />
+                    <AlertCircle className="h-5 w-5 mr-3 text-red-600" />
                   )}
-                  <span className="font-medium">{notification.message}</span>
+                  <span className="font-medium text-sm">{notification.message}</span>
                   <button
                     onClick={() => setNotification(null)}
-                    className="ml-auto text-gray-400 hover:text-gray-600"
+                    className="ml-auto text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -168,59 +167,63 @@ const AccessRequestForm = ({ onCancel }) => {
 
             <form onSubmit={handleSubmit}>
               {/* Header del formulario */}
-              <div className="bg-gradient-to-r from-orange-500 to-green-600 p-6 text-white">
-                <h2 className="text-2xl font-bold text-center">Formulario de Solicitud</h2>
-                <p className="text-center text-orange-100 mt-2">Complete todos los campos requeridos</p>
+              <div className="bg-green-600 p-6 text-white">
+                <h2 className="text-xl font-semibold text-center">Formulario de Solicitud de Acceso</h2>
+                <p className="text-center text-green-100 text-sm mt-2">Complete todos los campos obligatorios (*)</p>
               </div>
 
               {/* Sección 1: Datos Personales */}
-              <div className="p-8 border-b border-gray-200">
+              <div className="p-8 border-b border-gray-100 bg-white">
                 <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
-                    <User className="h-6 w-6 text-orange-600" />
+                  <div className="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center mr-4 shadow-sm">
+                    <User className="h-5 w-5 text-gray-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800">Información Personal</h3>
-                    <p className="text-gray-500 text-sm">Datos básicos del solicitante</p>
+                    <h3 className="text-base font-medium text-gray-800">Información Personal</h3>
+                    <p className="text-gray-500 text-xs">Datos básicos del solicitante</p>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName" className="text-sm font-semibold text-gray-700">Nombre Completo *</Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="Ingrese su nombre completo"
-                      value={formData.fullName}
-                      onChange={(e) => handleInputChange('fullName', e.target.value)}
-                      className="h-12 border-2 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 rounded-lg transition-all"
-                      required
-                    />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+                      Nombre Completo <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="fullName"
+                        type="text"
+                        placeholder="Ingrese su nombre completo"
+                        value={formData.fullName}
+                        onChange={(e) => handleInputChange('fullName', e.target.value)}
+                        className="h-10 border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-100 rounded-md transition-colors text-sm bg-white"
+                        required
+                      />
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="documentNumber" className="text-sm font-semibold text-gray-700">Número de Documento *</Label>
+                    <Label htmlFor="documentNumber" className="text-sm font-medium text-gray-700">Número de Documento <span className="text-red-500">*</span></Label>
                     <Input
                       id="documentNumber"
                       type="text"
                       placeholder="Número de identificación"
                       value={formData.documentNumber}
                       onChange={(e) => handleInputChange('documentNumber', e.target.value)}
-                      className="h-12 border-2 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 rounded-lg transition-all"
+                      className="h-10 border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-100 rounded-md transition-colors text-sm bg-white"
                       required
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Correo Electrónico *</Label>
+                    <Label htmlFor="email" className="text-sm font-medium text-gray-700">Correo Electrónico <span className="text-red-500">*</span></Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="ejemplo@sena.edu.co"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="h-12 border-2 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 rounded-lg transition-all"
+                      className="h-10 border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-100 rounded-md transition-colors text-sm bg-white"
                       required
                     />
                   </div>
@@ -228,20 +231,20 @@ const AccessRequestForm = ({ onCancel }) => {
               </div>
 
               {/* Sección 2: Información del Acceso */}
-              <div className="p-8 border-b border-gray-200 bg-green-50/30">
+              <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                     <Building className="h-6 w-6 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800">Información del Acceso</h3>
-                    <p className="text-gray-500 text-sm">Detalles sobre el tipo de acceso solicitado</p>
+                    <h3 className="text-base font-medium text-gray-800">Información del Acceso</h3>
+                    <p className="text-gray-400 text-xs">Detalles sobre el tipo de acceso solicitado</p>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="requestedRole" className="text-sm font-semibold text-gray-700">Rol Solicitado *</Label>
+                    <Label htmlFor="requestedRole" className="text-sm font-medium text-gray-700">Rol Solicitado <span className="text-red-500">*</span></Label>
                     <Select 
                       id="requestedRole"
                       value={formData.requestedRole} 
@@ -257,7 +260,7 @@ const AccessRequestForm = ({ onCancel }) => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="trainingCenter" className="text-sm font-semibold text-gray-700">Centro de Formación *</Label>
+                    <Label htmlFor="trainingCenter" className="text-sm font-medium text-gray-700">Centro de Formación <span className="text-red-500">*</span></Label>
                     <Input
                       id="trainingCenter"
                       type="text"
@@ -272,38 +275,38 @@ const AccessRequestForm = ({ onCancel }) => {
               </div>
 
               {/* Sección 3: Justificación */}
-              <div className="p-8 border-b border-gray-200">
+              <div className="p-8 border-b border-gray-100 bg-white">
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
                     <FileText className="h-6 w-6 text-orange-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800">Justificación</h3>
-                    <p className="text-gray-500 text-sm">Explique el motivo de su solicitud</p>
+                    <h3 className="text-base font-medium text-gray-800">Justificación</h3>
+                    <p className="text-gray-400 text-xs">Explique el motivo de su solicitud</p>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="justification" className="text-sm font-semibold text-gray-700">Motivo del Acceso *</Label>
+                  <Label htmlFor="justification" className="text-sm font-medium text-gray-700">Motivo del Acceso <span className="text-red-500">*</span></Label>
                   <Textarea
                     id="justification"
                     placeholder="Describa detalladamente por qué necesita acceso al sistema, sus responsabilidades y cómo planea utilizarlo en el marco de sus funciones en el SENA..."
                     value={formData.justification}
                     onChange={(e) => handleInputChange('justification', e.target.value)}
-                    className="min-h-[140px] border-2 border-gray-200 focus:border-orange-500 focus:ring-orange-500/20 rounded-lg transition-all resize-none"
+                    className="min-h-[120px] border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-100 rounded-md transition-colors resize-none text-sm p-3"
                     required
                   />
                 </div>
               </div>
 
               {/* Información Importante */}
-              <div className="p-8 bg-gradient-to-r from-orange-50 to-green-50">
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <AlertCircle className="h-5 w-5 text-white" />
+              <div className="p-8 bg-white border-t border-gray-100">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <AlertCircle className="h-4 w-4 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-800 mb-4">Información Importante - SENA</h3>
+                    <h3 className="font-medium text-gray-800 mb-3 text-sm">Información Importante</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
                       <div className="flex items-start space-x-3">
                         <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -327,12 +330,12 @@ const AccessRequestForm = ({ onCancel }) => {
               </div>
 
               {/* Botones */}
-              <div className="p-8 bg-white">
+              <div className="p-8 bg-white border-t border-gray-100">
                 <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
                   <Button 
                     type="button"
                     variant="outline"
-                    className="flex-1 h-14 border-2 border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-semibold rounded-lg"
+                    className="flex-1 h-10 border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors font-medium rounded-md text-sm"
                     onClick={() => {
                       setFormData({
                         fullName: '',
@@ -352,20 +355,19 @@ const AccessRequestForm = ({ onCancel }) => {
                     <X className="h-5 w-5 mr-2" />
                     Cancelar
                   </Button>
-                  
-                  <Button 
-                    type="submit" 
-                    className="flex-1 h-14 bg-gradient-to-r from-orange-500 to-green-600 hover:from-orange-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold rounded-lg"
+                  <Button
+                    type="submit"
+                    className="w-full h-10 bg-green-500 hover:bg-green-600 text-white font-medium text-sm rounded-md transition-colors"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
                         Enviando solicitud...
                       </>
                     ) : (
                       <>
-                        <Send className="h-5 w-5 mr-2" />
+                        <Send className="h-4 w-4 mr-2" />
                         Enviar Solicitud
                       </>
                     )}

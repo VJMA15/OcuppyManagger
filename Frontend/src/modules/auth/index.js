@@ -1,8 +1,8 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "../../contexts/auth-context";
 import LoginPage from "./pages/LoginPage";
-import { useAuthContext } from "./contexts/AuthContext";
+import { useAuthContext } from "../../contexts/auth-context";
 
 const AuthRoutes = () => {
   const { isAuthenticated, user } = useAuthContext();

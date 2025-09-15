@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAmbientes } from '../hooks/useAmbientes';
 import AmbientesContainer from '../containers/AmbientesContainer';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select.jsx';
+import { Plus } from 'lucide-react';
 
 const AmbientesPage = () => {
   const navigate = useNavigate();
@@ -9,7 +14,7 @@ const AmbientesPage = () => {
   
   // Estados para la UI
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('');
+  const [filterType, setFilterType] = useState('all');
   const [selectedAmbiente, setSelectedAmbiente] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -32,9 +37,12 @@ const AmbientesPage = () => {
   // Funciones de filtrado
   const filteredAmbientes = ambientes.filter(ambiente => {
     const matchesSearch = ambiente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ambiente.ubicacion.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === '' || ambiente.tipo === filterType;
-    return matchesSearch && matchesType;
+                        ambiente.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        ambiente.ubicacion.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = filterType === 'all' || ambiente.tipo === filterType;
+    
+    return matchesSearch && matchesFilter;
   });
 
   // Handlers para la UI
@@ -168,41 +176,112 @@ const AmbientesPage = () => {
   };
 
   return (
-    <AmbientesContainer
-      // Datos
-      ambientes={filteredAmbientes}
-      selectedAmbiente={selectedAmbiente}
-      loading={loading}
-      error={error}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="bg-blue-600 dark:bg-gray-800 shadow-md">
+        <div className="container mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-white">Gestión de Ambientes - CTPGA</h1>
+          <p className="text-blue-100 dark:text-gray-300">Administra los espacios educativos del centro</p>
+        </div>
+      </div>
       
-      // Estados de UI
-      searchTerm={searchTerm}
-      filterType={filterType}
-      showCreateModal={showCreateModal}
-      showEditModal={showEditModal}
-      showDeleteModal={showDeleteModal}
+      <main className="container mx-auto py-8 px-4">
+        <Card className="mb-8 border border-blue-200 dark:border-gray-700 shadow-lg">
+          <CardHeader className="bg-blue-50 dark:bg-gray-800 rounded-t-lg">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <CardTitle className="text-blue-800 dark:text-white">Panel de Control</CardTitle>
+                <p className="text-sm text-blue-600 dark:text-gray-400">
+                  {filteredAmbientes.length} ambientes encontrados
+                  {filterType && ` • Filtrado por: ${filterType}`}
+                </p>
+              </div>
+              <Button 
+                onClick={handleCreateNew}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Nuevo Ambiente</span>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="md:col-span-2">
+                <Input
+                  type="text"
+                  placeholder="Buscar ambientes..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <Select 
+                  value={filterType} 
+                  onValueChange={setFilterType}
+                >
+                  <SelectTrigger className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <SelectValue>
+                      {filterType === 'all' ? 'Todos los tipos' : filterType}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los tipos</SelectItem>
+                    <SelectItem value="Aula">Aula</SelectItem>
+                    <SelectItem value="Laboratorio">Laboratorio</SelectItem>
+                    <SelectItem value="Auditorio">Auditorio</SelectItem>
+                    <SelectItem value="Taller">Taller</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <AmbientesContainer
+              ambientes={filteredAmbientes}
+              selectedAmbiente={selectedAmbiente}
+              loading={loading}
+              error={error}
+              searchTerm={searchTerm}
+              filterType={filterType}
+              showCreateModal={showCreateModal}
+              showEditModal={showEditModal}
+              showDeleteModal={showDeleteModal}
+              formData={formData}
+              editingAmbiente={editingAmbiente}
+              isSubmitting={isSubmitting}
+              onSearchChange={setSearchTerm}
+              onFilterChange={setFilterType}
+              onAmbienteClick={handleAmbienteClick}
+              onClosePanel={handleClosePanel}
+              onCreateNew={handleCreateNew}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onDeleteConfirm={handleDeleteConfirm}
+              onInputChange={handleInputChange}
+              onServiciosChange={handleServiciosChange}
+              onSubmit={handleSubmit}
+              onCloseCreateModal={() => setShowCreateModal(false)}
+              onCloseEditModal={() => setShowEditModal(false)}
+              onCloseDeleteModal={() => setShowDeleteModal(false)}
+            />
+          </CardContent>
+        </Card>
+      </main>
       
-      // Datos del formulario
-      formData={formData}
-      editingAmbiente={editingAmbiente}
-      isSubmitting={isSubmitting}
-      
-      // Handlers
-      onSearchChange={setSearchTerm}
-      onFilterChange={setFilterType}
-      onAmbienteClick={handleAmbienteClick}
-      onClosePanel={handleClosePanel}
-      onCreateNew={handleCreateNew}
-      onEdit={handleEdit}
-      onDeleteConfirm={handleDeleteConfirm}
-      onDelete={handleDelete}
-      onInputChange={handleInputChange}
-      onServiciosChange={handleServiciosChange}
-      onSubmit={handleSubmit}
-      onCloseCreateModal={() => setShowCreateModal(false)}
-      onCloseEditModal={() => setShowEditModal(false)}
-      onCloseDeleteModal={() => setShowDeleteModal(false)}
-    />
+      <footer className="bg-primary-700 dark:bg-gray-900 text-white py-6 mt-12">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <h3 className="text-lg font-semibold">CTP de Grecia</h3>
+              <p className="text-primary-200 dark:text-gray-400">Sistema de Gestión de Ambientes</p>
+            </div>
+            <div className="flex space-x-4">
+              <span className="text-primary-200 dark:text-gray-400"> 2023 Todos los derechos reservados</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 };
 

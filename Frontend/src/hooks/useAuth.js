@@ -39,9 +39,9 @@ export const useAuth = () => {
       
       const response = await apiService.login({ cc, password });
       
-      if (response.success && response.data?.user) {
-        const userData = response.data.user;
-        const token = response.data.token;
+      if (response.success && response.user) {
+        const userData = response.user;
+        const token = response.token;
         
         // Guardar en localStorage
         localStorage.setItem('token', token);

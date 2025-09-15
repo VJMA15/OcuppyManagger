@@ -1,3 +1,5 @@
+import { Request } from 'express';
+
 // Tipos base del sistema
 export interface Ambiente {
   _id?: string;

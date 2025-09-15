@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { CheckCircle, AlertCircle, CreditCard, Package, TrendingUp, CalendarIcon, Building2, Clock, XCircle } from "lucide-react";
 
 import { overviewData } from "@/constants";
-import { Footer } from "@/layouts/footer";
+import Footer from "@/layouts/footer";
 
 
 // Componentes

@@ -1,4 +1,5 @@
-import API_CONFIG from '@/config/api';
+import { API_CONFIG } from '../config/api';
+import authService from './auth';
 
 class ApiService {
   constructor() {
@@ -7,10 +8,11 @@ class ApiService {
     this.timeout = API_CONFIG.TIMEOUT;
   }
 
-  // Configurar headers básicos (sin token)
+  // Configurar headers con autenticación
   getHeaders() {
     return {
       ...this.defaultHeaders,
+      ...authService.getAuthHeaders(),
     };
   }
 

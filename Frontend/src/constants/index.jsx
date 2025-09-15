@@ -1,7 +1,7 @@
-import { ChartColumn, Home, NotepadText, Package, PackagePlus, Settings, ShoppingBag, UserCheck, UserPlus, Users, Building2, Monitor, AlertTriangle, Shield, Calendar } from "lucide-react";
+import { ChartColumn, Home, NotepadText, Package, PackagePlus, Settings, ShoppingBag, UserCheck, UserPlus, Users, Building2, Monitor, AlertTriangle, Shield, Calendar, FileText, Activity, BarChart3 } from "lucide-react";
 
-import ProfileImage from "@/assets/profile-image.jpg";
-import ProductImage from "@/assets/product-image.jpg";
+import ProfileImage from "../assets/profile-image.jpg";
+import ProductImage from "../assets/product-image.jpg";
 
 export const navbarLinks = [
     {
@@ -22,6 +22,16 @@ export const navbarLinks = [
                 icon: ChartColumn,
                 path: "/dashboard/reports", // ✅ CORRECTO
             },
+            {
+                label: "Reportes",
+                icon: BarChart3,
+                path: "/dashboard/reportes", // ✅ CORRECTO
+            },
+            {
+                label: "Mis Reservas",
+                icon: Calendar,
+                path: "/dashboard/mis-reservas", // ✅ CORRECTO
+            },
         ],
     },
     {
@@ -36,6 +46,26 @@ export const navbarLinks = [
                 label: "Nueva Reserva",
                 icon: PackagePlus,
                 path: "/dashboard/reserva", // ✅ CORRECTO
+            },
+            {
+                label: "Registrar Usuario",
+                icon: UserPlus,
+                path: "/dashboard/registrar-usuario", // ✅ CORRECTO
+            },
+            {
+                label: "Gestión de Usuarios",
+                icon: Users,
+                path: "/dashboard/gestion-usuarios", // ✅ CORRECTO
+            },
+            {
+                label: "Registros",
+                icon: FileText,
+                path: "/dashboard/registros",
+            },
+            {
+                label: "Bitácora",
+                icon: Activity,
+                path: "/dashboard/bitacora",
             },
         ],
     },
@@ -281,6 +311,50 @@ export const guardiaNavLinks = [
                 label: "Reservas Activas",
                 icon: Calendar,
                 path: "/guardia/reservas",
+            },
+            {
+                label: "Reportes",
+                icon: BarChart3,
+                path: "/guardia/reportes",
+            },
+        ],
+    },
+];
+
+// Navegación específica para el panel de instructor
+export const instructorNavLinks = [
+    {
+        title: "Dashboard",
+        links: [
+            {
+                label: "Vista General",
+                icon: Home,
+                path: "/instructor", // Ruta principal
+            },
+            {
+                label: "Mis Reservas",
+                icon: Calendar,
+                path: "/instructor/mis-reservas",
+            },
+        ],
+    },
+    {
+        title: "Gestión",
+        links: [
+            {
+                label: "Ambientes",
+                icon: Building2,
+                path: "/instructor/ambientes",
+            },
+            {
+                label: "Nueva Reserva",
+                icon: PackagePlus,
+                path: "/instructor/reserva",
+            },
+            {
+                label: "Reportes",
+                icon: BarChart3,
+                path: "/instructor/reportes",
             },
         ],
     },

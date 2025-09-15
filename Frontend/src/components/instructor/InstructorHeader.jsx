@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BookOpen, Menu, Sun, Moon, Bell, User, LogOut } from 'lucide-react';
 import { useAuthContext } from '@/contexts/auth-context';
 import { useTheme } from '@/contexts/theme-context';
 import PropTypes from 'prop-types';
 import profileImg from '@/assets/profile-image.jpg';
+import NotificationPanel from '@/components/notifications/NotificationPanel';
+import NotificationBadge from '@/components/notifications/NotificationBadge';
 
 const InstructorHeader = ({ collapsed, setCollapsed }) => {
   const { user, logout } = useAuthContext();
   const { theme, setTheme } = useTheme();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = () => {
     if (window.confirm('¿Estás seguro de que deseas cerrar sesión?')) {
@@ -60,8 +63,13 @@ const InstructorHeader = ({ collapsed, setCollapsed }) => {
           />
         </button>
         
-        <button className="btn-ghost size-10" title="Notificaciones">
+        <button 
+          className="btn-ghost size-10 relative" 
+          title="Notificaciones"
+          onClick={() => setShowNotifications(true)}
+        >
           <Bell size={20} />
+          <NotificationBadge />
         </button>
         
         <button className="size-10 overflow-hidden rounded-full" title="Perfil">
@@ -81,6 +89,12 @@ const InstructorHeader = ({ collapsed, setCollapsed }) => {
           <LogOut size={20} />
         </button>
       </div>
+      
+      {/* Notification Panel */}
+      <NotificationPanel 
+        isOpen={showNotifications} 
+        onClose={() => setShowNotifications(false)} 
+      />
     </header>
   );
 };

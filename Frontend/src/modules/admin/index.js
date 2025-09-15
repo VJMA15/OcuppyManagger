@@ -11,6 +11,7 @@ import VerReservasPage from "./pages/VerReservasPage";
 import AmbientesPage from "./pages/AmbientesPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
+import RegistrarUsuarioPage from "@/pages/RegistrarUsuarioPage";
 
 // Hooks específicos del admin
 import { useAutoCompleteReservations } from "./hooks/useAutoCompleteReservations";
@@ -32,6 +33,7 @@ const AdminContent = () => {
           <Route path="ambientes" element={<AmbientesPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="registrar-usuario" element={<RegistrarUsuarioPage />} />
           <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
         </Routes>
       </AdminLayout>

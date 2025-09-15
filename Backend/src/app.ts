@@ -16,17 +16,18 @@ import cookieParser from 'cookie-parser';
 const xss = require('xss-clean');
 
 // Importar rutas
-// Usar require para archivos JavaScript
-const authRoutes = require('./routes/auth.routes');
-const userRoutes = require('./routes/user.routes');
+import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.routes';
 import ambienteRoutes from './routes/ambiente.routes';
-import reservaRoutes from './routes/reserva.routes'; // ✅ Descomentar y cambiar a import
-const registroRoutes = require('./routes/registro.routes');
-const bitacoraRoutes = require('./routes/bitacora.routes');
+import reservaRoutes from './routes/reserva.routes';
+import entregaRoutes from './routes/entrega.routes';
+import registrosRoutes from './routes/registros.routes';
+import bitacoraRoutes from './routes/bitacora.routes';
+import reportsRoutes from './routes/reports.routes';
 
 // Importar manejadores de errores
-const AppError = require('./utils/appError');
-const globalErrorHandler = require('./middlewares/errorHandler');
+import AppError from './utils/appError';
+import globalErrorHandler from './middlewares/errorHandler';
 
 // Inicializar la aplicación Express
 const app = express();
@@ -43,7 +44,11 @@ const corsOptions = {
         'http://localhost:5173', 
         'http://127.0.0.1:5173',
         'http://localhost:4173',
-        'http://127.0.0.1:4173'
+        'http://127.0.0.1:4173',
+        'http://localhost:3003',
+        'http://127.0.0.1:3003',
+        'http://localhost:8080',
+        'http://127.0.0.1:8080'
       ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
@@ -105,16 +110,18 @@ app.use((req, res, next) => {
 });
 
 // 3) CONFIGURACIÓN DE SWAGGER
-const setupSwagger = require('./config/swagger');
-setupSwagger(app);
+// const setupSwagger = require('./config/swagger'); // Archivo no disponible
+// setupSwagger(app); // Comentado temporalmente
 
-// 4) RUTAS
+// 3) RUTAS
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/ambientes', ambienteRoutes);
-app.use('/api/v1/reservas', reservaRoutes); // ✅ Descomentar esta línea
-app.use('/api/v1/registros', registroRoutes);
+app.use('/api/v1/reservas', reservaRoutes);
+app.use('/api/v1/entregas', entregaRoutes);
+app.use('/api/v1/registros', registrosRoutes);
 app.use('/api/v1/bitacora', bitacoraRoutes);
+app.use('/api/v1/reportes', reportsRoutes);
 
 // Ruta de información de la API
 app.get('/api/v1', (req, res) => {
@@ -125,7 +132,9 @@ app.get('/api/v1', (req, res) => {
       auth: '/api/v1/auth',
       users: '/api/v1/users',
       ambientes: '/api/v1/ambientes',
-      reservas: '/api/v1/reservas'
+      reservas: '/api/v1/reservas',
+      entregas: '/api/v1/entregas',
+      reportes: '/api/v1/reportes'
     }
   });
 });

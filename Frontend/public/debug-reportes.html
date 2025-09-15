@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Reportes</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .token-display { word-break: break-all; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug de Reportes</h1>
+        
+        <div class="section info">
+            <h3>Estado de Autenticación</h3>
+            <div id="auth-status">Verificando...</div>
+        </div>
+        
+        <div class="section">
+            <h3>Acciones de Debug</h3>
+            <button onclick="checkAuth()">🔐 Verificar Autenticación</button>
+            <button onclick="testLogin()">🔑 Hacer Login</button>
+            <button onclick="testReportesEndpoint()">📊 Probar Endpoint Reportes</button>
+            <button onclick="clearStorage()">🗑️ Limpiar Storage</button>
+        </div>
+        
+        <div class="section">
+            <h3>Resultados</h3>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `section ${type}`;
+            div.innerHTML = `<pre>${message}</pre>`;
+            results.appendChild(div);
+            console.log(message);
+        }
+        
+        function getTokenFromCookies() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'auth_token') {
+                    return value;
+                }
+            }
+            return null;
+        }
+        
+        function checkAuth() {
+            const token = getTokenFromCookies();
+            const authStatus = document.getElementById('auth-status');
+            
+            if (token) {
+                authStatus.innerHTML = `
+                    <div class="success">
+                        <strong>✅ Token encontrado</strong><br>
+                        <div class="token-display">Token: ${token}</div>
+                    </div>
+                `;
+                log(`Token encontrado: ${token}`, 'success');
+            } else {
+                authStatus.innerHTML = `
+                    <div class="error">
+                        <strong>❌ No hay token de autenticación</strong>
+                    </div>
+                `;
+                log('No se encontró token de autenticación', 'error');
+            }
+        }
+        
+        async function testLogin() {
+            try {
+                log('🔐 Intentando hacer login...', 'info');
+                
+                const response = await fetch(`${API_BASE}/api/v1/auth/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        cc: '12345678',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Guardar token en cookie
+                    document.cookie = `auth_token=${data.token}; path=/; max-age=86400`;
+                    log(`✅ Login exitoso\nToken: ${data.token}\nUsuario: ${JSON.stringify(data.user, null, 2)}`, 'success');
+                    checkAuth();
+                } else {
+                    log(`❌ Error en login: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error de conexión: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testReportesEndpoint() {
+            const token = getTokenFromCookies();
+            
+            if (!token) {
+                log('❌ No hay token. Haz login primero.', 'error');
+                return;
+            }
+            
+            try {
+                log('📊 Probando endpoint de reportes...', 'info');
+                
+                const response = await fetch(`${API_BASE}/api/v1/reportes/estadisticas`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ Endpoint funciona correctamente\nDatos: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    log(`❌ Error en endpoint: ${response.status} - ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error de conexión: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearStorage() {
+            document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            localStorage.clear();
+            sessionStorage.clear();
+            log('🗑️ Storage limpiado', 'info');
+            checkAuth();
+        }
+        
+        // Verificar autenticación al cargar
+        window.onload = function() {
+            checkAuth();
+        };
+    </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import React from 'react';
-import { cn } from '@/utils/cn';
+import { cn } from '../../utils/cn';
 
-const Card = ({ className, children, ...props }) => {
+export const Card = ({ className, children, ...props }) => {
   return (
     <div
       className={cn(
@@ -59,4 +59,8 @@ const CardContent = ({ className, children, ...props }) => {
   );
 };
 
-export { Card, CardHeader, CardTitle, CardDescription, CardContent };
+// Export all components as named exports
+export { CardHeader, CardTitle, CardDescription, CardContent };
+
+// Export Card as the default export for backward compatibility
+export default Card;

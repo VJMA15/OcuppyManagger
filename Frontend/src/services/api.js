@@ -1,8 +1,7 @@
 import authService from './auth';
-import apiMock from './api-mock';
 
-const USE_MOCK = true; // Cambiar a false cuando uses API real
-const API_BASE_URL = 'http://localhost:3001/api';
+// Configuración para usar API real (datos de prueba eliminados)
+const API_BASE_URL = 'http://localhost:5000';
 
 class ApiService {
   constructor() {
@@ -29,11 +28,11 @@ class ApiService {
     try {
       const response = await fetch(url, config);
       
-      // Si el token ha expirado (401), cerrar sesión
+      // Si el token ha expirado (401), redirigir a página de autenticación
       if (response.status === 401) {
         authService.logout();
-        window.location.href = '/login';
-        throw new Error('Sesión expirada');
+        window.location.href = '/auth-required';
+        throw new Error('Sesión expirada o no autorizado');
       }
 
       const data = await response.json();
@@ -51,12 +50,8 @@ class ApiService {
 
   // Login (no requiere JWT)
   async login(credentials) {
-    if (USE_MOCK) {
-      return apiMock.login(credentials);
-    }
-    
     try {
-      const response = await fetch(`${this.baseURL}/auth/login`, {
+      const response = await fetch(`${this.baseURL}/auth/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,14 +72,34 @@ class ApiService {
     }
   }
 
+  // Registro de usuarios
+  async signup(userData) {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Error en registro');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error en signup:', error);
+      throw error;
+    }
+  }
+
   // Logout
   async logout() {
-    if (USE_MOCK) {
-      return apiMock.logout();
-    }
-    
     try {
-      await this.request('/auth/logout', { method: 'POST' });
+      await this.request('/api/v1/auth/logout', { method: 'POST' });
       return { success: true };
     } catch (error) {
       console.error('Error en logout:', error);
@@ -92,36 +107,49 @@ class ApiService {
     }
   }
 
+  // Métodos HTTP básicos
+  async get(endpoint, options = {}) {
+    return this.request(endpoint, { method: 'GET', ...options });
+  }
+
+  async post(endpoint, data = null, options = {}) {
+    return this.request(endpoint, {
+      method: 'POST',
+      body: data,
+      ...options
+    });
+  }
+
+  async put(endpoint, data = null, options = {}) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: data,
+      ...options
+    });
+  }
+
+  async delete(endpoint, options = {}) {
+    return this.request(endpoint, { method: 'DELETE', ...options });
+  }
+
   // Métodos protegidos que requieren JWT
   async getAmbientes() {
-    if (USE_MOCK) {
-      return apiMock.getAmbientes();
-    }
-    return this.request('/ambientes');
+    return this.request('/api/v1/ambientes');
   }
 
   async getReservas() {
-    if (USE_MOCK) {
-      return apiMock.getReservas();
-    }
-    return this.request('/reservas');
+    return this.request('/api/v1/reservas');
   }
 
   async createReserva(reservaData) {
-    if (USE_MOCK) {
-      return apiMock.createReserva(reservaData);
-    }
-    return this.request('/reservas', {
+    return this.request('/api/v1/reservas', {
       method: 'POST',
       body: reservaData,
     });
   }
 
   async getDashboardStats() {
-    if (USE_MOCK) {
-      return apiMock.getDashboardStats();
-    }
-    return this.request('/dashboard/stats');
+    return this.request('/api/v1/dashboard/stats');
   }
 }
 

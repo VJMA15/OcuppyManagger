@@ -40,12 +40,6 @@ const LoginPage = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleTestLogin = () => {
-    console.log('🔧 Botón de prueba clickeado');
-    localStorage.setItem("isAdmin", "true");
-    window.location.href = '/dashboard';
-  };
-
   // If already authenticated, redirect
   if (isAuthenticated) {
     window.location.href = '/dashboard';
@@ -67,8 +61,6 @@ const LoginPage = () => {
       isLoading={isLoading}
       error={error}
       
-      // Additional actions
-      handleTestLogin={handleTestLogin}
     />
   );
 };

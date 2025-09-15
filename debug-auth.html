@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Auth</title>
+</head>
+<body>
+    <h1>Debug Autenticación</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        // Verificar localStorage
+        const userData = localStorage.getItem('user');
+        const token = localStorage.getItem('token');
+        
+        output.innerHTML = `
+            <h2>LocalStorage:</h2>
+            <p><strong>User:</strong> ${userData || 'No encontrado'}</p>
+            <p><strong>Token:</strong> ${token ? 'Presente' : 'No encontrado'}</p>
+            
+            <h2>Datos parseados:</h2>
+            <pre>${userData ? JSON.stringify(JSON.parse(userData), null, 2) : 'No hay datos'}</pre>
+            
+            <h2>Cookies:</h2>
+            <p>${document.cookie || 'No hay cookies'}</p>
+        `;
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Auth Status</title>
+</head>
+<body>
+    <h1>Debug Authentication Status</h1>
+    <div id="results"></div>
+    
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
+        function debugAuth() {
+            const results = document.getElementById('results');
+            
+            // Verificar cookies
+            const authToken = getCookie('auth_token');
+            const userData = getCookie('user_data');
+            
+            // Verificar localStorage
+            const localToken = localStorage.getItem('token');
+            const localUser = localStorage.getItem('user');
+            
+            results.innerHTML = `
+                <h2>Cookies:</h2>
+                <p><strong>auth_token:</strong> ${authToken ? 'Presente' : 'No encontrado'}</p>
+                <p><strong>user_data:</strong> ${userData ? 'Presente' : 'No encontrado'}</p>
+                
+                <h2>LocalStorage:</h2>
+                <p><strong>token:</strong> ${localToken ? 'Presente' : 'No encontrado'}</p>
+                <p><strong>user:</strong> ${localUser ? 'Presente' : 'No encontrado'}</p>
+                
+                <h2>Detalles:</h2>
+                <p><strong>Token Cookie:</strong> ${authToken || 'N/A'}</p>
+                <p><strong>Token LocalStorage:</strong> ${localToken || 'N/A'}</p>
+                
+                <h2>Todas las cookies:</h2>
+                <p>${document.cookie || 'No hay cookies'}</p>
+            `;
+        }
+        
+        debugAuth();
+    </script>
+</body>
+</html>

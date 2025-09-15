@@ -1,7 +1,38 @@
 import React from 'react';
-import { Search, Plus, Filter, Building2, Users, MapPin, Edit, Trash2, X } from 'lucide-react';
-import { Button, Input, Select, Card, CardContent, Badge, Modal } from '../components/ui';
+import { 
+  Search, 
+  Plus, 
+  Filter, 
+  Building2, 
+  Users, 
+  MapPin, 
+  Edit, 
+  Trash2, 
+  X, 
+  Home, 
+  FlaskConical, 
+  Presentation, 
+  Briefcase, 
+  Users2, 
+  Wrench,
+  GraduationCap,
+  Microscope,
+  Projector,
+  BookOpen
+} from 'lucide-react';
+// UI Components
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select.jsx';
+import Card, { CardContent } from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
+import Modal from '../components/ui/Modal';
+
+// Forms
 import AmbienteForm from '../components/forms/AmbienteForm';
+
+// Utils
+import { cn } from '../utils/cn';
 
 const AmbientesContainer = ({
   // Datos
@@ -29,8 +60,8 @@ const AmbientesContainer = ({
   onClosePanel,
   onCreateNew,
   onEdit,
-  onDeleteConfirm,
   onDelete,
+  onDeleteConfirm,
   onInputChange,
   onServiciosChange,
   onSubmit,
@@ -38,41 +69,47 @@ const AmbientesContainer = ({
   onCloseEditModal,
   onCloseDeleteModal
 }) => {
+  // Función para obtener el color del estado
   const getStatusColor = (estado) => {
     switch (estado) {
-      case 'Disponible': return 'success';
-      case 'Ocupado': return 'error';
-      case 'Mantenimiento': return 'warning';
-      default: return 'default';
+      case 'Disponible':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800';
+      case 'Ocupado':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800';
+      case 'Mantenimiento':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300 border-gray-200 dark:border-gray-700';
     }
   };
 
+  // Función para obtener el ícono según el tipo de ambiente
   const getTypeIcon = (tipo) => {
     switch (tipo) {
-      case 'Aula': return Building2;
-      case 'Laboratorio': return Building2;
-      case 'Auditorio': return Users;
-      default: return Building2;
+      case 'Aula': return GraduationCap;
+      case 'Laboratorio': return Microscope;
+      case 'Auditorio': return Presentation;
+      case 'Conferencia': return Briefcase;
+      case 'Reunión': return Users2;
+      case 'Taller': return Wrench;
+      default: return Home;
     }
   };
 
-  const getAmbienteIcon = (tipo) => {
-    switch (tipo) {
-      case 'Aula': return '🏫';
-      case 'Laboratorio': return '🔬';
-      case 'Auditorio': return '🎭';
-      case 'Conferencia': return '💼';
-      case 'Reunión': return '👥';
-      case 'Taller': return '🔧';
-      default: return '🏢';
-    }
+  const getAmbienteIcon = (tipo, className = 'w-5 h-5') => {
+    const Icon = getTypeIcon(tipo);
+    return <Icon className={`${className} text-primary-600 dark:text-primary-400`} />;
   };
 
   // Filtrar ambientes
   const filteredAmbientes = ambientes.filter(ambiente => {
-    const matchesSearch = ambiente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ambiente.ubicacion.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = !filterType || ambiente.tipo === filterType;
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = ambiente.nombre.toLowerCase().includes(searchLower) ||
+                         (ambiente.ubicacion && ambiente.ubicacion.toLowerCase().includes(searchLower)) ||
+                         (ambiente.descripcion && ambiente.descripcion.toLowerCase().includes(searchLower));
+    
+    const matchesType = !filterType || filterType === 'all' || ambiente.tipo === filterType;
+    
     return matchesSearch && matchesType;
   });
 
@@ -94,18 +131,6 @@ const AmbientesContainer = ({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Ambientes</h1>
-          <p className="text-slate-600 dark:text-slate-400">Administra los espacios disponibles para reservas</p>
-        </div>
-        <Button onClick={onCreateNew} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Nuevo Ambiente
-        </Button>
-      </div>
-
       {/* Filtros */}
       <Card>
         <CardContent className="p-4">
@@ -119,25 +144,30 @@ const AmbientesContainer = ({
               />
             </div>
             <div className="w-full sm:w-48">
-              <Select
-                icon={Filter}
-                value={filterType}
-                onChange={(e) => onFilterChange(e.target.value)}
+              <Select 
+                value={filterType || 'all'} 
+                onValueChange={onFilterChange}
               >
-                <option value="">Todos los tipos</option>
-                <option value="Aula">Aula</option>
-                <option value="Laboratorio">Laboratorio</option>
-                <option value="Conferencia">Conferencia</option>
-                <option value="Auditorio">Auditorio</option>
-                <option value="Reunión">Reunión</option>
-                <option value="Taller">Taller</option>
+                <SelectTrigger className="w-full">
+                  <SelectValue>
+                    {!filterType || filterType === 'all' ? 'Todos los tipos' : filterType}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  <SelectItem value="Aula">Aula</SelectItem>
+                  <SelectItem value="Laboratorio">Laboratorio</SelectItem>
+                  <SelectItem value="Oficina">Oficina</SelectItem>
+                  <SelectItem value="Taller">Taller</SelectItem>
+                  <SelectItem value="Auditorio">Auditorio</SelectItem>
+                </SelectContent>
               </Select>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Grid de ambientes */}
+      {/* Lista de ambientes */}
       {filteredAmbientes.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
@@ -146,72 +176,83 @@ const AmbientesContainer = ({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredAmbientes.map((ambiente) => (
             <div
               key={ambiente._id}
               onClick={() => onAmbienteClick(ambiente)}
               className={`
-                relative bg-white dark:bg-gray-800 rounded-lg border-2 cursor-pointer
-                transition-all duration-200 aspect-square p-4 flex flex-col items-center justify-center
-                hover:shadow-lg hover:scale-105 group
-                ${
-                  selectedAmbiente?._id === ambiente._id
-                    ? 'border-blue-500 shadow-lg'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                relative bg-white dark:bg-gray-800 rounded-xl border cursor-pointer
+                transition-all duration-300 overflow-hidden
+                hover:shadow-xl hover:-translate-y-1 group
+                ${selectedAmbiente?._id === ambiente._id
+                  ? 'ring-2 ring-blue-500 shadow-lg'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                 }
               `}
             >
-              {/* Icono del ambiente */}
-              <div className="text-3xl mb-2">
-                {getAmbienteIcon(ambiente.tipo)}
-              </div>
+              {/* Header con gradiente */}
+              <div className="h-2 bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900"></div>
               
-              {/* Nombre del ambiente */}
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white text-center mb-2">
-                {ambiente.nombre}
-              </h3>
-              
-              {/* Estado */}
-              <span className={`
-                px-2 py-1 rounded-full text-xs font-medium mb-2
-                ${
-                  ambiente.estado === 'Disponible'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : ambiente.estado === 'Ocupado'
-                    ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                }
-              `}>
-                {ambiente.estado}
-              </span>
-              
-              {/* Información básica */}
-              <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                <div>👥 {ambiente.capacidad}</div>
-                <div>📍 {ambiente.ubicacion}</div>
-              </div>
-              
-              {/* Botones de acción (aparecen al hover) */}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(ambiente);
-                  }}
-                  className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteConfirm(ambiente);
-                  }}
-                  className="p-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                >
-                  🗑️
-                </button>
+              {/* Contenido principal */}
+              <div className="p-5 flex flex-col items-center">
+                {/* Estado */}
+                <div className="absolute top-3 right-3">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(ambiente.estado)}`}>
+                    {ambiente.estado}
+                  </span>
+                </div>
+                
+                {/* Icono */}
+                <div className="relative w-20 h-20 mb-4 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 rounded-xl transform rotate-1 group-hover:rotate-3 transition-transform duration-300"></div>
+                  <div className="relative w-16 h-16 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center shadow-sm border border-gray-100 dark:border-gray-700 group-hover:shadow-md transition-all duration-300">
+                    {getAmbienteIcon(ambiente.tipo, 'w-8 h-8')}
+                  </div>
+                </div>
+                
+                {/* Información del ambiente */}
+                <div className="text-center w-full">
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                    {ambiente.nombre}
+                  </h3>
+                  <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-2">
+                    {ambiente.tipo?.toUpperCase() || 'SIN TIPO'}
+                  </p>
+                  
+                  <div className="mt-2 text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                    <div className="flex items-center justify-center gap-2">
+                      <Users2 className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                      <span className="truncate">Capacidad: {ambiente.capacidad || 0} personas</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                      <span className="truncate">{ambiente.ubicacion || 'Sin ubicación'}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Botones de acción */}
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(ambiente);
+                    }}
+                    className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteConfirm(ambiente);
+                    }}
+                    className="p-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -241,7 +282,7 @@ const AmbientesContainer = ({
                 onClick={onClosePanel}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl"
               >
-                ✕
+                ×
               </button>
             </div>
             
@@ -263,52 +304,42 @@ const AmbientesContainer = ({
                   {selectedAmbiente.estado}
                 </span>
               </div>
-              
-              {/* Información básica */}
+
+              {/* Capacidad y UbicaciÃ³n */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Capacidad</div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                    👥 {selectedAmbiente.capacidad}
-                  </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Capacidad</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedAmbiente.capacidad} personas
+                  </p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Ubicación</div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                    📍 {selectedAmbiente.ubicacion}
-                  </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">UbicaciÃ³n</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedAmbiente.ubicacion}
+                  </p>
                 </div>
               </div>
-              
-              {/* Responsable */}
-              {selectedAmbiente.responsable && (
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Responsable</div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    {selectedAmbiente.responsable}
-                  </div>
-                </div>
-              )}
-              
-              {/* Descripción */}
+
+              {/* DescripciÃ³n */}
               {selectedAmbiente.descripcion && (
-                <div>
-                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Descripción</div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">DescripciÃ³n</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {selectedAmbiente.descripcion}
                   </p>
                 </div>
               )}
-              
+
               {/* Servicios */}
               {selectedAmbiente.servicios && selectedAmbiente.servicios.length > 0 && (
-                <div>
-                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Servicios</div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Servicios</p>
                   <div className="flex flex-wrap gap-2">
                     {selectedAmbiente.servicios.map((servicio, index) => (
                       <span
                         key={index}
-                        className="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded text-xs"
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                       >
                         {servicio}
                       </span>
@@ -317,17 +348,23 @@ const AmbientesContainer = ({
                 </div>
               )}
             </div>
-            
-            {/* Botones de acción */}
+
+            {/* Footer */}
             <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
               <button
-                onClick={() => onEdit(selectedAmbiente)}
+                onClick={() => {
+                  onEdit(selectedAmbiente);
+                  onClosePanel();
+                }}
                 className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
               >
                 Editar
               </button>
               <button
-                onClick={() => onDeleteConfirm(selectedAmbiente)}
+                onClick={() => {
+                  onDelete(selectedAmbiente);
+                  onClosePanel();
+                }}
                 className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
               >
                 Eliminar
@@ -337,20 +374,20 @@ const AmbientesContainer = ({
         </div>
       )}
 
-      {/* Modal de creación */}
+      {/* Modal de creaciÃ³n */}
       <Modal
         show={showCreateModal}
         onClose={onCloseCreateModal}
-        title="Crear Nuevo Ambiente"
+        title="Nuevo Ambiente"
         size="lg"
       >
         <AmbienteForm
           formData={formData}
+          isSubmitting={isSubmitting}
+          onSubmit={onSubmit}
           onInputChange={onInputChange}
           onServiciosChange={onServiciosChange}
-          onSubmit={onSubmit}
-          isSubmitting={isSubmitting}
-          editingAmbiente={null}
+          onClose={onCloseCreateModal}
         />
       </Modal>
 
@@ -362,12 +399,13 @@ const AmbientesContainer = ({
         size="lg"
       >
         <AmbienteForm
-          formData={formData}
+          formData={editingAmbiente}
+          isSubmitting={isSubmitting}
+          onSubmit={onSubmit}
           onInputChange={onInputChange}
           onServiciosChange={onServiciosChange}
-          onSubmit={onSubmit}
-          isSubmitting={isSubmitting}
-          editingAmbiente={editingAmbiente}
+          onClose={onCloseEditModal}
+          isEdit
         />
       </Modal>
 
@@ -375,27 +413,29 @@ const AmbientesContainer = ({
       <Modal
         show={showDeleteModal}
         onClose={onCloseDeleteModal}
-        title="Confirmar Eliminación"
+        title="Eliminar Ambiente"
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-slate-600 dark:text-slate-400">
-            ¿Estás seguro de que deseas eliminar el ambiente <strong>{editingAmbiente?.nombre}</strong>?
+          <p className="text-gray-700 dark:text-gray-300">
+            ¿Estás seguro de que deseas eliminar este ambiente? Esta acción no se puede deshacer.
           </p>
-          <p className="text-sm text-red-600 dark:text-red-400">
-            Esta acción no se puede deshacer.
-          </p>
-          <div className="flex gap-3 justify-end">
-            <Button variant="outline" onClick={onCloseDeleteModal}>
-              Cancelar
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={onDelete}
-              disabled={isSubmitting}
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              onClick={onCloseDeleteModal}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
             >
-              {isSubmitting ? 'Eliminando...' : 'Eliminar'}
-            </Button>
+              Cancelar
+            </button>
+            <button
+              onClick={() => {
+                onDelete(editingAmbiente);
+                onCloseDeleteModal();
+              }}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
+            >
+              Eliminar
+            </button>
           </div>
         </div>
       </Modal>

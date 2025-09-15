@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/utils/cn';
+import { cn } from '../../utils/cn';
 
 const Table = ({ children, className, ...props }) => (
   <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug de Autenticación</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug de Autenticación - OcuppyManager</h1>
+        
+        <div class="result info">
+            <strong>Instrucciones:</strong>
+            <ol>
+                <li>Asegúrate de estar logueado en la aplicación</li>
+                <li>Haz clic en los botones para verificar el estado de autenticación</li>
+                <li>Revisa los resultados para identificar problemas</li>
+            </ol>
+        </div>
+
+        <button onclick="checkCookies()">🍪 Verificar Cookies</button>
+        <button onclick="checkLocalStorage()">💾 Verificar LocalStorage</button>
+        <button onclick="testApiCall()">🌐 Probar Llamada a API</button>
+        <button onclick="checkUserRole()">👤 Verificar Rol de Usuario</button>
+        <button onclick="clearAll()">🧹 Limpiar Resultados</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        function clearAll() {
+            resultsDiv.innerHTML = '';
+        }
+
+        function checkCookies() {
+            addResult('<strong>🍪 Verificando Cookies...</strong>');
+            
+            const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                const [key, value] = cookie.trim().split('=');
+                acc[key] = value;
+                return acc;
+            }, {});
+
+            if (cookies.auth_token) {
+                addResult(`✅ Token encontrado en cookies: ${cookies.auth_token.substring(0, 50)}...`, 'success');
+                
+                // Intentar decodificar el JWT
+                try {
+                    const payload = JSON.parse(atob(cookies.auth_token.split('.')[1]));
+                    addResult(`📋 Payload del token:<pre>${JSON.stringify(payload, null, 2)}</pre>`, 'info');
+                    
+                    const now = Date.now() / 1000;
+                    if (payload.exp && payload.exp > now) {
+                        addResult('✅ Token válido (no expirado)', 'success');
+                    } else {
+                        addResult('❌ Token expirado', 'error');
+                    }
+                } catch (error) {
+                    addResult(`❌ Error decodificando token: ${error.message}`, 'error');
+                }
+            } else {
+                addResult('❌ No se encontró token en cookies', 'error');
+            }
+
+            addResult(`📋 Todas las cookies:<pre>${JSON.stringify(cookies, null, 2)}</pre>`, 'info');
+        }
+
+        function checkLocalStorage() {
+            addResult('<strong>💾 Verificando LocalStorage...</strong>');
+            
+            const userData = localStorage.getItem('user_data');
+            const authToken = localStorage.getItem('auth_token');
+            
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    addResult(`✅ Datos de usuario encontrados:<pre>${JSON.stringify(user, null, 2)}</pre>`, 'success');
+                } catch (error) {
+                    addResult(`❌ Error parseando datos de usuario: ${error.message}`, 'error');
+                }
+            } else {
+                addResult('ℹ️ No hay datos de usuario en localStorage', 'info');
+            }
+
+            if (authToken) {
+                addResult(`✅ Token en localStorage: ${authToken.substring(0, 50)}...`, 'success');
+            } else {
+                addResult('ℹ️ No hay token en localStorage', 'info');
+            }
+        }
+
+        async function testApiCall() {
+            addResult('<strong>🌐 Probando llamada a API de usuarios...</strong>');
+            
+            const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                const [key, value] = cookie.trim().split('=');
+                acc[key] = value;
+                return acc;
+            }, {});
+
+            // Token válido generado para pruebas
+            const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4OGJkNTI1YzI1MGQ5MjBjMWU0MGQ1MyIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NzYxNTMyOSwiZXhwIjoxNzYwMjA3MzI5fQ.LWEFvkDc0_QUFasb7gZUvbW22lkIbXQZCFUnLPubRmU';
+            const token = cookies.auth_token || validToken;
+            
+            if (!token) {
+                addResult('❌ No hay token disponible para la petición', 'error');
+                return;
+            }
+            
+            if (token === validToken) {
+                addResult('ℹ️ Usando token de prueba válido', 'info');
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/users', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                addResult(`📊 Status de respuesta: ${response.status} ${response.statusText}`, 
+                    response.ok ? 'success' : 'error');
+
+                const data = await response.text();
+                
+                if (response.ok) {
+                    addResult(`✅ Respuesta exitosa:<pre>${data.substring(0, 500)}...</pre>`, 'success');
+                } else {
+                    addResult(`❌ Error en respuesta:<pre>${data}</pre>`, 'error');
+                }
+
+            } catch (error) {
+                addResult(`❌ Error en petición: ${error.message}`, 'error');
+            }
+        }
+
+        function checkUserRole() {
+            addResult('<strong>👤 Verificando rol de usuario...</strong>');
+            
+            const userData = localStorage.getItem('user_data');
+            const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                const [key, value] = cookie.trim().split('=');
+                acc[key] = value;
+                return acc;
+            }, {});
+
+            // Verificar en localStorage
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    if (user.role === 'admin') {
+                        addResult('✅ Usuario tiene rol de ADMIN (localStorage)', 'success');
+                    } else {
+                        addResult(`❌ Usuario NO es admin. Rol actual: ${user.role} (localStorage)`, 'error');
+                    }
+                } catch (error) {
+                    addResult(`❌ Error parseando datos: ${error.message}`, 'error');
+                }
+            }
+
+            // Verificar en token JWT
+            if (cookies.auth_token) {
+                try {
+                    const payload = JSON.parse(atob(cookies.auth_token.split('.')[1]));
+                    if (payload.role === 'admin') {
+                        addResult('✅ Token JWT confirma rol de ADMIN', 'success');
+                    } else {
+                        addResult(`❌ Token JWT indica rol: ${payload.role || 'no especificado'}`, 'error');
+                    }
+                } catch (error) {
+                    addResult(`❌ Error decodificando token: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Auto-ejecutar verificaciones básicas al cargar
+        window.onload = function() {
+            addResult('🚀 Debug de autenticación iniciado', 'info');
+            checkCookies();
+            checkUserRole();
+        };
+    </script>
+</body>
+</html>

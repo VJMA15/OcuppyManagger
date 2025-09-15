@@ -1,18 +1,95 @@
-import { useState } from "react";
-import StatsCard from "@/components/dashboard/StatsCard";
+import { useState, useEffect } from "react";
 import { useAmbientes } from "@/hooks/useAmbientes";
-import { Building2, Users, AlertTriangle, CheckCircle, Search, Filter, Activity } from "lucide-react";
+import { useGuardia } from "@/contexts/GuardiaContext";
+import { 
+    Users, 
+    AlertTriangle, 
+    CheckCircle, 
+    Search, 
+    Filter, 
+    Activity, 
+    Building2, 
+    MapPin, 
+    Clock,
+    ArrowRight,
+    Calendar,
+    User,
+    Info,
+    AlertCircle,
+    Sliders
+} from "lucide-react";
 import { cn } from "@/utils/cn";
 
-export const MonitoreoPage = () => {
+// Componente de tarjeta de estadísticas
+const StatsCard = ({ title, value, icon: Icon, color, subtitle, loading = false }) => {
+    if (loading) {
+        return (
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 animate-pulse">
+                <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-4"></div>
+                <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 transition-all hover:shadow-md">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{value}</h3>
+                </div>
+                <div className={`p-3 rounded-lg ${color.bg} ${color.icon} shadow-sm`}>
+                    <Icon className="w-6 h-6" />
+                </div>
+            </div>
+            <p className={`text-sm mt-2 ${color.text}`}>
+                {subtitle}
+            </p>
+        </div>
+    );
+};
+
+const MonitoreoPage = () => {
     const { ambientes, loading, error } = useAmbientes();
-    const [searchTerm, setSearchTerm] = useState("");
-    const [filterEstado, setFilterEstado] = useState("todos");
+    const { monitoreoData, updateMonitoreoData } = useGuardia();
+    const [searchTerm, setSearchTerm] = useState(monitoreoData.filtros?.searchTerm || "");
+    const [filterEstado, setFilterEstado] = useState(monitoreoData.filtros?.filterEstado || "todos");
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+        return () => setIsMounted(false);
+    }, []);
+
+    // Función para manejar clic en ambiente
+    const handleAmbienteClick = (ambienteId) => {
+        console.log('Ambiente seleccionado:', ambienteId);
+        // Aquí se puede agregar navegación o modal de detalles
+    };
+
+    // Actualizar contexto cuando cambien los datos
+    useEffect(() => {
+        if (ambientes.length > 0) {
+            updateMonitoreoData({
+                ambientes,
+                loading,
+                filtros: { searchTerm, filterEstado }
+            });
+        }
+    }, [ambientes, loading, searchTerm, filterEstado, updateMonitoreoData]);
+
+    // Restaurar filtros desde el contexto al montar
+    useEffect(() => {
+        if (monitoreoData.filtros) {
+            setSearchTerm(monitoreoData.filtros.searchTerm || "");
+            setFilterEstado(monitoreoData.filtros.filterEstado || "todos");
+        }
+    }, []);
 
     // Filtrar ambientes
     const ambientesFiltrados = ambientes.filter(ambiente => {
-        const matchesSearch = ambiente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            ambiente.codigo.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = ambiente.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           ambiente.codigo?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesFilter = filterEstado === "todos" || ambiente.estado === filterEstado;
         return matchesSearch && matchesFilter;
     });
@@ -25,31 +102,47 @@ export const MonitoreoPage = () => {
 
     const statsCards = [
         {
-            title: "Total Ambientes",
+            title: "Total de Ambientes",
             value: totalAmbientes,
             icon: Building2,
-            color: "blue",
-            subtitle: "Ambientes registrados"
+            color: {
+                bg: "bg-slate-50 dark:bg-slate-800/50",
+                icon: "text-slate-600 dark:text-slate-400",
+                text: "text-slate-600 dark:text-slate-400"
+            },
+            subtitle: `${totalAmbientes} ambientes registrados en total`
         },
         {
             title: "Disponibles",
             value: ambientesDisponibles,
             icon: CheckCircle,
-            color: "green",
-            subtitle: "Listos para usar"
+            color: {
+                bg: "bg-emerald-50 dark:bg-emerald-900/20",
+                icon: "text-emerald-600 dark:text-emerald-400",
+                text: "text-emerald-600 dark:text-emerald-400"
+            },
+            subtitle: `${((ambientesDisponibles / totalAmbientes) * 100 || 0).toFixed(0)}% de disponibilidad`
         },
         {
             title: "Ocupados",
             value: ambientesOcupados,
             icon: Users,
-            color: "orange",
-            subtitle: "En uso actualmente"
+            color: {
+                bg: "bg-amber-50 dark:bg-amber-900/20",
+                icon: "text-amber-600 dark:text-amber-400",
+                text: "text-amber-600 dark:text-amber-400"
+            },
+            subtitle: `${((ambientesOcupados / totalAmbientes) * 100 || 0).toFixed(0)}% de ocupación`
         },
         {
             title: "Mantenimiento",
             value: ambientesMantenimiento,
             icon: AlertTriangle,
-            color: "red",
+            color: {
+                bg: "bg-red-50 dark:bg-red-900/20",
+                icon: "text-red-600 dark:text-red-400",
+                text: "text-red-600 dark:text-red-400"
+            },
             subtitle: "Requieren atención"
         }
     ];
@@ -84,13 +177,13 @@ export const MonitoreoPage = () => {
     return (
         <div className="space-y-8 max-w-7xl mx-auto">
             {/* Header mejorado con gradiente */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-white via-slate-50 to-blue-50 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700">
+            <div className="relative overflow-hidden bg-gradient-to-br from-white via-slate-50 to-slate-100 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
                 <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
                 <div className="relative p-8">
                     <div className="flex items-center justify-between">
                         <div className="space-y-3">
                             <div className="flex items-center gap-3">
-                                <div className="p-3 bg-gradient-to-br from-sena-500 to-sena-600 rounded-xl shadow-lg">
+                                <div className="p-3 bg-gradient-to-br from-slate-600 to-slate-700 dark:from-slate-700 dark:to-slate-800 rounded-xl shadow-sm">
                                     <Activity className="w-6 h-6 text-white" />
                                 </div>
                                 <div>
@@ -119,130 +212,164 @@ export const MonitoreoPage = () => {
 
             {/* Estadísticas con diseño mejorado */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {statsCards.map((stat, index) => (
-                    <div key={index} className="transform hover:scale-105 transition-all duration-300">
-                        <StatsCard {...stat} />
+                {statsCards.map((stat) => (
+                    <div key={stat.title} className="transform hover:scale-105 transition-all duration-300">
+                        <StatsCard 
+                            title={stat.title}
+                            value={stat.value}
+                            icon={stat.icon}
+                            color={typeof stat.color === 'string' ? {
+                                bg: `bg-${stat.color}-100 dark:bg-${stat.color}-900/30`,
+                                icon: `text-${stat.color}-600 dark:text-${stat.color}-400`,
+                                text: `text-${stat.color}-600 dark:text-${stat.color}-400`
+                            } : stat.color}
+                            subtitle={stat.subtitle}
+                        />
                     </div>
                 ))}
             </div>
 
-            {/* Panel de filtros rediseñado */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-700 dark:to-slate-800 px-6 py-4 border-b border-slate-200 dark:border-slate-600">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Filter className="w-5 h-5" />
-                        Filtros de Búsqueda
-                    </h3>
-                </div>
-                <div className="p-6">
-                    <div className="flex flex-col lg:flex-row gap-4">
-                        <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                            <input
-                                type="text"
-                                placeholder="Buscar por nombre o código del ambiente..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-sena-500 focus:border-transparent dark:bg-slate-700 dark:text-white placeholder-slate-400 transition-all duration-200"
-                            />
-                        </div>
-                        <div className="lg:w-64">
-                            <select
-                                value={filterEstado}
-                                onChange={(e) => setFilterEstado(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-sena-500 focus:border-transparent dark:bg-slate-700 dark:text-white transition-all duration-200"
-                            >
-                                <option value="todos">📊 Todos los estados</option>
-                                <option value="disponible">✅ Disponible</option>
-                                <option value="ocupado">👥 Ocupado</option>
-                                <option value="mantenimiento">⚠️ Mantenimiento</option>
-                            </select>
-                        </div>
+            {/* Lista de ambientes */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                            Ambientes {filterEstado !== 'todos' ? `(${filterEstado})` : ''}
+                        </h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                            {ambientesFiltrados.length} {ambientesFiltrados.length === 1 ? 'ambiente encontrado' : 'ambientes encontrados'}
+                        </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">
+                            Ordenar por:
+                        </span>
+                        <select className="text-sm bg-transparent border-0 text-ctpga-600 dark:text-ctpga-400 font-medium focus:ring-0 focus:ring-offset-0 p-0">
+                            <option>Nombre (A-Z)</option>
+                            <option>Estado</option>
+                            <option>Capacidad</option>
+                        </select>
                     </div>
                 </div>
-            </div>
 
-            {/* Grid de ambientes con diseño de tarjetas mejorado */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {ambientesFiltrados.map((ambiente) => (
-                    <div
-                        key={ambiente._id}
-                        className="group bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-                    >
-                        {/* Header de la tarjeta */}
-                        <div className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-700 dark:to-slate-800 p-4 border-b border-slate-200 dark:border-slate-600">
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                    <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-1 group-hover:text-sena-600 dark:group-hover:text-sena-400 transition-colors">
-                                        {ambiente.nombre}
-                                    </h3>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 font-mono">
-                                        {ambiente.codigo}
-                                    </p>
-                                </div>
-                                <span className={cn(
-                                    "px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm",
-                                    ambiente.estado === "disponible" 
-                                        ? "bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200 dark:from-green-900/40 dark:to-emerald-900/40 dark:text-green-300 dark:border-green-700"
-                                        : ambiente.estado === "ocupado"
-                                        ? "bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 border border-orange-200 dark:from-orange-900/40 dark:to-amber-900/40 dark:text-orange-300 dark:border-orange-700"
-                                        : "bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border border-red-200 dark:from-red-900/40 dark:to-rose-900/40 dark:text-red-300 dark:border-red-700"
-                                )}>
-                                    {ambiente.estado}
-                                </span>
-                            </div>
-                        </div>
-                        
-                        {/* Contenido de la tarjeta */}
-                        <div className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <Users className="w-4 h-4 text-slate-400" />
-                                        <span className="text-slate-600 dark:text-slate-400">Capacidad</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Building2 className="w-4 h-4 text-slate-400" />
-                                        <span className="text-slate-600 dark:text-slate-400">Ubicación</span>
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <div className="font-bold text-slate-900 dark:text-white">
-                                        {ambiente.capacidad} personas
-                                    </div>
-                                    <div className="font-medium text-slate-700 dark:text-slate-300">
-                                        {ambiente.ubicacion}
-                                    </div>
-                                </div>
-                            </div>
+                {ambientesFiltrados.length > 0 ? (
+                    <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                        {ambientesFiltrados.map((ambiente) => {
+                            const statusColors = {
+                                disponible: {
+                                    bg: 'bg-green-100 dark:bg-green-900/20',
+                                    text: 'text-green-800 dark:text-green-400',
+                                    icon: 'text-green-500',
+                                    border: 'border-green-200 dark:border-green-800'
+                                },
+                                ocupado: {
+                                    bg: 'bg-amber-100 dark:bg-amber-900/20',
+                                    text: 'text-amber-800 dark:text-amber-400',
+                                    icon: 'text-amber-500',
+                                    border: 'border-amber-200 dark:border-amber-800'
+                                },
+                                mantenimiento: {
+                                    bg: 'bg-red-100 dark:bg-red-900/20',
+                                    text: 'text-red-800 dark:text-red-400',
+                                    icon: 'text-red-500',
+                                    border: 'border-red-200 dark:border-red-800'
+                                }
+                            };
                             
-                            <div className="pt-3 border-t border-slate-200 dark:border-slate-600">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-600 dark:text-slate-400">Tipo de ambiente</span>
-                                    <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">
-                                        {ambiente.tipo}
-                                    </span>
+                            const status = statusColors[ambiente.estado] || statusColors.disponible;
+                            
+                            return (
+                                <div 
+                                    key={`ambiente-${ambiente._id || ambiente.id}`}
+                                    className="group p-6 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors duration-150 cursor-pointer"
+                                    onClick={() => handleAmbienteClick(ambiente._id || ambiente.id)}
+                                >
+                                    <div className="flex items-start">
+                                        <div className={`p-3 rounded-lg ${status.bg} ${status.icon} ${status.border} border`}>
+                                            <Building2 className="w-5 h-5" />
+                                        </div>
+                                        <div className="ml-4 flex-1 min-w-0">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-ctpga-600 dark:group-hover:text-ctpga-400 transition-colors truncate">
+                                                    {ambiente.nombre}
+                                                </h3>
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.bg} ${status.text} ${status.border} border`}>
+                                                    {ambiente.estado.charAt(0).toUpperCase() + ambiente.estado.slice(1)}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                                                {ambiente.codigo}
+                                            </p>
+                                            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+                                                <div className="flex items-center text-sm text-slate-600 dark:text-slate-300">
+                                                    <MapPin className="w-4 h-4 mr-1.5 text-slate-400 flex-shrink-0" />
+                                                    <span className="truncate">{ambiente.ubicacion || 'Sin ubicación'}</span>
+                                                </div>
+                                                <div className="flex items-center text-sm text-slate-600 dark:text-slate-300">
+                                                    <Users className="w-4 h-4 mr-1.5 text-slate-400 flex-shrink-0" />
+                                                    {ambiente.capacidad || '0'} personas
+                                                </div>
+                                                <div className="flex items-center text-sm text-slate-600 dark:text-slate-300">
+                                                    <Clock className="w-4 h-4 mr-1.5 text-slate-400 flex-shrink-0" />
+                                                    Actualizado hace 5 min
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="ml-4 flex-shrink-0 self-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                            <button 
+                                                className="text-ctpga-600 hover:text-ctpga-700 dark:text-ctpga-400 dark:hover:text-ctpga-300 p-1 rounded-full hover:bg-ctpga-50 dark:hover:bg-ctpga-900/20"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleAmbienteClick(ambiente._id);
+                                                }}
+                                                aria-label="Ver detalles"
+                                            >
+                                                <ArrowRight className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="p-12 text-center">
+                        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 mb-4">
+                            <Search className="h-8 w-8" />
                         </div>
+                        <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-1">
+                            {searchTerm || filterEstado !== 'todos' ? 'No se encontraron coincidencias' : 'No hay ambientes registrados'}
+                        </h3>
+                        <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                            {searchTerm || filterEstado !== 'todos' 
+                                ? 'No hay ambientes que coincidan con los criterios de búsqueda. Intenta con otros términos o ajusta los filtros.'
+                                : 'Actualmente no hay ambientes registrados en el sistema. Crea un nuevo ambiente para comenzar.'}
+                        </p>
+                        {searchTerm || filterEstado !== 'todos' ? (
+                            <button
+                                type="button"
+                                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-ctpga-700 bg-ctpga-100 hover:bg-ctpga-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ctpga-500 dark:bg-ctpga-900/30 dark:text-ctpga-200 dark:hover:bg-ctpga-900/40"
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setFilterEstado('todos');
+                                }}
+                            >
+                                Limpiar filtros
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-ctpga-600 hover:bg-ctpga-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ctpga-500"
+                            >
+                                <Plus className="-ml-1 mr-2 h-4 w-4" />
+                                Agregar ambiente
+                            </button>
+                        )}
                     </div>
-                ))}
+                )}
             </div>
-
-            {/* Estado vacío mejorado */}
-            {ambientesFiltrados.length === 0 && (
-                <div className="text-center py-16">
-                    <div className="bg-slate-100 dark:bg-slate-800 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-                        <Building2 size={48} className="text-slate-400 dark:text-slate-500" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                        No se encontraron ambientes
-                    </h3>
-                    <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                        Intenta ajustar los filtros de búsqueda o verifica que existan ambientes registrados en el sistema.
-                    </p>
-                </div>
-            )}
         </div>
     );
 };
+
+export default MonitoreoPage;

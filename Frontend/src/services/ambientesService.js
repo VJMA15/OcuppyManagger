@@ -1,25 +1,100 @@
-import ApiService from './apiService';
-import API_CONFIG from '@/config/api';
+// Servicio para gestión de ambientes - CONECTADO AL BACKEND REAL
+class AmbientesService {
+  constructor() {
+    this.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  }
 
-class AmbientesService extends ApiService {
+  async request(endpoint, options = {}) {
+    const token = localStorage.getItem('token');
+    
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    if (config.body && typeof config.body === 'object') {
+      config.body = JSON.stringify(config.body);
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}${endpoint}`, config);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        data: data.data || data,
+        message: data.message
+      };
+    } catch (error) {
+      console.error('API Error:', error);
+      return {
+        success: false,
+        error: error.message,
+        data: null
+      };
+    }
+  }
+
+  // Obtener todos los ambientes
   async getAmbientes() {
-    return this.get(API_CONFIG.ENDPOINTS.AMBIENTES.ALL);
+    return this.request('/api/v1/ambientes');
   }
 
+  // Obtener ambiente por ID
   async getAmbienteById(id) {
-    return this.get(API_CONFIG.ENDPOINTS.AMBIENTES.BY_ID(id));
+    return this.request(`/api/v1/ambientes/${id}`);
   }
 
+  // Crear nuevo ambiente
   async createAmbiente(ambienteData) {
-    return this.post(API_CONFIG.ENDPOINTS.AMBIENTES.CREATE, ambienteData);
+    return this.request('/api/v1/ambientes', {
+      method: 'POST',
+      body: ambienteData,
+    });
   }
 
+  // Actualizar ambiente
   async updateAmbiente(id, ambienteData) {
-    return this.put(API_CONFIG.ENDPOINTS.AMBIENTES.UPDATE(id), ambienteData);
+    return this.request(`/api/v1/ambientes/${id}`, {
+      method: 'PUT',
+      body: ambienteData,
+    });
   }
 
+  // Eliminar ambiente
   async deleteAmbiente(id) {
-    return this.delete(API_CONFIG.ENDPOINTS.AMBIENTES.DELETE(id));
+    return this.request(`/api/v1/ambientes/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Verificar disponibilidad de ambiente
+  async checkAvailability(environmentId, startDate, endDate) {
+    return this.request('/api/v1/ambientes/verificar-disponibilidad', {
+      method: 'POST',
+      body: {
+        environmentId,
+        startDate,
+        endDate,
+      },
+    });
+  }
+
+  // Obtener horarios de ambiente
+  async getAmbienteSchedule(environmentId, date) {
+    return this.request(`/api/v1/ambientes/${environmentId}/horarios`, {
+      method: 'POST',
+      body: { date },
+    });
   }
 }
 

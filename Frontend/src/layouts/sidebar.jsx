@@ -1,8 +1,8 @@
 import { forwardRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { navbarLinks } from "@/constants";
-import logoSena from "@/assets/logo-sena.png";
-import { cn } from "@/utils/cn";
+import { navbarLinks } from "../constants";
+import logoSena from "../assets/logo-sena.png";
+import { cn } from "../utils/cn";
 import PropTypes from "prop-types";
 
 export const Sidebar = forwardRef(({ collapsed }, ref) => {
@@ -32,7 +32,7 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
                         src={logoSena}
                         alt="Logo SENA"
                         className={cn(
-                            "object-contain transition-all duration-300",
+                            "object-contain transition-all duration-300 rounded-full",
                             collapsed 
                                 ? "w-6 h-6" 
                                 : "w-8 h-8"

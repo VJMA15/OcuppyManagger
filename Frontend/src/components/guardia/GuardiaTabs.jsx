@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { cn } from "@/utils/cn";
+import { cn } from "../../utils/cn";
 import { Monitor, AlertTriangle, Shield, Calendar } from "lucide-react";
 
 const tabs = [
@@ -29,7 +29,7 @@ const tabs = [
     }
 ];
 
-export const GuardiaTabs = ({ activeTab, onTabChange }) => {
+const GuardiaTabs = ({ activeTab, onTabChange }) => {
     return (
         <div className="border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
             <div className="flex space-x-8 px-6">
@@ -44,7 +44,7 @@ export const GuardiaTabs = ({ activeTab, onTabChange }) => {
                             className={cn(
                                 "flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200",
                                 isActive
-                                    ? "border-sena-500 text-sena-600 dark:text-sena-400"
+                                    ? "border-slate-600 text-slate-700 dark:text-slate-300 dark:border-slate-400"
                                     : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300"
                             )}
                         >
@@ -57,3 +57,5 @@ export const GuardiaTabs = ({ activeTab, onTabChange }) => {
         </div>
     );
 };
+
+export default GuardiaTabs;

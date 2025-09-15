@@ -1,10 +1,244 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, MapPin, Users, Eye, CheckCircle, XCircle, Building2, Calendar, Clock, Plus, BookOpen } from 'lucide-react';
+import { Search, Filter, MapPin, Users, Building2, Calendar, Clock, BookOpen, X } from 'lucide-react';
 import { useAmbientes } from '../hooks/useAmbientes';
 import { useAuthContext } from '../contexts/auth-context';
-import { Modal } from '../components/ui';
-import apiService from '../services/api';
+import { useTheme } from '../hooks/use-theme';
+import Modal from '../components/ui/Modal';
+import reservationsService from '../services/reservationsService';
+
+// Estilos personalizados para los botones de estado (modo claro y oscuro)
+const statusStyles = {
+  disponible: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800',
+  ocupado: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800',
+  mantenimiento: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800',
+  inactivo: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
+};
+
+// Estilos para los tipos de ambiente (modo claro y oscuro)
+const typeStyles = {
+  aula: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 border-blue-200 dark:border-blue-800',
+  laboratorio: 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200 border-purple-200 dark:border-purple-800',
+  taller: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-200 border-amber-200 dark:border-amber-800',
+  auditorio: 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-200 border-rose-200 dark:border-rose-800',
+  otro: 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700'
+};
+
+// Componente para cada tarjeta de ambiente
+const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [localReservaForm, setLocalReservaForm] = useState({
+    fecha: '',
+    jornada: '',
+    proposito: '',
+    observaciones: ''
+  });
+  
+  const handleToggleExpanded = (e) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+    if (!isExpanded) {
+      // Reset form when opening
+      setLocalReservaForm({
+        fecha: '',
+        jornada: '',
+        proposito: '',
+        observaciones: ''
+      });
+    }
+  };
+  
+  const handleLocalReservaSubmit = (e) => {
+    e.preventDefault();
+    onReservaSubmit(e, ambiente, localReservaForm);
+    setIsExpanded(false);
+    setLocalReservaForm({
+      fecha: '',
+      jornada: '',
+      proposito: '',
+      observaciones: ''
+    });
+  };
+  
+  return (
+    <div
+      key={ambiente._id}
+      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-slate-100 dark:border-gray-700 hover:border-slate-200 dark:hover:border-gray-600"
+      onClick={() => onAmbienteClick(ambiente)}
+    >
+      <div className="relative">
+        <div className="h-36 bg-gradient-to-r from-slate-100 to-slate-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
+          <Building2 className="h-12 w-12 text-slate-400 dark:text-gray-500" />
+        </div>
+        <div className="absolute top-4 right-4">
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+            statusStyles[ambiente.estado] || statusStyles.inactivo
+          }`}>
+            {ambiente.estado.charAt(0).toUpperCase() + ambiente.estado.slice(1)}
+          </span>
+        </div>
+      </div>
+      <div className="p-5">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">{ambiente.nombre}</h3>
+            <p className="text-slate-500 dark:text-gray-400 text-sm mt-1 flex items-center">
+              <MapPin className="h-3.5 w-3.5 mr-1.5 text-slate-400 dark:text-gray-500" />
+              {ambiente.ubicacion}
+            </p>
+          </div>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            typeStyles[ambiente.tipo?.toLowerCase()] || typeStyles.otro
+          }`}>
+            {ambiente.tipo}
+          </span>
+        </div>
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-gray-700">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center">
+              <div className="p-2 bg-slate-50 dark:bg-gray-700 rounded-lg mr-3">
+                <Users className="h-4 w-4 text-slate-500 dark:text-gray-400" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-gray-400">Capacidad</p>
+                <p className="font-medium text-slate-800 dark:text-gray-200">{ambiente.capacidad} personas</p>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <div className="p-2 bg-slate-50 dark:bg-gray-700 rounded-lg mr-3">
+                <BookOpen className="h-4 w-4 text-slate-500 dark:text-gray-400" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 dark:text-gray-400">Tipo</p>
+                <p className="font-medium text-slate-800 dark:text-gray-200">{ambiente.tipo}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={handleToggleExpanded}
+            disabled={ambiente.estado !== 'disponible'}
+            className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors ${
+              ambiente.estado === 'disponible'
+                ? isExpanded
+                  ? 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200'
+                  : 'bg-green-700 text-white hover:bg-green-800 shadow-sm hover:shadow-md'
+                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+            }`}
+          >
+            {isExpanded ? (
+              <>
+                <X className="h-4 w-4 mr-2" />
+                Cerrar
+              </>
+            ) : (
+              <>
+                <Calendar className="h-4 w-4 mr-2" />
+                Reservar
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+      
+      {/* Formulario inline de reserva */}
+      {isExpanded && (
+        <div className="mt-4 p-4 bg-slate-50 dark:bg-gray-700 rounded-lg border-t border-slate-200 dark:border-gray-600">
+          <div className="mb-4">
+            <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+              Reservar {ambiente.nombre}
+            </h4>
+            <div className="flex items-center text-sm text-slate-600 dark:text-gray-300">
+              <MapPin className="h-4 w-4 mr-1" />
+              {ambiente.ubicacion} • Capacidad: {ambiente.capacidad} personas
+            </div>
+          </div>
+          
+          <form onSubmit={handleLocalReservaSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  Fecha *
+                </label>
+                <input
+                  type="date"
+                  className="block w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  value={localReservaForm.fecha}
+                  onChange={(e) => setLocalReservaForm({...localReservaForm, fecha: e.target.value})}
+                  required
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-gray-300 mb-1">
+                  Jornada *
+                </label>
+                <select
+                  className="block w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  value={localReservaForm.jornada}
+                  onChange={(e) => setLocalReservaForm({...localReservaForm, jornada: e.target.value})}
+                  required
+                >
+                  <option value="">Seleccionar jornada</option>
+                  <option value="mañana">Mañana (6:00 - 12:00)</option>
+                  <option value="tarde">Tarde (12:00 - 18:00)</option>
+                  <option value="noche">Noche (18:00 - 22:00)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-gray-300 mb-1">
+                Propósito *
+              </label>
+              <input
+                type="text"
+                placeholder="Ej: Clase de programación"
+                className="block w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                value={localReservaForm.proposito}
+                onChange={(e) => setLocalReservaForm({...localReservaForm, proposito: e.target.value})}
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-gray-300 mb-1">
+                Observaciones
+              </label>
+              <textarea
+                rows={3}
+                placeholder="Observaciones adicionales..."
+                className="block w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                value={localReservaForm.observaciones}
+                onChange={(e) => setLocalReservaForm({...localReservaForm, observaciones: e.target.value})}
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                  type="button"
+                  onClick={handleToggleExpanded}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-slate-300 dark:border-gray-600 rounded-md hover:bg-slate-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600 transition-colors duration-150"
+                >
+                  Cancelar
+                </button>
+              <button
+                type="submit"
+                className="px-4 py-2 text-sm font-medium text-white bg-green-700 border border-transparent rounded-md hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600 transition-colors duration-150"
+              >
+                Confirmar Reserva
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  // Solo re-renderizar si el ambiente cambia
+  return prevProps.ambiente._id === nextProps.ambiente._id;
+});
 
 const InstructorAmbientesPage = () => {
   const navigate = useNavigate();
@@ -16,10 +250,10 @@ const InstructorAmbientesPage = () => {
   const [selectedAmbiente, setSelectedAmbiente] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showReservaModal, setShowReservaModal] = useState(false);
+  // Estado removido: expandedReservaCard ya no es necesario
   const [reservaForm, setReservaForm] = useState({
     fecha: '',
-    horaInicio: '',
-    horaFin: '',
+    jornada: '',
     proposito: '',
     observaciones: ''
   });
@@ -41,10 +275,16 @@ const InstructorAmbientesPage = () => {
     setShowModal(true);
   };
 
-  const handleReservarClick = (ambiente) => {
+  const handleReservarClick = (ambiente, useModal = true) => {
     setSelectedAmbiente(ambiente);
-    setShowReservaModal(true);
+    if (useModal) {
+      setShowReservaModal(true);
+    } else {
+      setExpandedReservaCard(ambiente._id);
+    }
   };
+
+  // Función removida: handleToggleInlineReserva ya no es necesaria
 
   const handleCloseModal = () => {
     setShowModal(false);
@@ -56,44 +296,58 @@ const InstructorAmbientesPage = () => {
     setSelectedAmbiente(null);
     setReservaForm({
       fecha: '',
-      horaInicio: '',
-      horaFin: '',
+      jornada: '',
       proposito: '',
       observaciones: ''
     });
   };
 
-  const handleReservaSubmit = async (e) => {
+  const handleReservaSubmit = async (e, ambiente = null, formData = null) => {
     e.preventDefault();
+    
+    const targetAmbiente = ambiente || selectedAmbiente;
+    const targetFormData = formData || reservaForm;
+    
+    if (!targetAmbiente) {
+      alert('Por favor selecciona un ambiente');
+      return;
+    }
+
     try {
-      await apiService.post('/reservas', {
-        ambienteId: selectedAmbiente._id,
+      await apiService.post('/api/v1/reservas', {
+        ambienteId: targetAmbiente._id,
         instructorId: user.id,
-        ...reservaForm
+        ...targetFormData
       });
       alert('Reserva creada exitosamente');
-      handleCloseReservaModal();
+      
+      // Cerrar modal o formulario inline según corresponda
+      if (showReservaModal) {
+        handleCloseReservaModal();
+      }
     } catch (error) {
       alert('Error al crear la reserva: ' + error.message);
     }
   };
 
+  // Renderizar el componente de carga
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-sena border-t-transparent mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-sena-600 border-t-transparent mx-auto mb-4"></div>
           <p className="text-slate-600 font-medium">Cargando ambientes...</p>
         </div>
       </div>
     );
   }
 
+  // Renderizar mensaje de error
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-rose-100 flex items-center justify-center">
         <div className="text-center bg-white rounded-xl p-8 shadow-lg border border-red-200">
-          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <X className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 font-semibold text-lg">Error al cargar ambientes</p>
           <p className="text-red-500 mt-2">{error}</p>
         </div>
@@ -101,312 +355,247 @@ const InstructorAmbientesPage = () => {
     );
   }
 
+  const { theme } = useTheme();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Header para Instructores */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-6">
-                <BookOpen className="w-6 h-6" />
-                <span className="font-semibold text-lg">Panel de Instructor</span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Encabezado */}
+        <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-700 to-green-800 p-6 text-white">
+            <div className="flex flex-col md:flex-row md:items-center justify-between">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold">Gestión de Ambientes</h1>
+                <p className="text-slate-100 dark:text-gray-300 opacity-90 mt-1">Panel de control para instructores CTPGA</p>
               </div>
-              <h1 className="text-4xl font-bold mb-4">Gestión de Ambientes</h1>
-              <p className="text-xl opacity-90 mb-8 max-w-2xl">
-                Bienvenido {user?.nombre}. Reserva y gestiona ambientes para tus clases y actividades académicas.
-              </p>
-            </div>
-            <div className="hidden lg:flex flex-col gap-4">
-              <button 
-                onClick={() => navigate('/mis-reservas')}
-                className="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold hover:bg-white/30 transition-all duration-200 flex items-center gap-2"
-              >
-                <Calendar className="w-5 h-5" />
-                Mis Reservas
-              </button>
-              <button 
-                onClick={() => navigate('/crear-reserva')}
-                className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-slate-50 transition-all duration-200 flex items-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                Nueva Reserva
-              </button>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Contenido principal */}
-      <div className="pt-12 px-6 pb-12">
-        <div className="max-w-7xl mx-auto">
-          {/* Filtros y búsqueda */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 mb-12">
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* Barra de búsqueda */}
-              <div className="flex-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Search className="h-6 w-6 text-slate-400" />
+          
+          {/* Barra de búsqueda y filtros */}
+          <div className="p-4 md:p-6 border-b border-slate-100 dark:border-gray-700">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-slate-400 dark:text-gray-500" />
                 </div>
                 <input
                   type="text"
-                  placeholder="Buscar ambientes por nombre o ubicación..."
+                  placeholder="Buscar por nombre o ubicación..."
+                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-slate-700 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-150"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-6 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-lg placeholder-slate-400"
                 />
               </div>
               
-              {/* Filtros */}
-              <div className="flex gap-4">
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="px-6 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-lg bg-white"
-                >
-                  <option value="">Todos los tipos</option>
-                  {tiposUnicos.map((tipo) => (
-                    <option key={tipo} value={tipo}>{tipo}</option>
-                  ))}
-                </select>
+              <div className="flex flex-wrap gap-2">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Filter className="h-4 w-4 text-slate-400 dark:text-gray-500" />
+                  </div>
+                  <select
+                    className="appearance-none bg-white border border-gray-300 text-gray-700 pl-10 pr-8 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                  >
+                    <option value="">Todos los tipos</option>
+                    {tiposUnicos.map(tipo => (
+                      <option key={tipo} value={tipo}>{tipo}</option>
+                    ))}
+                  </select>
+                </div>
                 
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-6 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-lg bg-white"
-                >
-                  <option value="">Todos los estados</option>
-                  <option value="Disponible">Disponible</option>
-                  <option value="Ocupado">Ocupado</option>
-                  <option value="Mantenimiento">Mantenimiento</option>
-                </select>
-              </div>
-            </div>
-            
-            {/* Estadísticas rápidas */}
-            <div className="mt-6 pt-6 border-t border-slate-200">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">{filteredAmbientes.length}</p>
-                  <p className="text-slate-600">Ambientes encontrados</p>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Filter className="h-4 w-4 text-slate-400 dark:text-gray-500" />
+                  </div>
+                  <select
+                    className="appearance-none bg-white border border-gray-300 text-gray-700 pl-10 pr-8 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                  >
+                    <option value="">Todos los estados</option>
+                    <option value="disponible">Disponible</option>
+                    <option value="ocupado">Ocupado</option>
+                    <option value="mantenimiento">En mantenimiento</option>
+                  </select>
                 </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">{filteredAmbientes.filter(a => a.estado === 'Disponible').length}</p>
-                  <p className="text-slate-600">Disponibles</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-600">{tiposUnicos.length}</p>
-                  <p className="text-slate-600">Tipos diferentes</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-orange-600">0</p>
-                  <p className="text-slate-600">Mis reservas hoy</p>
-                </div>
+                
+                {(searchTerm || filterType || filterStatus) && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setFilterType('');
+                      setFilterStatus('');
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-green-800 dark:hover:text-green-400 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    Limpiar filtros
+                  </button>
+                )}
               </div>
             </div>
           </div>
-
-          {/* Grid de ambientes */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredAmbientes.map((ambiente) => (
-              <div
-                key={ambiente._id}
-                className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
-              >
-                {/* Header de la tarjeta */}
-                <div className={`p-6 bg-gradient-to-r ${
-                  ambiente.estado === 'Disponible' 
-                    ? 'from-green-500 to-emerald-600' 
-                    : ambiente.estado === 'Ocupado'
-                    ? 'from-red-500 to-rose-600'
-                    : 'from-green-600 to-green-700'
-                } text-white relative overflow-hidden`}>
-                  <div className="absolute inset-0 bg-black/10"></div>
-                  <div className="relative z-10">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-xl font-bold leading-tight">
-                        {ambiente.nombre}
-                      </h3>
-                      <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold">
-                        {ambiente.estado}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-white/90">
-                      <MapPin className="w-4 h-4" />
-                      <span className="text-sm">{ambiente.ubicacion}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Contenido de la tarjeta */}
-                <div className="p-6">
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-slate-50 rounded-xl p-4 text-center">
-                      <Users className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                      <p className="text-2xl font-bold text-slate-900">{ambiente.capacidad}</p>
-                      <p className="text-sm text-slate-600">personas</p>
-                    </div>
-                    
-                    <div className="bg-slate-50 rounded-xl p-4 text-center">
-                      <Filter className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                      <p className="text-lg font-semibold text-slate-900">{ambiente.tipo}</p>
-                      <p className="text-sm text-slate-600">tipo</p>
-                    </div>
-                  </div>
-                  
-                  {/* Servicios destacados */}
-                  {ambiente.servicios && ambiente.servicios.length > 0 && (
-                    <div className="mb-6">
-                      <p className="text-sm font-medium text-slate-700 mb-2">Servicios destacados:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {ambiente.servicios.slice(0, 3).map((servicio, index) => (
-                          <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-lg text-xs font-medium">
-                            {servicio}
-                          </span>
-                        ))}
-                        {ambiente.servicios.length > 3 && (
-                          <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg text-xs font-medium">
-                            +{ambiente.servicios.length - 3} más
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Botones de acción */}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleAmbienteClick(ambiente)}
-                      className="flex-1 bg-gradient-to-r from-slate-500 to-slate-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-slate-600 hover:to-slate-700 transition-all duration-200 flex items-center justify-center gap-2"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Ver Detalles
-                    </button>
-                    {ambiente.estado === 'Disponible' && (
-                      <button
-                        onClick={() => handleReservarClick(ambiente)}
-                        className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 flex items-center justify-center gap-2"
-                      >
-                        <Calendar className="w-4 h-4" />
-                        Reservar
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Mensaje cuando no hay resultados */}
-          {filteredAmbientes.length === 0 && (
-            <div className="text-center py-16">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-12 max-w-md mx-auto">
-                <Search className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">No se encontraron ambientes</h3>
-                <p className="text-slate-600">Intenta ajustar los filtros de búsqueda</p>
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* Lista de ambientes */}
+        {filteredAmbientes.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredAmbientes.map(ambiente => (
+               <AmbienteCard
+                 key={ambiente._id}
+                 ambiente={ambiente}
+                 onAmbienteClick={handleAmbienteClick}
+                 onReservaSubmit={handleReservaSubmit}
+               />
+             ))}
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700 overflow-hidden">
+            <div className="text-center p-12">
+              <div className="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-slate-50 dark:bg-gray-700 mb-4">
+                <Search className="h-10 w-10 text-slate-300 dark:text-gray-600" />
+              </div>
+              <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-1">No se encontraron ambientes</h3>
+              <p className="text-slate-500 dark:text-gray-400 max-w-md mx-auto mb-6">
+                No hay ambientes que coincidan con los filtros actuales. Intenta con otros criterios de búsqueda.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterType('');
+                  setFilterStatus('');
+                }}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800"
+              >
+                <X className="-ml-1 mr-2 h-4 w-4" />
+                Limpiar filtros
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Modal de detalles del ambiente */}
-      {selectedAmbiente && showModal && (
-        <Modal
-          show={showModal}
-          onClose={handleCloseModal}
-          title="Información del Ambiente"
-          size="xl"
-        >
-          {/* ... contenido similar al modal de guest pero con opciones de instructor ... */}
-        </Modal>
-      )}
-
       {/* Modal de reserva */}
-      {selectedAmbiente && showReservaModal && (
-        <Modal
-          show={showReservaModal}
-          onClose={handleCloseReservaModal}
-          title={`Reservar ${selectedAmbiente.nombre}`}
-          size="lg"
-        >
-          <form onSubmit={handleReservaSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Fecha</label>
-                <input
-                  type="date"
-                  value={reservaForm.fecha}
-                  onChange={(e) => setReservaForm({...reservaForm, fecha: e.target.value})}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
+      {showReservaModal && (
+        <Modal isOpen={showReservaModal} onClose={handleCloseReservaModal}>
+          <div className="relative">
+            <button
+              onClick={handleCloseReservaModal}
+              className="absolute top-0 right-0 -mt-2 -mr-2 p-2 text-slate-400 hover:text-slate-500 dark:text-gray-400 dark:hover:text-gray-300"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
+                <Calendar className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Hora de inicio</label>
-                <input
-                  type="time"
-                  value={reservaForm.horaInicio}
-                  onChange={(e) => setReservaForm({...reservaForm, horaInicio: e.target.value})}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Hora de fin</label>
-                <input
-                  type="time"
-                  value={reservaForm.horaFin}
-                  onChange={(e) => setReservaForm({...reservaForm, horaFin: e.target.value})}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Propósito</label>
-                <select
-                  value={reservaForm.proposito}
-                  onChange={(e) => setReservaForm({...reservaForm, proposito: e.target.value})}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Seleccionar propósito</option>
-                  <option value="Clase teórica">Clase teórica</option>
-                  <option value="Clase práctica">Clase práctica</option>
-                  <option value="Evaluación">Evaluación</option>
-                  <option value="Reunión">Reunión</option>
-                  <option value="Otro">Otro</option>
-                </select>
-              </div>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Nueva reserva</h2>
+              <p className="text-slate-500 dark:text-gray-400 mb-6">
+                Completa el formulario para reservar <span className="font-medium text-slate-900 dark:text-white">{selectedAmbiente?.nombre}</span>
+              </p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Observaciones</label>
-              <textarea
-                value={reservaForm.observaciones}
-                onChange={(e) => setReservaForm({...reservaForm, observaciones: e.target.value})}
-                rows={3}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Observaciones adicionales (opcional)"
-              />
-            </div>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={handleCloseReservaModal}
-                className="flex-1 px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Crear Reserva
-              </button>
-            </div>
-          </form>
+            <form onSubmit={handleReservaSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1.5">
+                  Fecha de la reserva <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Calendar className="h-5 w-5 text-slate-400 dark:text-gray-500" />
+                  </div>
+                  <input
+                    type="date"
+                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    value={reservaForm.fecha}
+                    onChange={(e) => setReservaForm({...reservaForm, fecha: e.target.value})}
+                    required
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1.5">
+                  Jornada <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Clock className="h-5 w-5 text-slate-400 dark:text-gray-500" />
+                  </div>
+                  <select
+                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    value={reservaForm.jornada}
+                    onChange={(e) => setReservaForm({...reservaForm, jornada: e.target.value})}
+                    required
+                  >
+                    <option value="">Seleccionar jornada</option>
+                    <option value="mañana">Mañana (6:00 - 12:00)</option>
+                    <option value="tarde">Tarde (12:00 - 18:00)</option>
+                    <option value="noche">Noche (18:00 - 22:00)</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1.5">
+                  Propósito <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <BookOpen className="h-5 w-5 text-slate-400 dark:text-gray-500" />
+                  </div>
+                  <input
+                    type="text"
+                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Ej: Clase de programación"
+                    value={reservaForm.proposito}
+                    onChange={(e) => setReservaForm({...reservaForm, proposito: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-1.5">
+                  Observaciones
+                </label>
+                <div className="relative">
+                  <div className="absolute top-3 left-3">
+                    <svg className="h-5 w-5 text-slate-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </div>
+                  <textarea
+                    rows={3}
+                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Alguna observación adicional..."
+                    value={reservaForm.observaciones}
+                    onChange={(e) => setReservaForm({...reservaForm, observaciones: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="pt-2">
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800"
+                    onClick={handleCloseReservaModal}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600 dark:focus:ring-offset-gray-800 transition-colors duration-150"
+                  >
+                    Confirmar reserva
+                  </button>
+                </div>
+              </div>
+              <div className="mt-6 border-t border-slate-200 dark:border-gray-700 pt-4">
+                <p className="text-xs text-slate-500 dark:text-gray-400 text-center">
+                  Al hacer clic en "Confirmar reserva", aceptas los términos y condiciones de uso de los espacios del CTPGA.
+                </p>
+              </div>
+            </form>
+          </div>
         </Modal>
       )}
     </div>

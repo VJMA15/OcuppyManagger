@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import authService from '@/services/auth';
-import apiService from '@/services/api';
+import authService from '../services/auth';
+import apiService from '../services/api';
+import sessionManager from '../services/sessionManager';
 
 const AuthContext = createContext();
 
@@ -28,6 +29,10 @@ export const AuthProvider = ({ children }) => {
           
           setUser({ ...userData, ...tokenData });
           setIsAuthenticated(true);
+          
+          // Iniciar el gestor de sesión para sesiones existentes
+          sessionManager.startSession();
+          console.log('🔄 Sesión existente detectada, iniciando gestión de timeout');
         } else {
           // Token inválido o expirado
           authService.logout();
@@ -47,31 +52,27 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  // Login
+  // Login con backend real
   const login = async (credentials) => {
     try {
       setLoading(true);
-      const response = await apiService.login(credentials);
       
-      if (response.success && response.token) {
-        // Guardar token y datos del usuario
-        const loginSuccess = authService.login(response.token, response.user);
-        
-        if (loginSuccess) {
-          setUser(response.user);
-          setIsAuthenticated(true);
-          return { success: true, user: response.user };
-        } else {
-          throw new Error('Error al guardar la sesión');
-        }
+      // Usar el nuevo método de autenticación con backend real
+      const response = await authService.loginWithBackend(credentials.cc, credentials.password);
+      
+      if (response.success && response.user) {
+        setUser(response.user);
+        setIsAuthenticated(true);
+        console.log('🔐 Login exitoso desde contexto');
+        return { success: true, user: response.user };
       } else {
-        throw new Error(response.message || 'Credenciales inválidas');
+        throw new Error(response.error || 'Credenciales inválidas');
       }
     } catch (error) {
-      console.error('Error en login:', error);
+      console.error('❌ Error en login desde contexto:', error);
       return { 
         success: false, 
-        message: error.message || 'Error de conexión' 
+        message: error.message || 'Error de conexión con el servidor' 
       };
     } finally {
       setLoading(false);

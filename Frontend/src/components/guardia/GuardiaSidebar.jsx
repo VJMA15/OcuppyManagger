@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Shield, Monitor, AlertTriangle, KeyRound, Calendar } from "lucide-react";
+import { Shield, Monitor, AlertTriangle, KeyRound, Calendar, Package, BarChart3 } from "lucide-react";
 import logoSena from "@/assets/logo-sena.png";
 import { cn } from "@/utils/cn";
 import PropTypes from "prop-types";
@@ -21,19 +21,29 @@ const guardiaNavLinks = [
       },
       {
         label: "Control de Acceso",
-        path: "/guardia/acceso",
+        path: "/guardia/accesos",
         icon: KeyRound
       },
       {
         label: "Reservas Activas",
         path: "/guardia/reservas",
         icon: Calendar
+      },
+      {
+        label: "Entregas",
+        path: "/guardia/entregas",
+        icon: Package
+      },
+      {
+        label: "Reportes",
+        path: "/guardia/reportes",
+        icon: BarChart3
       }
     ]
   }
 ];
 
-export const GuardiaSidebar = forwardRef(({ collapsed }, ref) => {
+const GuardiaSidebar = forwardRef(({ collapsed }, ref) => {
     const location = useLocation();
     
     return (
@@ -130,3 +140,5 @@ GuardiaSidebar.displayName = "GuardiaSidebar";
 GuardiaSidebar.propTypes = {
     collapsed: PropTypes.bool,
 };
+
+export default GuardiaSidebar;

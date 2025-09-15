@@ -1,13 +1,13 @@
 import { Outlet } from "react-router-dom";
 
 import { useMediaQuery } from "@uidotdev/usehooks";
-import { useClickOutside } from "@/hooks/use-click-outside";
+import { useClickOutside } from "../hooks/use-click-outside";
 
-import { Sidebar } from "@/layouts/sidebar";
-import { Header } from "@/layouts/header";
-import DevTools from "@/components/DevTools";
+import { Sidebar } from "../layouts/sidebar";
+import { Header } from "../layouts/header";
 
-import { cn } from "@/utils/cn";
+
+import { cn } from "../utils/cn";
 import { useEffect, useRef, useState } from "react";
 
 const Layout = ({ onLogout }) => {
@@ -46,7 +46,7 @@ const Layout = ({ onLogout }) => {
                 <div className="h-[calc(100vh-60px)] overflow-y-auto overflow-x-hidden p-6">
                     <Outlet />
                 </div>
-                <DevTools />
+        
             </div>
         </div>
     );

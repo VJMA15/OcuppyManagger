@@ -1,7 +1,7 @@
 import React from 'react';
-import { cn } from '@/utils/cn';
+import { cn } from '../../utils/cn';
 
-const Badge = ({ children, variant = 'default', className, ...props }) => {
+export const Badge = ({ children, variant = 'default', className, ...props }) => {
   const variants = {
     default: 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400',
     success: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
@@ -23,4 +23,5 @@ const Badge = ({ children, variant = 'default', className, ...props }) => {
   );
 };
 
+// Exporting as both named and default for backward compatibility
 export default Badge;

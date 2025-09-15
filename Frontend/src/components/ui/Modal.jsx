@@ -1,8 +1,8 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import { Button } from './Button';
+import Button from './Button';
 
-const Modal = ({ show, onClose, title, children, size = 'md' }) => {
+export const Modal = ({ show, onClose, title, children, size = 'md' }) => {
   if (!show) return null;
 
   const sizes = {
@@ -31,4 +31,5 @@ const Modal = ({ show, onClose, title, children, size = 'md' }) => {
   );
 };
 
+// Exporting as both named and default for backward compatibility
 export default Modal;

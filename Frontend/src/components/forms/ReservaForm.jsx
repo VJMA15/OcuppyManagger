@@ -12,16 +12,18 @@ const ReservaForm = ({
   user = null
 }) => {
   return (
-    <Card className="p-8">
-      <CardHeader>
-        <CardTitle>Información de la Reserva</CardTitle>
-        <CardDescription>
-          Completa los datos para crear tu reserva
-        </CardDescription>
-      </CardHeader>
+    <Card className="overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white">
+        <CardHeader className="p-0 mb-2">
+          <CardTitle className="text-2xl font-bold">Nueva Reserva</CardTitle>
+          <CardDescription className="text-blue-100">
+            Completa el formulario para programar tu reserva
+          </CardDescription>
+        </CardHeader>
+      </div>
       
-      <CardContent>
-        <form onSubmit={onSubmit} className="space-y-6">
+      <CardContent className="p-8 pt-6">
+        <form onSubmit={onSubmit} className="space-y-8">
           {/* Información Personal */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
@@ -33,7 +35,7 @@ const ReservaForm = ({
               placeholder="Ingresa tu nombre completo"
               required
               readOnly={!!user}
-              className={user ? "bg-slate-100 dark:bg-slate-700 cursor-not-allowed" : ""}
+              className={`${user ? "bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed" : "bg-white dark:bg-gray-800"} border-gray-200 dark:border-gray-700`}
             />
             
             <Input
@@ -45,7 +47,7 @@ const ReservaForm = ({
               placeholder="Número de cédula"
               required
               readOnly={!!user}
-              className={user ? "bg-slate-100 dark:bg-slate-700 cursor-not-allowed" : ""}
+              className={`${user ? "bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed" : "bg-white dark:bg-gray-800"} border-gray-200 dark:border-gray-700`}
             />
           </div>
 
@@ -76,31 +78,37 @@ const ReservaForm = ({
             Los ambientes marcados como "OCUPADO" no están disponibles para reserva
           </p>
 
-          {/* Fecha y Jornada */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              type="date"
-              label="Fecha de Reserva"
-              icon={Calendar}
-              name="fecha"
-              value={formData.fecha}
-              onChange={onFormChange}
-              required
-            />
-            
-            <Select
-              label="Jornada"
-              icon={Clock}
-              name="jornada"
-              value={formData.jornada}
-              onChange={onFormChange}
-              required
-            >
-              <option value="">Selecciona una jornada</option>
-              <option value="mañana">Mañana (6:00 AM - 12:00 PM)</option>
-              <option value="tarde">Tarde (12:30 PM - 6:00 PM)</option>
-              <option value="noche">Noche (6:30 PM - 10:00 PM)</option>
-            </Select>
+          {/* Sección de Fecha y Hora */}
+          <div className="bg-white dark:bg-gray-900/30 p-6 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
+              Fecha y Hora de la Reserva
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                type="date"
+                label="Fecha de Reserva"
+                icon={Calendar}
+                name="fecha"
+                value={formData.fecha}
+                onChange={onFormChange}
+                required
+              />
+              
+              <Select
+                label="Jornada"
+                icon={Clock}
+                name="jornada"
+                value={formData.jornada}
+                onChange={onFormChange}
+                required
+              >
+                <option value="">Selecciona una jornada</option>
+                <option value="mañana">Mañana (6:00 AM - 12:00 PM)</option>
+                <option value="tarde">Tarde (12:30 PM - 6:00 PM)</option>
+                <option value="noche">Noche (6:30 PM - 10:00 PM)</option>
+              </Select>
+            </div>
           </div>
 
           {/* Dispositivos Requeridos */}
@@ -155,22 +163,24 @@ const ReservaForm = ({
             />
           </div>
 
-          {/* Mensaje de Error */}
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-red-500" />
-                <div>
-                  <h4 className="font-medium text-red-800 dark:text-red-200">
-                    Error al crear reserva
-                  </h4>
-                  <p className="text-sm text-red-600 dark:text-red-300">
-                    {error}
-                  </p>
+          {/* Botón de envío */}
+          <div className="pt-2">
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+              {error && (
+                <div className="flex items-center text-red-600 dark:text-red-400 text-sm">
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  {error}
                 </div>
-              </div>
+              )}
+              <Button
+                type="submit"
+                className="ml-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Procesando...' : 'Confirmar Reserva'}
+              </Button>
             </div>
-          )}
+          </div>
 
           {/* Botones */}
           <div className="flex gap-4 pt-4">
@@ -181,20 +191,6 @@ const ReservaForm = ({
               onClick={() => window.history.back()}
             >
               Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              className="flex-1" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Procesando...
-                </div>
-              ) : (
-                "Crear Reserva"
-              )}
             </Button>
           </div>
         </form>

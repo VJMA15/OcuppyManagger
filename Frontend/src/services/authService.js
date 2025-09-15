@@ -1,5 +1,5 @@
 import ApiService from './apiService';
-import API_CONFIG from '@/config/api';
+import { API_CONFIG } from '../config/api';
 
 class AuthService extends ApiService {
   async verifyUser(cc, password) {

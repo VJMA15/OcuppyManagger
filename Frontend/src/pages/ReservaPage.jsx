@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// ELIMINAR: import { useAuthContext } from "@/contexts/auth-context";
+import { useAuthContext } from "@/contexts/auth-context";
 import { 
   Calendar, 
   Clock, 
@@ -18,7 +18,7 @@ import apiService from "@/services/api";
 import { Button, Input, Select, Card, CardContent } from "@/components/ui";
 
 export default function ReservaPage() {
-  // ELIMINAR: const { user } = useAuthContext();
+  const { user } = useAuthContext();
   const navigate = useNavigate();
   
   const [form, setForm] = useState({
@@ -64,13 +64,24 @@ export default function ReservaPage() {
     fetchAmbientes();
   }, []);
 
+  // Auto-llenar campos con datos del usuario autenticado
+  useEffect(() => {
+    if (user && user.nombre && user.cc) {
+      setForm(prevForm => ({
+        ...prevForm,
+        nombre: user.nombre,
+        documento: user.cc
+      }));
+    }
+  }, [user]);
+
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleAmbienteSelect = (ambiente) => {
     setSelectedAmbiente(ambiente);
-    setForm({ ...form, ambiente: ambiente.nombre });
+    setForm({ ...form, ambiente: ambiente._id }); // Usar el _id en lugar del nombre
   };
 
   const handleSubmit = async e => {
@@ -95,11 +106,11 @@ export default function ReservaPage() {
       const [horaInicio, horaFin] = form.jornada.split('-');
       
       const reservaData = {
-        ambiente: form.ambiente,
+        environmentId: form.ambiente, // Mapear ambiente a environmentId
         fecha: form.fecha,
         startDate: `${form.fecha}T${horaInicio}:00.000Z`,
         endDate: `${form.fecha}T${horaFin}:00.000Z`,
-        motivo: form.motivo,
+        purpose: form.motivo, // Mapear motivo a purpose
         // Enviar los datos del formulario directamente
         userCC: form.documento, // Usar el documento del formulario
         userName: form.nombre   // Usar el nombre del formulario
@@ -161,23 +172,34 @@ export default function ReservaPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate(-1)}
-                className="p-2 rounded-xl hover:bg-sena-100 dark:hover:bg-sena-800 transition-colors"
+                onClick={() => {
+                  // Navegar según el rol del usuario
+                  if (user?.role === 'admin') {
+                    navigate('/dashboard');
+                  } else if (user?.role === 'instructor') {
+                    navigate('/instructor/ambientes');
+                  } else if (user?.role === 'guardia') {
+                    navigate('/guardia/ambientes');
+                  } else {
+                    navigate('/ambientes');
+                  }
+                }}
+                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-sena dark:text-sena-light" />
+                <ArrowLeft className="w-5 h-5 text-slate-700 dark:text-slate-300" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-sena to-sena-dark bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
                   Nueva Reserva
                 </h1>
-                <p className="text-sm text-slate-300 dark:text-slate-400">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Reserva un ambiente para tu actividad
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-sena-50 dark:bg-sena-900/30 rounded-xl border border-sena-200 dark:border-sena-700">
-              <div className="w-2 h-2 bg-sena rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-sena-dark dark:text-sena-light">Sistema Activo</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-xl border border-green-200 dark:border-green-700">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-green-700 dark:text-green-300">Sistema Activo</span>
             </div>
           </div>
         </div>
@@ -189,11 +211,11 @@ export default function ReservaPage() {
           
           {/* Formulario Principal */}
           <div className="xl:col-span-3">
-            <Card className="bg-white/80 backdrop-blur-sm border-sena-200 dark:bg-slate-900/80 dark:border-sena-700">
+            <Card className="bg-white/80 backdrop-blur-sm border-slate-200 dark:bg-slate-900/80 dark:border-slate-700">
               <CardContent className="p-8">
                 <div className="mb-8">
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-sena" />
+                    <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     Información de la Reserva
                   </h2>
                   <p className="text-slate-600 dark:text-slate-400">
@@ -225,6 +247,9 @@ export default function ReservaPage() {
                         onChange={handleChange}
                         required
                         placeholder="Ingrese su nombre completo"
+                        readOnly={!!user}
+                        disabled={!!user}
+                        className={user ? "bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed text-gray-600 dark:text-gray-400" : ""}
                       />
                     </div>
                     
@@ -240,6 +265,9 @@ export default function ReservaPage() {
                         onChange={handleChange}
                         required
                         placeholder="CC"
+                        readOnly={!!user}
+                        disabled={!!user}
+                        className={user ? "bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed text-gray-600 dark:text-gray-400" : ""}
                       />
                     </div>
                   </div>
@@ -262,8 +290,8 @@ export default function ReservaPage() {
                             transition-all duration-200 p-4 hover:shadow-lg hover:scale-105
                             ${
                               selectedAmbiente?._id === ambiente._id
-                                ? 'border-sena shadow-lg bg-sena-50 dark:bg-sena-900/20'
-                                : 'border-sena-200 dark:border-sena-700 hover:border-sena'
+                                ? 'border-blue-500 shadow-lg bg-blue-50 dark:bg-blue-900/20'
+                                : 'border-slate-200 dark:border-slate-700 hover:border-blue-400'
                             }
                           `}
                         >
@@ -292,7 +320,7 @@ export default function ReservaPage() {
                           {/* Indicador de selección */}
                           {selectedAmbiente?._id === ambiente._id && (
                             <div className="absolute top-2 right-2">
-                              <CheckCircle className="w-5 h-5 text-sena" />
+                              <CheckCircle className="w-5 h-5 text-blue-500" />
                             </div>
                           )}
                         </div>
@@ -325,12 +353,15 @@ export default function ReservaPage() {
                         name="jornada"
                         value={form.jornada}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-sena-200 rounded-xl focus:ring-2 focus:ring-sena focus:border-sena dark:bg-slate-800 dark:border-sena-700 dark:text-white dark:focus:ring-sena-light transition-all duration-200"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:ring-blue-400 transition-all duration-200"
                         required
                       >
                         <option value="">Selecciona una jornada</option>
-                        {jornadas.map(jornada => (
-                          <option key={jornada.value} value={jornada.value}>
+                        {jornadas && Array.isArray(jornadas) && jornadas.map((jornada, index) => (
+                          <option 
+                            key={`jornada-${index}-${jornada.value}`} 
+                            value={jornada.value}
+                          >
                             {jornada.label}
                           </option>
                         ))}
@@ -363,7 +394,7 @@ export default function ReservaPage() {
                       value={form.motivo}
                       onChange={handleChange}
                       rows={4}
-                      className="w-full px-4 py-3 border border-sena-200 rounded-xl focus:ring-2 focus:ring-sena focus:border-sena dark:bg-slate-800 dark:border-sena-700 dark:text-white dark:focus:ring-sena-light transition-all duration-200 resize-none"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:focus:ring-blue-400 transition-all duration-200 resize-none"
                       placeholder="Describe el motivo de tu reserva..."
                       required
                     />
@@ -374,15 +405,26 @@ export default function ReservaPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => navigate(-1)}
-                      className="flex-1 border-sena-200 text-sena hover:bg-sena-50 hover:border-sena dark:border-sena-700 dark:text-sena-light dark:hover:bg-sena-900/20"
+                      onClick={() => {
+                        // Navegar según el rol del usuario
+                        if (user?.role === 'admin') {
+                          navigate('/dashboard');
+                        } else if (user?.role === 'instructor') {
+                          navigate('/instructor/ambientes');
+                        } else if (user?.role === 'guardia') {
+                          navigate('/guardia/ambientes');
+                        } else {
+                          navigate('/ambientes');
+                        }
+                      }}
+                      className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
                     >
                       Cancelar
                     </Button>
                     <Button
                       type="submit"
                       disabled={isSubmitting || !selectedAmbiente}
-                      className="flex-1 bg-sena hover:bg-sena-dark text-white border-sena disabled:bg-sena/50 disabled:border-sena/50"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-blue-600 disabled:bg-blue-400 disabled:border-blue-400"
                     >
                       {isSubmitting ? (
                         <div className="flex items-center justify-center">
@@ -408,19 +450,19 @@ export default function ReservaPage() {
             <Card className="bg-white/80 backdrop-blur-sm border-sena-200 dark:bg-slate-900/80 dark:border-sena-700">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-sena" />
+                  <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   Jornadas Disponibles
                 </h3>
                 <div className="space-y-3 text-sm">
-                  <div className="flex justify-between items-center p-2 bg-sena-50 dark:bg-sena-900/20 rounded-lg border border-sena-100 dark:border-sena-800">
+                  <div className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
                     <span className="text-slate-600 dark:text-slate-400">Mañana</span>
                     <span className="font-medium text-slate-900 dark:text-white">6:00 AM - 12:00 PM</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 bg-sena-50 dark:bg-sena-900/20 rounded-lg border border-sena-100 dark:border-sena-800">
+                  <div className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
                     <span className="text-slate-600 dark:text-slate-400">Tarde</span>
                     <span className="font-medium text-slate-900 dark:text-white">12:30 PM - 6:00 PM</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 bg-sena-50 dark:bg-sena-900/20 rounded-lg border border-sena-100 dark:border-sena-800">
+                  <div className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
                     <span className="text-slate-600 dark:text-slate-400">Noche</span>
                     <span className="font-medium text-slate-900 dark:text-white">6:30 PM - 10:00 PM</span>
                   </div>
@@ -429,19 +471,19 @@ export default function ReservaPage() {
             </Card>
 
             {/* Políticas */}
-            <Card className="bg-white/80 backdrop-blur-sm border-sena-200 dark:bg-slate-900/80 dark:border-sena-700">
+            <Card className="bg-white/80 backdrop-blur-sm border-slate-200 dark:bg-slate-900/80 dark:border-slate-700">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-sena" />
+                  <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   Políticas de Reserva
                 </h3>
                 <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
-                  <div className="flex items-start gap-2 p-2 bg-sena-50 dark:bg-sena-900/20 rounded-lg border border-sena-100 dark:border-sena-800">
-                    <CheckCircle className="w-4 h-4 text-sena mt-0.5 flex-shrink-0" />
+                  <div className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
+                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                     <span>Reservas con 24h de anticipación</span>
                   </div>
-                  <div className="flex items-start gap-2 p-2 bg-sena-50 dark:bg-sena-900/20 rounded-lg border border-sena-100 dark:border-sena-800">
-                    <CheckCircle className="w-4 h-4 text-sena mt-0.5 flex-shrink-0" />
+                  <div className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
+                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                     <span>Máximo 4 horas por reserva</span>
                   </div>
                   <div className="flex items-start gap-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
@@ -454,10 +496,10 @@ export default function ReservaPage() {
 
             {/* Resumen de Selección */}
             {selectedAmbiente && (
-              <Card className="bg-gradient-to-br from-sena-50 to-sena-100 dark:from-sena-900/20 dark:to-sena-800/20 border-sena-200 dark:border-sena-700">
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Building2 className="w-5 h-5 text-sena" />
+                    <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     Ambiente Seleccionado
                   </h3>
                   <div className="space-y-3">
@@ -473,13 +515,13 @@ export default function ReservaPage() {
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="text-center p-2 bg-white/50 dark:bg-slate-800/50 rounded-lg border border-sena-100 dark:border-sena-800">
-                        <Users className="w-4 h-4 mx-auto mb-1 text-sena" />
+                      <div className="text-center p-2 bg-white/50 dark:bg-slate-800/50 rounded-lg border border-blue-200 dark:border-blue-700">
+                        <Users className="w-4 h-4 mx-auto mb-1 text-blue-600 dark:text-blue-400" />
                         <div className="font-medium">{selectedAmbiente.capacidad}</div>
                         <div className="text-xs text-slate-500">Capacidad</div>
                       </div>
-                      <div className="text-center p-2 bg-white/50 dark:bg-slate-800/50 rounded-lg border border-sena-100 dark:border-sena-800">
-                        <MapPin className="w-4 h-4 mx-auto mb-1 text-sena" />
+                      <div className="text-center p-2 bg-white/50 dark:bg-slate-800/50 rounded-lg border border-blue-200 dark:border-blue-700">
+                        <MapPin className="w-4 h-4 mx-auto mb-1 text-blue-600 dark:text-blue-400" />
                         <div className="font-medium text-xs">{selectedAmbiente.ubicacion}</div>
                         <div className="text-xs text-slate-500">Ubicación</div>
                       </div>
@@ -495,9 +537,9 @@ export default function ReservaPage() {
       {/* Modal de Éxito */}
       {showSuccess && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md mx-4 text-center border border-sena-200 dark:border-sena-700">
-            <div className="w-16 h-16 bg-gradient-to-br from-sena-100 to-sena-200 dark:from-sena-900/30 dark:to-sena-800/30 rounded-full flex items-center justify-center mx-auto mb-4 border border-sena-200 dark:border-sena-700">
-              <CheckCircle className="w-8 h-8 text-sena dark:text-sena-light" />
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md mx-4 text-center border border-slate-200 dark:border-slate-700">
+            <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-200 dark:border-green-700">
+              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
             <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
               ¡Reserva Creada Exitosamente!
@@ -506,7 +548,7 @@ export default function ReservaPage() {
               Tu reserva ha sido registrada y está pendiente de aprobación. Serás redirigido a la lista de reservas.
             </p>
             <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sena"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             </div>
           </div>
         </div>

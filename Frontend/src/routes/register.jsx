@@ -75,7 +75,7 @@ export default function Register() {
     setSuccess("");
     
     try {
-      const response = await apiService.post('/auth/signup', {
+      const response = await apiService.post('/api/v1/auth/signup', {
         nombre: form.nombre,
         cc: form.cc,
         email: form.email,
@@ -125,7 +125,7 @@ export default function Register() {
                 <Building2 className="w-10 h-10 text-white" />
               </div>
               <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md">
-                <img src={logoSena} alt="SENA" className="w-5 h-5 object-contain" />
+                <img src={logoSena} alt="SENA" className="w-5 h-5 object-contain rounded-full" />
               </div>
             </div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
@@ -352,4 +352,4 @@ export default function Register() {
       </div>
     </div>
   );
-} 
+}

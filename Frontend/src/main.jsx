@@ -2,10 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
-import clearTestDataOnStart from './utils/clearTestDataOnStart'
 
-// Limpiar datos de prueba al iniciar (solo en desarrollo)
-clearTestDataOnStart();
 
 // Add this at the top to filter specific warnings
 if (process.env.NODE_ENV === 'development') {

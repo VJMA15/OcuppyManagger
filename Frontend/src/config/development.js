@@ -1,7 +1,7 @@
 // Configuración de desarrollo
 export const DEV_CONFIG = {
   // URL base de la API en desarrollo
-  API_URL: 'http://localhost:5000/api/v1',
+  API_URL: 'http://localhost:5000',
   
   // Configuración de la aplicación
   APP_NAME: 'Occupy Manager',
@@ -19,4 +19,4 @@ export const DEV_CONFIG = {
   RETRY_DELAY: 1000,
 };
 
-export default DEV_CONFIG; 
+export default DEV_CONFIG;

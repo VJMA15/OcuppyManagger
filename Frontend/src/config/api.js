@@ -1,46 +1,65 @@
-// Configuración de la API - MODO DESARROLLO SIN BACKEND
-const API_CONFIG = {
-  // Comentar la URL real del backend
-  // BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
+// Configuración de la API - CONECTADO AL BACKEND REAL
+export const API_CONFIG = {
+  // URL real del backend
+  BASE_URL: 'http://localhost:5000',
   
-  // URL temporal para desarrollo sin backend
-  BASE_URL: 'http://localhost:3001/api/v1', // Puerto que no existe
+  // URL anterior del backend (puerto 5000 estaba ocupado)
+  // BASE_URL: 'http://localhost:5000/api/v1',
   
-  TIMEOUT: 5000, // ✅ REDUCIDO: 5 segundos para respuestas más rápidas
   ENDPOINTS: {
     AUTH: {
-      VERIFY: '/auth/verify',
-      REGISTER: '/auth/signup',
-      USER_BY_CC: (cc) => `/auth/user/${cc}`,
+      LOGIN: '/api/v1/auth/login',
+      VERIFY: '/api/v1/auth/verify',
+      REGISTER: '/api/v1/auth/register',
+      USER_BY_CC: '/api/v1/auth/user-by-cc'
     },
     USERS: {
-      PROFILE: '/users/profile',
-      ALL: '/users',
-      BY_ID: (id) => `/users/${id}`,
+      PROFILE: '/api/v1/users/profile',
+      ALL: '/api/v1/users',
+      BY_ID: (id) => `/api/v1/users/${id}`,
     },
     AMBIENTES: {
-      ALL: '/ambientes',
-      BY_ID: (id) => `/ambientes/${id}`,
-      CREATE: '/ambientes',
-      UPDATE: (id) => `/ambientes/${id}`,
-      DELETE: (id) => `/ambientes/${id}`,
+      ALL: '/api/v1/ambientes',
+      BY_ID: (id) => `/api/v1/ambientes/${id}`,
+      CREATE: '/api/v1/ambientes',
+      UPDATE: (id) => `/api/v1/ambientes/${id}`,
+      DELETE: (id) => `/api/v1/ambientes/${id}`,
     },
     RESERVAS: {
-      ALL: '/reservas',
-      BY_ID: (id) => `/reservas/${id}`,
-      CREATE: '/reservas',
-      UPDATE: (id) => `/reservas/${id}`,
-      DELETE: (id) => `/reservas/${id}`,
-      MY_RESERVAS: '/reservas/my-reservas',
+      ALL: '/api/v1/reservas',
+      BY_ID: (id) => `/api/v1/reservas/${id}`,
+      CREATE: '/api/v1/reservas',
+      UPDATE: (id) => `/api/v1/reservas/${id}`,
+      DELETE: (id) => `/api/v1/reservas/${id}`,
+      MY_RESERVAS: '/api/v1/reservas/my-reservas',
+    },
+    ENTREGAS: {
+      ALL: '/api/v1/entregas',
+      BY_ID: (id) => `/api/v1/entregas/${id}`,
+      CREATE: '/api/v1/entregas',
+      UPDATE: (id) => `/api/v1/entregas/${id}`,
+      DELETE: (id) => `/api/v1/entregas/${id}`,
+      VERIFICAR: (codigo) => `/api/v1/entregas/verificar/${codigo}`,
+      JORNADA: (jornada) => `/api/v1/entregas/jornada/${jornada}`,
+      VENCIDAS: '/api/v1/entregas/vencidas',
+      ESTADISTICAS: '/api/v1/entregas/estadisticas',
     },
     REGISTROS: {
-      ALL: '/registros',
-      BY_ID: (id) => `/registros/${id}`,
-      CREATE: '/registros',
+      ALL: '/api/v1/registros',
+      BY_ID: (id) => `/api/v1/registros/${id}`,
+      CREATE: '/api/v1/registros',
+      UPDATE: (id) => `/api/v1/registros/${id}`,
+      DELETE: (id) => `/api/v1/registros/${id}`,
+      BY_AMBIENTE: (ambienteId) => `/api/v1/registros/ambiente/${ambienteId}`,
+      ENTRADA: '/api/v1/registros/entrada',
+      SALIDA: '/api/v1/registros/salida',
     },
     BITACORA: {
-      ALL: '/bitacora',
-      BY_ID: (id) => `/bitacora/${id}`,
+      ALL: '/api/v1/bitacora',
+      BY_ID: (id) => `/api/v1/bitacora/${id}`,
+      CREATE: '/api/v1/bitacora',
+      UPDATE: (id) => `/api/v1/bitacora/${id}`,
+      DELETE: (id) => `/api/v1/bitacora/${id}`,
     },
   },
   
@@ -48,10 +67,7 @@ const API_CONFIG = {
     'Content-Type': 'application/json',
   },
   
-  TIMEOUT: 10000,
+  TIMEOUT: 5000, // 5 segundos para respuestas más rápidas
 };
 
 export default API_CONFIG;
-
-// ❌ ELIMINAR: Esta línea duplicada que causa confusión
-// export const TIMEOUT = 3000;

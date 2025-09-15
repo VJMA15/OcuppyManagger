@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import useReservas from './useReservas';
+import { useReservasContext } from '@/contexts/ReservasContext';
 import { useAmbientes } from './useAmbientes';
 // CORRECCIÓN: Cambiar la importación a la ruta correcta
 import { obtenerAmbientesOcupados } from '@/utils/ambienteUtils';
 
 export const useDashboardStats = () => {
-    const { reservas, loading: loadingReservas } = useReservas();
+    const { reservas, loading: loadingReservas, stats: contextStats } = useReservasContext();
     const { ambientes, loading: loadingAmbientes } = useAmbientes();
     
     const [stats, setStats] = useState({
@@ -27,15 +27,12 @@ export const useDashboardStats = () => {
 
         console.log('📊 Calculando estadísticas con:', { reservas, ambientes });
 
-        // Calcular estadísticas desde los datos de la API
-        const totalReservas = reservas.length;
-        // CORRECCIÓN: Usar los estados correctos que existen en los datos mock
-        const reservasPendientes = reservas.filter(r => r.estado === 'pendiente').length;
-        const reservasAprobadas = reservas.filter(r => r.estado === 'activa').length; // 'activa' en lugar de 'aprobada'
-        const reservasRechazadas = reservas.filter(r => r.estado === 'rechazada').length;
-        
-        // Calcular reservas activas (usar 'activa' que es el estado en los datos mock)
-        const reservasActivas = reservas.filter(r => r.estado === 'activa').length;
+        // Usar las estadísticas calculadas del contexto
+        const totalReservas = contextStats.total;
+        const reservasPendientes = contextStats.pendientes;
+        const reservasAprobadas = contextStats.aprobadas;
+        const reservasRechazadas = contextStats.rechazadas;
+        const reservasActivas = contextStats.aprobadas; // Las aprobadas son las activas
 
         // CORRECCIÓN: Usar los datos correctos para calcular ambientes ocupados
         const ambientesOcupadosArray = obtenerAmbientesOcupados(ambientes, reservas);

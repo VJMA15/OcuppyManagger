@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { ReservationService } from '../services/reservation.service';
 import { CreateReservationDto } from '../dto/create-reservation.dto';
-const User = require('../models/user.model');
+import User from '../models/user.model';
+import Bitacora from '../models/bitacora.model';
 
 export class ReservationController {
   private reservationService = new ReservationService();
@@ -120,11 +121,82 @@ export class ReservationController {
           message: 'Reserva no encontrada'
         });
       }
+
+      // Registrar en bitácora
+      await Bitacora.registrarAccion(
+        approvedBy,
+        'APROBAR_RESERVA',
+        'reserva',
+        id,
+        JSON.stringify({
+          reservaId: id,
+          usuarioSolicitante: reservation.userId,
+          ambiente: reservation.environmentId,
+          fechaReserva: reservation.startDate,
+          fechaAprobacion: new Date()
+        }),
+        req.ip
+      );
       
       res.json({
         success: true,
         data: reservation,
         message: 'Reserva aprobada exitosamente'
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      res.status(500).json({
+        success: false,
+        message: errorMessage
+      });
+    }
+  }
+
+  async rejectReservation(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      if (!reason) {
+        return res.status(400).json({
+          success: false,
+          message: 'reason es requerido'
+        });
+      }
+
+      const reservation = await this.reservationService.rejectReservation(
+        id,
+        reason
+      );
+      
+      if (!reservation) {
+        return res.status(404).json({
+          success: false,
+          message: 'Reserva no encontrada'
+        });
+      }
+
+      // Registrar en bitácora
+      await Bitacora.registrarAccion(
+        (req as any).user?.id || 'sistema',
+        'RECHAZAR_RESERVA',
+        'reserva',
+        id,
+        JSON.stringify({
+          reservaId: id,
+          usuarioSolicitante: reservation.userId,
+          ambiente: reservation.environmentId,
+          fechaReserva: reservation.startDate,
+          motivoRechazo: reason,
+          fechaRechazo: new Date()
+        }),
+        req.ip
+      );
+      
+      res.json({
+        success: true,
+        data: reservation,
+        message: 'Reserva rechazada exitosamente'
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';

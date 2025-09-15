@@ -28,5 +28,5 @@ const errorHandler = (err, req, res, next) => {
     });
 };
 exports.errorHandler = errorHandler;
-exports.default = globalErrorHandler;
+exports.default = exports.errorHandler;
 //# sourceMappingURL=errorHandler.js.map
