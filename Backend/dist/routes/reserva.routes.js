@@ -9,5 +9,6 @@ router.post('/', reservationController.createReservation.bind(reservationControl
 router.get('/', reservationController.getReservations.bind(reservationController));
 router.get('/my-reservations', reservationController.getMyReservations.bind(reservationController));
 router.patch('/:id/approve', reservationController.approveReservation.bind(reservationController));
+router.patch('/:id/reject', reservationController.rejectReservation.bind(reservationController));
 exports.default = router;
 //# sourceMappingURL=reserva.routes.js.map

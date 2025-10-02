@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Autenticación Instructor</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug - Autenticación Instructor</h1>
+        <p>Esta herramienta te ayuda a diagnosticar problemas de autenticación para instructores.</p>
+        
+        <div>
+            <button onclick="checkAuthStatus()">Verificar Estado de Autenticación</button>
+            <button onclick="checkUserData()">Verificar Datos de Usuario</button>
+            <button onclick="testInstructorAccess()">Probar Acceso de Instructor</button>
+            <button onclick="clearResults()">Limpiar Resultados</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function checkAuthStatus() {
+            addResult('<strong>🔍 Verificando estado de autenticación...</strong>');
+            
+            // Verificar localStorage
+            const userData = localStorage.getItem('user_data');
+            const token = localStorage.getItem('token');
+            
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    addResult(`✅ Datos de usuario encontrados: ${user.nombre || 'Sin nombre'}`, 'success');
+                    addResult(`📋 Rol del usuario: ${user.role || user.rol || 'No definido'}`, 'info');
+                    addResult(`📧 Email: ${user.email || 'No definido'}`, 'info');
+                    addResult(`🆔 CC: ${user.cc || 'No definido'}`, 'info');
+                } catch (error) {
+                    addResult(`❌ Error al parsear datos de usuario: ${error.message}`, 'error');
+                }
+            } else {
+                addResult('❌ No se encontraron datos de usuario en localStorage', 'error');
+            }
+
+            if (token) {
+                addResult('✅ Token encontrado en localStorage', 'success');
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    addResult(`🔑 Token válido - Expira: ${new Date(payload.exp * 1000).toLocaleString()}`, 'info');
+                    addResult(`👤 Rol en token: ${payload.role || 'No definido'}`, 'info');
+                } catch (error) {
+                    addResult(`❌ Error al decodificar token: ${error.message}`, 'error');
+                }
+            } else {
+                addResult('❌ No se encontró token en localStorage', 'error');
+            }
+
+            // Verificar cookies
+            const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                const [key, value] = cookie.trim().split('=');
+                if (key && value) acc[key] = value;
+                return acc;
+            }, {});
+
+            if (cookies.auth_token) {
+                addResult('✅ Token encontrado en cookies', 'success');
+            } else {
+                addResult('❌ No se encontró token en cookies', 'error');
+            }
+
+            if (cookies.user_data) {
+                addResult('✅ Datos de usuario encontrados en cookies', 'success');
+            } else {
+                addResult('❌ No se encontraron datos de usuario en cookies', 'error');
+            }
+        }
+
+        function checkUserData() {
+            addResult('<strong>👤 Verificando datos específicos del usuario...</strong>');
+            
+            const userData = localStorage.getItem('user_data');
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    addResult('<pre>' + JSON.stringify(user, null, 2) + '</pre>', 'info');
+                    
+                    // Verificar si es instructor
+                    const role = user.role || user.rol;
+                    if (role === 'instructor') {
+                        addResult('✅ Usuario confirmado como INSTRUCTOR', 'success');
+                    } else {
+                        addResult(`❌ Usuario NO es instructor. Rol actual: ${role}`, 'error');
+                    }
+                } catch (error) {
+                    addResult(`❌ Error al parsear datos: ${error.message}`, 'error');
+                }
+            } else {
+                addResult('❌ No hay datos de usuario para verificar', 'error');
+            }
+        }
+
+        async function testInstructorAccess() {
+            addResult('<strong>🚀 Probando acceso a rutas de instructor...</strong>');
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                addResult('❌ No hay token para probar el acceso', 'error');
+                return;
+            }
+
+            try {
+                // Probar acceso a una ruta de instructor
+                const response = await fetch('/api/v1/ambientes', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    addResult('✅ Acceso exitoso a la API', 'success');
+                    const data = await response.json();
+                    addResult(`📊 Respuesta: ${data.message || 'Datos obtenidos correctamente'}`, 'info');
+                } else {
+                    addResult(`❌ Error en acceso a API: ${response.status} - ${response.statusText}`, 'error');
+                    const errorData = await response.text();
+                    addResult(`📋 Detalle del error: ${errorData}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Error de conexión: ${error.message}`, 'error');
+            }
+        }
+
+        // Ejecutar verificación automática al cargar
+        window.onload = function() {
+            addResult('🔄 Iniciando verificación automática...', 'info');
+            checkAuthStatus();
+        };
+    </script>
+</body>
+</html>

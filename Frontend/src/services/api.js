@@ -1,7 +1,7 @@
 import authService from './auth';
 
-// Configuración para usar API real (datos de prueba eliminados)
-const API_BASE_URL = 'http://localhost:5000';
+// Configuración para usar proxy de Vite
+const API_BASE_URL = '';
 
 class ApiService {
   constructor() {
@@ -35,10 +35,30 @@ class ApiService {
         throw new Error('Sesión expirada o no autorizado');
       }
 
-      const data = await response.json();
+      // Verificar si la respuesta tiene contenido antes de intentar parsear JSON
+      const contentType = response.headers.get('content-type');
+      let data = null;
+      
+      if (contentType && contentType.includes('application/json')) {
+        const text = await response.text();
+        if (text.trim()) {
+          try {
+            data = JSON.parse(text);
+          } catch (parseError) {
+            console.error('Error parsing JSON:', parseError);
+            throw new Error(`Invalid JSON response: ${text}`);
+          }
+        } else {
+          data = { success: false, message: 'Empty response from server' };
+        }
+      } else {
+        // Si no es JSON, obtener como texto
+        const text = await response.text();
+        data = { success: false, message: text || `HTTP error! status: ${response.status}` };
+      }
       
       if (!response.ok) {
-        throw new Error(data.message || 'Error en la petición');
+        throw new Error(data?.message || 'Error en la petición');
       }
 
       return data;

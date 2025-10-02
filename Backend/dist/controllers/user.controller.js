@@ -60,22 +60,29 @@ exports.getUser = (0, catchAsync_1.default)(async (req, res, next) => {
 });
 // Crear nuevo usuario
 exports.createUser = (0, catchAsync_1.default)(async (req, res, next) => {
-    const { nombre, email, password, rol, telefono, documento } = req.body;
+    console.log('📝 Datos recibidos en createUser:', req.body);
+    console.log('📝 Campo cc específicamente:', req.body.cc, 'tipo:', typeof req.body.cc);
+    const { nombre, cc, email, password, passwordConfirm, role } = req.body;
+    console.log('📝 Variables extraídas - cc:', cc, 'nombre:', nombre);
     // Verificar si el email ya existe
     const existingUser = await user_model_1.default.findOne({ email });
     if (existingUser) {
         return next(new appError_1.default('Ya existe un usuario con este email', 400));
+    }
+    // Verificar si la CC ya existe
+    const existingUserByCC = await user_model_1.default.findOne({ cc });
+    if (existingUserByCC) {
+        return next(new appError_1.default('Ya existe un usuario con esta cédula', 400));
     }
     // Hashear la contraseña
     const hashedPassword = await bcryptjs_1.default.hash(password, 12);
     // Crear el usuario
     const newUser = await user_model_1.default.create({
         nombre,
+        cc,
         email,
         password: hashedPassword,
-        rol,
-        telefono,
-        documento,
+        role,
         activo: true
     });
     // Remover la contraseña de la respuesta

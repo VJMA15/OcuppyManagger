@@ -760,7 +760,7 @@ const EntregaAmbientesPage = () => {
                         >
                           <option value="">Seleccionar tipo</option>
                           <option value="clase">Clase</option>
-                          <option value="taller">Taller</option>
+                          <option value="Taller">Taller</option>
                           <option value="reunion">Reunión</option>
                           <option value="evento">Evento</option>
                         </select>

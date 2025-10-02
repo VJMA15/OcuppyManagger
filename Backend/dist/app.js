@@ -25,6 +25,7 @@ const reserva_routes_1 = __importDefault(require("./routes/reserva.routes"));
 const entrega_routes_1 = __importDefault(require("./routes/entrega.routes"));
 const registros_routes_1 = __importDefault(require("./routes/registros.routes"));
 const bitacora_routes_1 = __importDefault(require("./routes/bitacora.routes"));
+const reports_routes_1 = __importDefault(require("./routes/reports.routes"));
 // Importar manejadores de errores
 const appError_1 = __importDefault(require("./utils/appError"));
 const errorHandler_1 = __importDefault(require("./middlewares/errorHandler"));
@@ -43,7 +44,9 @@ const corsOptions = {
             'http://localhost:4173',
             'http://127.0.0.1:4173',
             'http://localhost:3003',
-            'http://127.0.0.1:3003'
+            'http://127.0.0.1:3003',
+            'http://localhost:8080',
+            'http://127.0.0.1:8080'
         ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
@@ -102,6 +105,7 @@ app.use('/api/v1/reservas', reserva_routes_1.default);
 app.use('/api/v1/entregas', entrega_routes_1.default);
 app.use('/api/v1/registros', registros_routes_1.default);
 app.use('/api/v1/bitacora', bitacora_routes_1.default);
+app.use('/api/v1/reportes', reports_routes_1.default);
 // Ruta de información de la API
 app.get('/api/v1', (req, res) => {
     res.json({
@@ -112,7 +116,8 @@ app.get('/api/v1', (req, res) => {
             users: '/api/v1/users',
             ambientes: '/api/v1/ambientes',
             reservas: '/api/v1/reservas',
-            entregas: '/api/v1/entregas'
+            entregas: '/api/v1/entregas',
+            reportes: '/api/v1/reportes'
         }
     });
 });

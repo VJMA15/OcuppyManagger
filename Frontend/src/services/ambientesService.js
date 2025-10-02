@@ -1,16 +1,17 @@
-// Servicio para gestión de ambientes - CONECTADO AL BACKEND REAL
+// Servicio para gestión de ambientes - USANDO PROXY DE VITE
+import authService from './auth';
+
 class AmbientesService {
   constructor() {
-    this.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    // Usar proxy de Vite en lugar de peticiones directas
+    this.baseURL = '';
   }
 
   async request(endpoint, options = {}) {
-    const token = localStorage.getItem('token');
-    
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...authService.getAuthHeaders(), // Usar el servicio de auth centralizado
         ...options.headers,
       },
       ...options,

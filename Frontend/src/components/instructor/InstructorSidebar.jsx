@@ -1,8 +1,8 @@
 import { forwardRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { BookOpen, Calendar, Plus, Building2, BarChart3 } from "lucide-react";
-import logoSena from "@/assets/logo-sena.png";
-import { cn } from "@/utils/cn";
+import logoSena from "../../assets/logo-sena.png";
+import { cn } from "../../utils/cn";
 import PropTypes from "prop-types";
 
 const instructorNavLinks = [
@@ -10,24 +10,19 @@ const instructorNavLinks = [
     title: "Panel de Instructor",
     links: [
       {
-        label: "Mis Reservas",
-        path: "/instructor/mis-reservas",
-        icon: Calendar
-      },
-      {
-        label: "Nueva Reserva",
-        path: "/instructor/crear-reserva",
-        icon: Plus
-      },
-      {
         label: "Ambientes Disponibles",
         path: "/instructor/ambientes",
         icon: Building2
       },
       {
-        label: "Reportes",
-        path: "/instructor/reportes",
-        icon: BarChart3
+        label: "Nueva Reserva",
+        path: "/instructor/nueva-reserva",
+        icon: Plus
+      },
+      {
+        label: "Mis Reservas",
+        path: "/instructor/mis-reservas",
+        icon: Calendar
       }
     ]
   }

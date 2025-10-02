@@ -1,18 +1,5 @@
 import { Schema, model, Document } from 'mongoose';
-// Define enums locally since types file is not found
-enum ReservationStatus {
-  PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  CANCELLED = 'CANCELLED'
-}
-
-enum EquipmentType {
-  PROJECTOR = 'PROJECTOR',
-  MICROPHONE = 'MICROPHONE',
-  COMPUTER = 'COMPUTER',
-  WHITEBOARD = 'WHITEBOARD'
-}
+import { ReservationStatus, EquipmentType, ReservationDocument } from '../types/reservation.types';
 
 // Define the Reservation interface locally
 interface Reservation {
@@ -31,7 +18,6 @@ interface Reservation {
   rejectionReason?: string;
 }
 
-// ... existing code ...
 const equipmentSchema = new Schema({
   type: {
     type: String,
@@ -45,7 +31,7 @@ const equipmentSchema = new Schema({
   }
 });
 
-const reservationSchema = new Schema<Reservation & Document>({
+const reservationSchema = new Schema<ReservationDocument>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
@@ -93,4 +79,4 @@ reservationSchema.index({ userId: 1, startDate: 1 });
 reservationSchema.index({ environmentId: 1, startDate: 1, endDate: 1 });
 reservationSchema.index({ status: 1 });
 
-export const ReservationModel = model<Reservation & Document>('Reservation', reservationSchema);
+export const ReservationModel = model<ReservationDocument>('Reservation', reservationSchema);

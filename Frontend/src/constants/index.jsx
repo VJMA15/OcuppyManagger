@@ -13,24 +13,19 @@ export const navbarLinks = [
                 path: "/dashboard", // ✅ Esta ruta sí funciona (index route)
             },
             {
-                label: "Reservas",
+                label: "Ver Reservas",
                 icon: NotepadText,
                 path: "/dashboard/ver-reservas", // ✅ CORRECTO
-            },
-            {
-                label: "Informes",
-                icon: ChartColumn,
-                path: "/dashboard/reports", // ✅ CORRECTO
-            },
-            {
-                label: "Reportes",
-                icon: BarChart3,
-                path: "/dashboard/reportes", // ✅ CORRECTO
             },
             {
                 label: "Mis Reservas",
                 icon: Calendar,
                 path: "/dashboard/mis-reservas", // ✅ CORRECTO
+            },
+            {
+                label: "Crear Reserva",
+                icon: PackagePlus,
+                path: "/dashboard/reserva", // ✅ CORREGIDO
             },
         ],
     },
@@ -43,9 +38,9 @@ export const navbarLinks = [
                 path: "/dashboard/ambientes", // ✅ CORRECTO
             },
             {
-                label: "Nueva Reserva",
-                icon: PackagePlus,
-                path: "/dashboard/reserva", // ✅ CORRECTO
+                label: "Gestión de Usuarios",
+                icon: Users,
+                path: "/dashboard/gestion-usuarios", // ✅ CORREGIDO
             },
             {
                 label: "Registrar Usuario",
@@ -53,29 +48,39 @@ export const navbarLinks = [
                 path: "/dashboard/registrar-usuario", // ✅ CORRECTO
             },
             {
-                label: "Gestión de Usuarios",
-                icon: Users,
-                path: "/dashboard/gestion-usuarios", // ✅ CORRECTO
+                label: "Entregas",
+                icon: Package,
+                path: "/dashboard/entregas", // ✅ AGREGADO
             },
             {
-                label: "Registros",
-                icon: FileText,
-                path: "/dashboard/registros",
-            },
-            {
-                label: "Bitácora",
-                icon: Activity,
-                path: "/dashboard/bitacora",
+                label: "Configuración",
+                icon: Settings,
+                path: "/dashboard/settings", // ✅ AGREGADO
             },
         ],
     },
     {
-        title: "Configuración",
+        title: "Reportes",
         links: [
             {
-                label: "Configuración",
-                icon: Settings,
-                path: "/dashboard/settings", // ✅ CORRECTO
+                label: "Informes",
+                icon: ChartColumn,
+                path: "/dashboard/reports", // ✅ CORRECTO
+            },
+            {
+                label: "Reportes",
+                icon: BarChart3,
+                path: "/dashboard/reportes", // ✅ CORRECTO
+            },
+            {
+                label: "Bitácora",
+                icon: FileText,
+                path: "/dashboard/bitacora", // ✅ AGREGADO
+            },
+            {
+                label: "Registros",
+                icon: Activity,
+                path: "/dashboard/registros", // ✅ AGREGADO
             },
         ],
     },

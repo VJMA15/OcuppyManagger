@@ -89,12 +89,19 @@ export const actualizarAmbiente = async (req: Request, res: Response): Promise<v
   try {
     const ambienteData = {
       ...req.body,
-      capacidad: parseInt(req.body.capacidad.toString()),
-      equipos: parseInt(req.body.equipos.toString()),
+      capacidad: req.body.capacidad ? parseInt(req.body.capacidad.toString()) : undefined,
+      equipos: req.body.equipos ? parseInt(req.body.equipos.toString()) : undefined,
       servicios: Array.isArray(req.body.servicios) 
         ? req.body.servicios 
-        : (req.body.servicios as string).split(',').map((s: string) => s.trim())
+        : req.body.servicios ? (req.body.servicios as string).split(',').map((s: string) => s.trim()) : undefined
     };
+
+    // Remove undefined values
+    Object.keys(ambienteData).forEach(key => {
+      if (ambienteData[key] === undefined) {
+        delete ambienteData[key];
+      }
+    });
 
     const ambiente = await AmbienteModel.findByIdAndUpdate(
       req.params.id,

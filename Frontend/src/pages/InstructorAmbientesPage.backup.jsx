@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, MapPin, Users, Building2, Calendar, Clock, BookOpen, X } from 'lucide-react';
+import { Search, Filter, MapPin, Users, Building2, Calendar, BookOpen, X, XCircle, ArrowRight, ChevronRight, Sliders, Plus } from 'lucide-react';
 import { useAmbientes } from '../hooks/useAmbientes';
 import { useAuthContext } from '../contexts/auth-context';
 import { Modal } from '../components/ui';
-import apiService from '../services/api';
 
 // Estilos personalizados para los botones de estado
 const statusStyles = {
@@ -32,14 +31,6 @@ const InstructorAmbientesPage = () => {
   const [filterStatus, setFilterStatus] = useState('');
   const [selectedAmbiente, setSelectedAmbiente] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [showReservaModal, setShowReservaModal] = useState(false);
-  const [reservaForm, setReservaForm] = useState({
-    fecha: '',
-    horaInicio: '',
-    horaFin: '',
-    proposito: '',
-    observaciones: ''
-  });
 
   // Filtrar ambientes
   const filteredAmbientes = ambientes.filter(ambiente => {
@@ -58,41 +49,9 @@ const InstructorAmbientesPage = () => {
     setShowModal(true);
   };
 
-  const handleReservarClick = (ambiente) => {
-    setSelectedAmbiente(ambiente);
-    setShowReservaModal(true);
-  };
-
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedAmbiente(null);
-  };
-
-  const handleCloseReservaModal = () => {
-    setShowReservaModal(false);
-    setSelectedAmbiente(null);
-    setReservaForm({
-      fecha: '',
-      horaInicio: '',
-      horaFin: '',
-      proposito: '',
-      observaciones: ''
-    });
-  };
-
-  const handleReservaSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await apiService.post('/reservas', {
-        ambienteId: selectedAmbiente._id,
-        instructorId: user.id,
-        ...reservaForm
-      });
-      alert('Reserva creada exitosamente');
-      handleCloseReservaModal();
-    } catch (error) {
-      alert('Error al crear la reserva: ' + error.message);
-    }
   };
 
   if (loading) {
@@ -131,8 +90,7 @@ const InstructorAmbientesPage = () => {
     );
   }
 
-  // Función para renderizar el contenido principal
-  const renderMainContent = () => {
+  return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Header para Instructores */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-12 relative overflow-hidden">
@@ -167,72 +125,79 @@ const InstructorAmbientesPage = () => {
               </button>
             </div>
           </div>
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative">
+          
+          {/* Barra de búsqueda y filtros */}
+          <div className="mt-8">
+            <div className="relative mb-4">
               <input
-                  type="text"
-                  placeholder="Buscar por nombre o ubicación..."
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sena-500 focus:border-transparent transition duration-150"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                type="text"
+                placeholder="Buscar por nombre o ubicación..."
+                className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sena-500 focus:border-transparent transition duration-150"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-slate-400" />
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Filter className="h-4 w-4 text-slate-400" />
+                </div>
+                <select
+                  className="appearance-none bg-white border border-slate-300 text-slate-700 pl-10 pr-8 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-sena-500 focus:border-transparent cursor-pointer"
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                >
+                  <option value="">Todos los tipos</option>
+                  {tiposUnicos.map((tipo) => (
+                    <option key={tipo} value={tipo}>
+                      {tipo}
+                    </option>
+                  ))}
+                </select>
+                <ChevronRight className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none -rotate-90" />
               </div>
               
-              <div className="flex flex-wrap gap-2">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Filter className="h-4 w-4 text-slate-400" />
-                  </div>
-                  <select
-                    className="appearance-none bg-white border border-slate-300 text-slate-700 pl-10 pr-8 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-sena-500 focus:border-transparent cursor-pointer"
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                  >
-                    <option value="">Todos los tipos</option>
-                    {tiposUnicos.map((tipo) => (
-                      <option key={tipo} value={tipo}>
-                        {tipo}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronRight className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none -rotate-90" />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Sliders className="h-4 w-4 text-slate-400" />
                 </div>
-                
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Sliders className="h-4 w-4 text-slate-400" />
-                  </div>
-                  <select
-                    className="appearance-none bg-white border border-slate-300 text-slate-700 pl-10 pr-8 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-sena-500 focus:border-transparent cursor-pointer"
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                  >
-                    <option value="">Todos los estados</option>
-                    <option value="disponible">Disponible</option>
-                    <option value="ocupado">Ocupado</option>
-                    <option value="mantenimiento">En mantenimiento</option>
-                  </select>
-                  <ChevronRight className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none -rotate-90" />
-                </div>
-                
-                {(searchTerm || filterType || filterStatus) && (
-                  <button
-                    onClick={() => {
-                      setSearchTerm('');
-                      setFilterType('');
-                      setFilterStatus('');
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-sena-700 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                    Limpiar filtros
-                  </button>
-                )}
+                <select
+                  className="appearance-none bg-white border border-slate-300 text-slate-700 pl-10 pr-8 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-sena-500 focus:border-transparent cursor-pointer"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="">Todos los estados</option>
+                  <option value="disponible">Disponible</option>
+                  <option value="ocupado">Ocupado</option>
+                  <option value="mantenimiento">En mantenimiento</option>
+                </select>
+                <ChevronRight className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none -rotate-90" />
               </div>
+              
+              {(searchTerm || filterType || filterStatus) && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setFilterType('');
+                    setFilterStatus('');
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-sena-700 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                  Limpiar filtros
+                </button>
+              )}
             </div>
           </div>
         </div>
+      </div>
 
+      {/* Contenedor principal para el contenido */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Grid de ambientes */}
         {filteredAmbientes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -305,7 +270,7 @@ const InstructorAmbientesPage = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleReservarClick(ambiente);
+                        handleAmbienteClick(ambiente);
                       }}
                       disabled={ambiente.estado !== 'disponible'}
                       className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors ${
@@ -347,158 +312,90 @@ const InstructorAmbientesPage = () => {
           </div>
         )}
       </div>
-    </div>
-  );
-  };
 
-  // Función para renderizar el modal de reserva
-  const renderReservaModal = () => {
-    if (!showReservaModal) return null;
-    
-    return (
-      <Modal isOpen={showReservaModal} onClose={handleCloseReservaModal}>
-        <div className="relative">
-          <button
-            onClick={handleCloseReservaModal}
-            className="absolute top-0 right-0 -mt-2 -mr-2 p-2 text-slate-400 hover:text-slate-500"
-          >
-            <X className="h-5 w-5" />
-          </button>
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-sena-100 mb-4">
-              <Calendar className="h-8 w-8 text-sena-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Nueva reserva</h2>
-            <p className="text-slate-500 mb-6">
-              Completa el formulario para reservar <span className="font-medium text-slate-900">{selectedAmbiente?.nombre}</span>
-            </p>
-          </div>
-          <form onSubmit={handleReservaSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Fecha de la reserva <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Calendar className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="date"
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sena-500 focus:border-transparent"
-                  value={reservaForm.fecha}
-                  onChange={(e) => setReservaForm({...reservaForm, fecha: e.target.value})}
-                  required
-                  min={new Date().toISOString().split('T')[0]}
-                />
+      {/* Modal de detalles */}
+      {selectedAmbiente && (
+        <Modal isOpen={showModal} onClose={handleCloseModal}>
+          <div className="relative">
+            <button
+              onClick={handleCloseModal}
+              className="absolute top-0 right-0 -mt-2 -mr-2 p-2 text-slate-400 hover:text-slate-500"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                <Building2 className="h-8 w-8 text-blue-600" />
               </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Hora de inicio <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Clock className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="time"
-                    className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sena-500 focus:border-transparent"
-                    value={reservaForm.horaInicio}
-                    onChange={(e) => setReservaForm({...reservaForm, horaInicio: e.target.value})}
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Hora de fin <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Clock className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="time"
-                    className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sena-500 focus:border-transparent"
-                    value={reservaForm.horaFin}
-                    onChange={(e) => setReservaForm({...reservaForm, horaFin: e.target.value})}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Propósito <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <BookOpen className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="text"
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sena-500 focus:border-transparent"
-                  placeholder="Ej: Clase de programación"
-                  value={reservaForm.proposito}
-                  onChange={(e) => setReservaForm({...reservaForm, proposito: e.target.value})}
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Observaciones
-              </label>
-              <div className="relative">
-                <div className="absolute top-3 left-3">
-                  <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </div>
-                <textarea
-                  rows={3}
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sena-500 focus:border-transparent"
-                  placeholder="Alguna observación adicional..."
-                  value={reservaForm.observaciones}
-                  onChange={(e) => setReservaForm({...reservaForm, observaciones: e.target.value})}
-                />
-              </div>
-            </div>
-            <div className="pt-2">
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  className="px-5 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sena-500"
-                  onClick={handleCloseReservaModal}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-sena-600 hover:bg-sena-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sena-500 transition-colors duration-150"
-                >
-                  Confirmar reserva
-                </button>
-              </div>
-            </div>
-            <div className="mt-6 border-t border-slate-200 pt-4">
-              <p className="text-xs text-slate-500 text-center">
-                Al hacer clic en "Confirmar reserva", aceptas los términos y condiciones de uso de los espacios del CTPGA.
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">{selectedAmbiente.nombre}</h2>
+              <p className="text-slate-500 mb-6">
+                Información detallada del ambiente
               </p>
             </div>
-          </form>
-        </div>
-      </Modal>
-    );
-  };
-
-  // Renderizar el componente completo
-  return (
-    <>
-      {renderMainContent()}
-      {renderReservaModal()}
-    </>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Ubicación</label>
+                  <p className="text-slate-900">{selectedAmbiente.ubicacion}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
+                  <p className="text-slate-900">{selectedAmbiente.tipo}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Capacidad</label>
+                  <p className="text-slate-900">{selectedAmbiente.capacidad} personas</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Estado</label>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[selectedAmbiente.estado] || statusStyles.inactivo}`}>
+                    {selectedAmbiente.estado.charAt(0).toUpperCase() + selectedAmbiente.estado.slice(1)}
+                  </span>
+                </div>
+              </div>
+              {selectedAmbiente.descripcion && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Descripción</label>
+                  <p className="text-slate-900">{selectedAmbiente.descripcion}</p>
+                </div>
+              )}
+              {selectedAmbiente.recursos && selectedAmbiente.recursos.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Recursos disponibles</label>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAmbiente.recursos.map((recurso, index) => (
+                      <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                        {recurso}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={handleCloseModal}
+                className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50"
+              >
+                Cerrar
+              </button>
+              <button
+                onClick={handleCloseModal}
+                disabled={selectedAmbiente.estado !== 'disponible'}
+                className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center ${
+                  selectedAmbiente.estado === 'disponible'
+                    ? 'bg-sena-600 text-white hover:bg-sena-700'
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Reservar
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
   );
 };
 

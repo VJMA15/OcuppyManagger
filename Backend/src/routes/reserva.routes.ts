@@ -1,14 +1,19 @@
 import { Router } from 'express';
 import { ReservationController } from '../controllers/reservation.controller';
+import { authenticateToken, requireRole } from '../middlewares/auth.middleware';
 
 const router = Router();
 const reservationController = new ReservationController();
 
+// Aplicar middleware de autenticación a todas las rutas
+router.use(authenticateToken);
+
 // Rutas para reservas
 router.post('/', reservationController.createReservation.bind(reservationController));
-router.get('/', reservationController.getReservations.bind(reservationController));
+router.get('/', requireRole(['admin', 'guardia', 'instructor']), reservationController.getReservations.bind(reservationController));
 router.get('/my-reservations', reservationController.getMyReservations.bind(reservationController));
-router.patch('/:id/approve', reservationController.approveReservation.bind(reservationController));
-router.patch('/:id/reject', reservationController.rejectReservation.bind(reservationController));
+router.patch('/:id/approve', requireRole(['admin', 'guardia', 'instructor']), reservationController.approveReservation.bind(reservationController));
+router.patch('/:id/reject', requireRole(['admin', 'guardia', 'instructor']), reservationController.rejectReservation.bind(reservationController));
+router.patch('/:id/cancel', reservationController.cancelReservation.bind(reservationController));
 
 export default router;

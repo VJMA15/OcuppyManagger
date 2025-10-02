@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const User = require('./src/models/user.model');
+const User = require('./dist/models/user.model.js').default;
 require('dotenv').config();
 
 // Conectar a MongoDB

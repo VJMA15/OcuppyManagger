@@ -1,7 +1,7 @@
 // Configuración de la API - CONECTADO AL BACKEND REAL
 export const API_CONFIG = {
-  // URL real del backend
-  BASE_URL: 'http://localhost:5000',
+  // URL para desarrollo con proxy de Vite
+  BASE_URL: '',
   
   // URL anterior del backend (puerto 5000 estaba ocupado)
   // BASE_URL: 'http://localhost:5000/api/v1',
@@ -11,7 +11,8 @@ export const API_CONFIG = {
       LOGIN: '/api/v1/auth/login',
       VERIFY: '/api/v1/auth/verify',
       REGISTER: '/api/v1/auth/register',
-      USER_BY_CC: '/api/v1/auth/user-by-cc'
+      USER_BY_CC: '/api/v1/auth/user-by-cc',
+      REFRESH_TOKEN: '/api/v1/auth/refresh-token'
     },
     USERS: {
       PROFILE: '/api/v1/users/profile',
@@ -31,7 +32,7 @@ export const API_CONFIG = {
       CREATE: '/api/v1/reservas',
       UPDATE: (id) => `/api/v1/reservas/${id}`,
       DELETE: (id) => `/api/v1/reservas/${id}`,
-      MY_RESERVAS: '/api/v1/reservas/my-reservas',
+      MY_RESERVAS: '/api/v1/reservas/my-reservations',
     },
     ENTREGAS: {
       ALL: '/api/v1/entregas',

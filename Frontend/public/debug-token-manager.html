@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Gestor de Tokens JWT - OcuppyManager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+        
+        .section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn.danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        
+        .btn.success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+        
+        .token-display {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .value {
+            color: #7f8c8d;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Gestor de Tokens JWT</h1>
+            <p>Herramienta de depuración para OcuppyManager</p>
+        </div>
+        
+        <div class="content">
+            <div class="grid">
+                <!-- Estado del Token -->
+                <div class="section">
+                    <h3>📊 Estado del Token</h3>
+                    <div id="tokenStatus"></div>
+                    <div class="actions">
+                        <button class="btn" onclick="checkTokenStatus()">🔍 Verificar Token</button>
+                        <button class="btn danger" onclick="clearToken()">🗑️ Limpiar Token</button>
+                    </div>
+                </div>
+                
+                <!-- Información del Usuario -->
+                <div class="section">
+                    <h3>👤 Información del Usuario</h3>
+                    <div id="userInfo"></div>
+                </div>
+            </div>
+            
+            <!-- Token Actual -->
+            <div class="section">
+                <h3>🎫 Token Actual</h3>
+                <div id="currentToken"></div>
+                <div class="actions">
+                    <button class="btn" onclick="copyToken()">📋 Copiar Token</button>
+                    <button class="btn" onclick="decodeToken()">🔓 Decodificar Token</button>
+                </div>
+            </div>
+            
+            <!-- Renovación de Token -->
+            <div class="section">
+                <h3>🔄 Renovación de Token</h3>
+                <div id="renewalStatus"></div>
+                <div class="actions">
+                    <button class="btn success" onclick="renewToken()">🔄 Renovar Token</button>
+                    <button class="btn" onclick="testApiCall()">🧪 Probar API</button>
+                </div>
+            </div>
+            
+            <!-- Logs de Actividad -->
+            <div class="section">
+                <h3>📝 Logs de Actividad</h3>
+                <div id="activityLogs" style="max-height: 300px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 5px;"></div>
+                <div class="actions">
+                    <button class="btn" onclick="clearLogs()">🧹 Limpiar Logs</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logs = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            logs.unshift(logEntry);
+            
+            if (logs.length > 50) {
+                logs = logs.slice(0, 50);
+            }
+            
+            updateLogsDisplay();
+            console.log(logEntry);
+        }
+        
+        function updateLogsDisplay() {
+            const logsContainer = document.getElementById('activityLogs');
+            logsContainer.innerHTML = logs.map(log => `<div style="margin-bottom: 5px; font-family: monospace; font-size: 12px;">${log}</div>`).join('');
+        }
+        
+        function clearLogs() {
+            logs = [];
+            updateLogsDisplay();
+            log('Logs limpiados');
+        }
+        
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
+        function setCookie(name, value, days = 30) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+        
+        function deleteCookie(name) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        }
+        
+        function parseJWT(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (error) {
+                return null;
+            }
+        }
+        
+        function isTokenExpired(token) {
+            const payload = parseJWT(token);
+            if (!payload || !payload.exp) return true;
+            
+            const currentTime = Math.floor(Date.now() / 1000);
+            return payload.exp < currentTime;
+        }
+        
+        function checkTokenStatus() {
+            log('🔍 Verificando estado del token...');
+            
+            const token = getCookie('token');
+            const statusContainer = document.getElementById('tokenStatus');
+            const userInfoContainer = document.getElementById('userInfo');
+            const currentTokenContainer = document.getElementById('currentToken');
+            
+            if (!token) {
+                statusContainer.innerHTML = '<div class="status error">❌ No hay token almacenado</div>';
+                userInfoContainer.innerHTML = '<div class="status warning">⚠️ No hay información de usuario disponible</div>';
+                currentTokenContainer.innerHTML = '<div class="status warning">⚠️ No hay token para mostrar</div>';
+                log('❌ No se encontró token en las cookies');
+                return;
+            }
+            
+            const payload = parseJWT(token);
+            if (!payload) {
+                statusContainer.innerHTML = '<div class="status error">❌ Token inválido o corrupto</div>';
+                userInfoContainer.innerHTML = '<div class="status error">❌ No se puede decodificar el token</div>';
+                log('❌ Token corrupto o inválido');
+                return;
+            }
+            
+            const isExpired = isTokenExpired(token);
+            const expirationDate = new Date(payload.exp * 1000);
+            const timeUntilExpiry = payload.exp * 1000 - Date.now();
+            
+            // Estado del token
+            if (isExpired) {
+                statusContainer.innerHTML = '<div class="status error">❌ Token expirado</div>';
+                log('❌ Token expirado');
+            } else if (timeUntilExpiry < 300000) { // Menos de 5 minutos
+                statusContainer.innerHTML = '<div class="status warning">⚠️ Token expira pronto</div>';
+                log('⚠️ Token expira en menos de 5 minutos');
+            } else {
+                statusContainer.innerHTML = '<div class="status success">✅ Token válido</div>';
+                log('✅ Token válido y activo');
+            }
+            
+            // Información del usuario
+            userInfoContainer.innerHTML = `
+                <div class="info-item">
+                    <span class="label">ID:</span>
+                    <span class="value">${payload.id || 'N/A'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Rol:</span>
+                    <span class="value">${payload.role || 'N/A'}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Emitido:</span>
+                    <span class="value">${new Date(payload.iat * 1000).toLocaleString()}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Expira:</span>
+                    <span class="value">${expirationDate.toLocaleString()}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Tiempo restante:</span>
+                    <span class="value">${isExpired ? 'Expirado' : Math.floor(timeUntilExpiry / 60000) + ' minutos'}</span>
+                </div>
+            `;
+            
+            // Token actual
+            currentTokenContainer.innerHTML = `
+                <div class="token-display">${token}</div>
+                <div style="font-size: 12px; color: #7f8c8d; margin-top: 10px;">
+                    Longitud: ${token.length} caracteres
+                </div>
+            `;
+        }
+        
+        function clearToken() {
+            deleteCookie('token');
+            log('🗑️ Token eliminado de las cookies');
+            checkTokenStatus();
+        }
+        
+        function copyToken() {
+            const token = getCookie('token');
+            if (token) {
+                navigator.clipboard.writeText(token).then(() => {
+                    log('📋 Token copiado al portapapeles');
+                }).catch(() => {
+                    log('❌ Error al copiar token');
+                });
+            } else {
+                log('❌ No hay token para copiar');
+            }
+        }
+        
+        function decodeToken() {
+            const token = getCookie('token');
+            if (!token) {
+                log('❌ No hay token para decodificar');
+                return;
+            }
+            
+            const payload = parseJWT(token);
+            if (payload) {
+                console.log('🔓 Token decodificado:', payload);
+                log('🔓 Token decodificado (ver consola del navegador)');
+            } else {
+                log('❌ Error al decodificar token');
+            }
+        }
+        
+        async function renewToken() {
+            log('🔄 Intentando renovar token...');
+            const renewalContainer = document.getElementById('renewalStatus');
+            renewalContainer.innerHTML = '<div class="status warning"><span class="loading"></span> Renovando token...</div>';
+            
+            try {
+                const response = await fetch('/api/v1/auth/refresh-token', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.token) {
+                        setCookie('token', data.token);
+                        renewalContainer.innerHTML = '<div class="status success">✅ Token renovado exitosamente</div>';
+                        log('✅ Token renovado exitosamente');
+                        checkTokenStatus();
+                    } else {
+                        renewalContainer.innerHTML = '<div class="status error">❌ Respuesta sin token</div>';
+                        log('❌ Respuesta de renovación sin token');
+                    }
+                } else {
+                    const errorData = await response.json();
+                    renewalContainer.innerHTML = `<div class="status error">❌ Error: ${errorData.message || response.statusText}</div>`;
+                    log(`❌ Error al renovar token: ${errorData.message || response.statusText}`);
+                }
+            } catch (error) {
+                renewalContainer.innerHTML = `<div class="status error">❌ Error de conexión: ${error.message}</div>`;
+                log(`❌ Error de conexión al renovar token: ${error.message}`);
+            }
+        }
+        
+        async function testApiCall() {
+            log('🧪 Probando llamada a la API...');
+            const token = getCookie('token');
+            
+            if (!token) {
+                log('❌ No hay token para probar');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/v1/reservas/my-reservations', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ API funcionando correctamente. Reservas encontradas: ${data.data?.length || 0}`);
+                } else {
+                    const errorData = await response.json();
+                    log(`❌ Error en API (${response.status}): ${errorData.message || response.statusText}`);
+                }
+            } catch (error) {
+                log(`❌ Error de conexión en API: ${error.message}`);
+            }
+        }
+        
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Gestor de tokens iniciado');
+            checkTokenStatus();
+            
+            // Verificar automáticamente cada 30 segundos
+            setInterval(checkTokenStatus, 30000);
+        });
+    </script>
+</body>
+</html>

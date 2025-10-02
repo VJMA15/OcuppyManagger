@@ -7,32 +7,91 @@ class NotificationsService {
     this.unreadCount = 0;
   }
 
-  // Obtener notificaciones de reservas (excluyendo las del usuario actual)
-  async getReservationNotifications(currentUserId) {
+  // Obtener notificaciones de reservas filtradas por rol
+  async getReservationNotifications(currentUserId, userRole) {
     try {
       const response = await reservasService.getReservas();
       
       if (response.success && response.data) {
-        // Filtrar reservas que no sean del usuario actual
-        const otherUsersReservations = response.data.filter(reserva => {
-          return reserva.userId?._id !== currentUserId && reserva.userId?.cc !== currentUserId;
-        });
+        let filteredReservations = [];
+        
+        // Filtrar según el rol del usuario
+        switch (userRole?.toLowerCase()) {
+          case 'administrador':
+          case 'admin':
+            // Los administradores ven todas las reservas
+            filteredReservations = response.data;
+            break;
+            
+          case 'instructor':
+            // Los instructores solo ven reservas aprobadas o rechazadas (no pendientes)
+            filteredReservations = response.data.filter(reserva => {
+              const estado = reserva.estado?.toLowerCase();
+              const isNotOwnReservation = reserva.userId?._id !== currentUserId && reserva.userId?.cc !== currentUserId;
+              return isNotOwnReservation && (estado === 'aprobada' || estado === 'rechazada');
+            });
+            break;
+            
+          case 'guardia':
+            // Los guardias ven reservas que requieren supervisión o están en proceso
+            filteredReservations = response.data.filter(reserva => {
+              const estado = reserva.estado?.toLowerCase();
+              return estado === 'pendiente' || estado === 'en_proceso' || estado === 'activa';
+            });
+            break;
+            
+          default:
+            // Otros roles no ven notificaciones de reservas
+            filteredReservations = [];
+        }
         
         // Ordenar por fecha de creación (más recientes primero)
-        const sortedReservations = otherUsersReservations.sort((a, b) => 
+        const sortedReservations = filteredReservations.sort((a, b) => 
           new Date(b.createdAt || b.fechaCreacion) - new Date(a.createdAt || a.fechaCreacion)
         );
         
-        // Convertir a formato de notificación
-        const notifications = sortedReservations.map(reserva => ({
-          id: reserva._id,
-          type: 'reservation',
-          title: 'Nueva reserva',
-          message: `${reserva.userId?.nombre || 'Usuario'} ha realizado una reserva`,
-          data: reserva,
-          timestamp: new Date(reserva.createdAt || reserva.fechaCreacion),
-          read: false
-        }));
+        // Convertir a formato de notificación con información específica por rol
+        const notifications = sortedReservations.map(reserva => {
+          let title = 'Nueva reserva';
+          let message = `${reserva.userId?.nombre || 'Usuario'} ha realizado una reserva`;
+          
+          // Personalizar mensaje según el rol
+          switch (userRole?.toLowerCase()) {
+            case 'administrador':
+            case 'admin':
+              title = 'Gestión de Reserva';
+              message = `Reserva de ${reserva.userId?.nombre || 'Usuario'} - Estado: ${reserva.estado || 'Pendiente'}`;
+              break;
+              
+            case 'instructor':
+              title = 'Estado de Reserva';
+              const estado = reserva.estado?.toLowerCase();
+              if (estado === 'aprobada') {
+                message = `Tu colega ${reserva.userId?.nombre || 'Usuario'} tuvo su reserva APROBADA en ${reserva.ambienteId?.nombre || 'un ambiente'}`;
+              } else if (estado === 'rechazada') {
+                message = `Tu colega ${reserva.userId?.nombre || 'Usuario'} tuvo su reserva RECHAZADA en ${reserva.ambienteId?.nombre || 'un ambiente'}`;
+              } else {
+                message = `Reserva de ${reserva.userId?.nombre || 'Colega'} - Estado: ${reserva.estado}`;
+              }
+              break;
+              
+            case 'guardia':
+              title = 'Reserva para Supervisión';
+              message = `Reserva ${reserva.estado || 'pendiente'} en ${reserva.ambienteId?.nombre || 'ambiente'}`;
+              break;
+          }
+          
+          return {
+            id: reserva._id,
+            type: 'reservation',
+            title,
+            message,
+            data: reserva,
+            timestamp: new Date(reserva.createdAt || reserva.fechaCreacion),
+            read: false,
+            userRole: userRole // Agregar rol para referencia
+          };
+        });
         
         this.notifications = notifications;
         this.updateUnreadCount();

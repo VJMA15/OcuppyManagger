@@ -1,12 +1,12 @@
 import { Outlet } from "react-router-dom";
 import { useMediaQuery } from "@uidotdev/usehooks";
-import { useClickOutside } from "@/hooks/use-click-outside";
-import { InstructorSidebar } from "@/components/instructor/InstructorSidebar";
-import InstructorHeader from "@/components/instructor/InstructorHeader";
-import { cn } from "@/utils/cn";
+import { useClickOutside } from "../hooks/use-click-outside";
+import { InstructorSidebar } from "../components/instructor/InstructorSidebar";
+import InstructorHeader from "../components/instructor/InstructorHeader";
+import { cn } from "../utils/cn";
 import { useEffect, useRef, useState } from "react";
 
-const InstructorLayout = () => {
+const InstructorLayout = ({ children }) => {
     const isDesktopDevice = useMediaQuery("(min-width: 768px)");
     const [collapsed, setCollapsed] = useState(!isDesktopDevice);
 
@@ -40,7 +40,7 @@ const InstructorLayout = () => {
                 />
                 <main className="h-[calc(100vh-60px)] overflow-y-auto overflow-x-hidden">
                     <div className="max-w-7xl mx-auto p-6">
-                        <Outlet />
+                        {children}
                     </div>
                 </main>
             </div>

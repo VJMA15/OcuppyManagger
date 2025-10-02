@@ -7,7 +7,7 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isAuthenticated } = useAuthContext();
+  const { login, isAuthenticated, user } = useAuthContext();
 
   // Event handlers
   const handleChange = (e) => {
@@ -40,9 +40,16 @@ const LoginPage = () => {
     setShowPassword(!showPassword);
   };
 
-  // If already authenticated, redirect
+  // If already authenticated, redirect based on role
   if (isAuthenticated) {
-    window.location.href = '/dashboard';
+    const userRole = user?.role || user?.rol;
+    const redirectPath = 
+      userRole === 'admin' ? '/dashboard' :
+      userRole === 'instructor' ? '/instructor' :
+      userRole === 'guardia' ? '/guardia' :
+      '/ambientes';
+    
+    window.location.href = redirectPath;
     return null;
   }
 

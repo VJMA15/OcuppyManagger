@@ -1,50 +1,375 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Debug Auth Status</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Estado de Autenticación</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #ccc;
+        }
+        .test-result.success { border-left-color: #28a745; background: #d4edda; }
+        .test-result.error { border-left-color: #dc3545; background: #f8d7da; }
+        .test-result.warning { border-left-color: #ffc107; background: #fff3cd; }
+    </style>
 </head>
 <body>
-    <h1>Debug Authentication Status</h1>
-    <div id="results"></div>
+    <h1>🔍 Debug - Estado de Autenticación</h1>
     
+    <div class="container">
+        <h2>🍪 Estado de Cookies</h2>
+        <button onclick="checkCookies()">Verificar Cookies</button>
+        <div id="cookieStatus"></div>
+    </div>
+
+    <div class="container">
+        <h2>🔐 Estado de Autenticación</h2>
+        <button onclick="checkAuthStatus()">Verificar Estado</button>
+        <div id="authStatus"></div>
+    </div>
+
+    <div class="container">
+        <h2>🌐 Prueba de API</h2>
+        <button onclick="testReservasAPI()">Probar /api/v1/reservas</button>
+        <button onclick="testAmbientesAPI()">Probar /api/v1/ambientes</button>
+        <div id="apiResults"></div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 Acciones de Debug</h2>
+        <div style="margin-bottom: 15px;">
+            <label for="customToken">Token JWT Personalizado:</label><br>
+            <textarea id="customToken" placeholder="Pega aquí tu token JWT..." style="width: 100%; height: 80px; margin: 5px 0; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+            <button onclick="setCustomToken()">Establecer Token Personalizado</button>
+        </div>
+        <button onclick="setValidToken()">Establecer Token Pregenerado</button>
+        <button onclick="simulateLogin()">Simular Login</button>
+        <button onclick="clearAuth()">Limpiar Autenticación</button>
+        <div id="debugActions"></div>
+    </div>
+
     <script>
+        // Token válido generado para Victor Admin
+        const VALID_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4Y2M1YTYxYzJjNzdhN2IyMTliZGVjMCIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1OTE2OTQ3OSwiZXhwIjoxNzYxNzYxNDc5fQ.xr8H7MzfR4uYgNOr82tMTkm-D-MP4DkMFdl_f3JfkcY';
+
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
             if (parts.length === 2) return parts.pop().split(';').shift();
             return null;
         }
-        
-        function debugAuth() {
-            const results = document.getElementById('results');
+
+        function setCookie(name, value, days = 7) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = `${name}=${value}; expires=${expires}; path=/`;
+        }
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = message;
+            element.appendChild(resultDiv);
+        }
+
+        function clearResults(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        function checkCookies() {
+            clearResults('cookieStatus');
             
-            // Verificar cookies
             const authToken = getCookie('auth_token');
             const userData = getCookie('user_data');
             
-            // Verificar localStorage
-            const localToken = localStorage.getItem('token');
-            const localUser = localStorage.getItem('user');
+            if (authToken) {
+                showResult('cookieStatus', `✅ Token encontrado: ${authToken.substring(0, 50)}...`, 'success');
+                
+                try {
+                    const payload = JSON.parse(atob(authToken.split('.')[1]));
+                    const exp = new Date(payload.exp * 1000);
+                    const now = new Date();
+                    
+                    if (exp > now) {
+                        showResult('cookieStatus', `✅ Token válido hasta: ${exp.toLocaleString()}`, 'success');
+                    } else {
+                        showResult('cookieStatus', `❌ Token expirado desde: ${exp.toLocaleString()}`, 'error');
+                    }
+                    
+                    showResult('cookieStatus', `📋 Payload: <pre>${JSON.stringify(payload, null, 2)}</pre>`, 'info');
+                } catch (error) {
+                    showResult('cookieStatus', `❌ Error decodificando token: ${error.message}`, 'error');
+                }
+            } else {
+                showResult('cookieStatus', '❌ No se encontró token de autenticación', 'error');
+            }
             
-            results.innerHTML = `
-                <h2>Cookies:</h2>
-                <p><strong>auth_token:</strong> ${authToken ? 'Presente' : 'No encontrado'}</p>
-                <p><strong>user_data:</strong> ${userData ? 'Presente' : 'No encontrado'}</p>
-                
-                <h2>LocalStorage:</h2>
-                <p><strong>token:</strong> ${localToken ? 'Presente' : 'No encontrado'}</p>
-                <p><strong>user:</strong> ${localUser ? 'Presente' : 'No encontrado'}</p>
-                
-                <h2>Detalles:</h2>
-                <p><strong>Token Cookie:</strong> ${authToken || 'N/A'}</p>
-                <p><strong>Token LocalStorage:</strong> ${localToken || 'N/A'}</p>
-                
-                <h2>Todas las cookies:</h2>
-                <p>${document.cookie || 'No hay cookies'}</p>
-            `;
+            if (userData) {
+                showResult('cookieStatus', `📋 Datos de usuario: <pre>${userData}</pre>`, 'info');
+            } else {
+                showResult('cookieStatus', '⚠️ No se encontraron datos de usuario', 'warning');
+            }
         }
-        
-        debugAuth();
+
+        function checkAuthStatus() {
+            clearResults('authStatus');
+            
+            // Verificar si hay servicios de autenticación disponibles
+            if (typeof window.authService !== 'undefined') {
+                showResult('authStatus', '✅ Servicio de autenticación disponible', 'success');
+                
+                if (window.authService.isAuthenticated()) {
+                    showResult('authStatus', '✅ Usuario autenticado según servicio', 'success');
+                } else {
+                    showResult('authStatus', '❌ Usuario NO autenticado según servicio', 'error');
+                }
+            } else {
+                showResult('authStatus', '⚠️ Servicio de autenticación no disponible en window', 'warning');
+            }
+            
+            // Verificar localStorage
+            const localStorageData = Object.keys(localStorage).filter(key => 
+                key.includes('auth') || key.includes('user') || key.includes('token')
+            );
+            
+            if (localStorageData.length > 0) {
+                showResult('authStatus', `📋 Datos en localStorage: ${localStorageData.join(', ')}`, 'info');
+            } else {
+                showResult('authStatus', '📋 No hay datos de autenticación en localStorage', 'info');
+            }
+        }
+
+        async function testReservasAPI() {
+            clearResults('apiResults');
+            showResult('apiResults', '🔄 Probando /api/v1/reservas...', 'info');
+            
+            const token = getCookie('auth_token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+                showResult('apiResults', '✅ Enviando token en header Authorization', 'success');
+            } else {
+                showResult('apiResults', '❌ No hay token para enviar', 'error');
+            }
+            
+            try {
+                const response = await fetch('/api/v1/reservas', {
+                    method: 'GET',
+                    headers: headers
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('apiResults', `✅ Reservas API: ${response.status} - ${data.data?.length || 0} reservas`, 'success');
+                } else {
+                    showResult('apiResults', `❌ Reservas API: ${response.status} - ${data.error || data.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('apiResults', `❌ Error en Reservas API: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAmbientesAPI() {
+            showResult('apiResults', '🔄 Probando /api/v1/ambientes...', 'info');
+            
+            const token = getCookie('auth_token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            try {
+                const response = await fetch('/api/v1/ambientes', {
+                    method: 'GET',
+                    headers: headers
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('apiResults', `✅ Ambientes API: ${response.status} - ${data.data?.length || 0} ambientes`, 'success');
+                } else {
+                    showResult('apiResults', `❌ Ambientes API: ${response.status} - ${data.error || data.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('apiResults', `❌ Error en Ambientes API: ${error.message}`, 'error');
+            }
+        }
+
+        function setCustomToken() {
+            clearResults('debugActions');
+            
+            const customToken = document.getElementById('customToken').value.trim();
+            
+            if (!customToken) {
+                showResult('debugActions', '❌ Por favor ingresa un token JWT', 'error');
+                return;
+            }
+            
+            try {
+                // Validar que el token tenga el formato correcto
+                const parts = customToken.split('.');
+                if (parts.length !== 3) {
+                    throw new Error('Token JWT debe tener 3 partes separadas por puntos');
+                }
+                
+                // Decodificar y validar el payload
+                const payload = JSON.parse(atob(parts[1]));
+                const exp = new Date(payload.exp * 1000);
+                const now = new Date();
+                
+                if (exp <= now) {
+                    showResult('debugActions', `⚠️ Advertencia: Token expirado desde ${exp.toLocaleString()}`, 'warning');
+                } else {
+                    showResult('debugActions', `✅ Token válido hasta: ${exp.toLocaleString()}`, 'success');
+                }
+                
+                // Establecer el token en cookies
+                setCookie('auth_token', customToken, 7);
+                
+                // Establecer datos de usuario si están en el payload
+                if (payload.id && payload.role) {
+                    const userData = {
+                        id: payload.id,
+                        role: payload.role,
+                        nombre: 'Usuario Personalizado',
+                        activo: true
+                    };
+                    setCookie('user_data', JSON.stringify(userData), 7);
+                    showResult('debugActions', '✅ Datos de usuario establecidos', 'success');
+                }
+                
+                showResult('debugActions', '✅ Token personalizado establecido en cookies', 'success');
+                showResult('debugActions', `📋 Payload: <pre>${JSON.stringify(payload, null, 2)}</pre>`, 'info');
+                showResult('debugActions', '🔄 Recarga la página para que el contexto detecte la autenticación', 'info');
+                
+                // Limpiar el campo de texto
+                document.getElementById('customToken').value = '';
+                
+            } catch (error) {
+                showResult('debugActions', `❌ Token inválido: ${error.message}`, 'error');
+            }
+        }
+
+        function setValidToken() {
+            clearResults('debugActions');
+            
+            setCookie('auth_token', VALID_TOKEN, 7);
+            
+            // También establecer datos de usuario
+            const userData = {
+                id: '68cc5a61c2c77a7b219bdec0',
+                nombre: 'Victor Mendez',
+                cc: '1038647805',
+                email: 'vjmendez5@soy.sena.edu.co',
+                role: 'admin',
+                activo: true
+            };
+            
+            setCookie('user_data', JSON.stringify(userData), 7);
+            
+            showResult('debugActions', '✅ Token válido establecido en cookies', 'success');
+            showResult('debugActions', '✅ Datos de usuario establecidos', 'success');
+            showResult('debugActions', '🔄 Recarga la página para que el contexto detecte la autenticación', 'info');
+        }
+
+        function clearAuth() {
+            clearResults('debugActions');
+            
+            // Limpiar cookies
+            document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'user_data=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            
+            // Limpiar localStorage
+            localStorage.clear();
+            
+            showResult('debugActions', '✅ Autenticación limpiada', 'success');
+            showResult('debugActions', '🔄 Recarga la página para ver los cambios', 'info');
+        }
+
+        async function simulateLogin() {
+            clearResults('debugActions');
+            showResult('debugActions', '🔄 Simulando login...', 'info');
+            
+            try {
+                const response = await fetch('/api/v1/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        cc: '1038647805',
+                        password: 'Admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    setCookie('auth_token', data.token, 7);
+                    setCookie('user_data', JSON.stringify(data.user), 7);
+                    
+                    showResult('debugActions', '✅ Login simulado exitoso', 'success');
+                    showResult('debugActions', `👤 Usuario: ${data.user.nombre} (${data.user.role})`, 'success');
+                    showResult('debugActions', '🔄 Recarga la página para que el contexto detecte la autenticación', 'info');
+                } else {
+                    showResult('debugActions', `❌ Error en login: ${data.error || 'Credenciales inválidas'}`, 'error');
+                }
+            } catch (error) {
+                showResult('debugActions', `❌ Error de conexión: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-ejecutar verificaciones al cargar
+        window.onload = function() {
+            console.log('🚀 Debug de autenticación iniciado');
+            checkCookies();
+            checkAuthStatus();
+        };
     </script>
 </body>
 </html>

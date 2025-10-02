@@ -25,6 +25,11 @@ const validateCreateUser = [
         .withMessage('El nombre es requerido')
         .isLength({ min: 2 })
         .withMessage('El nombre debe tener al menos 2 caracteres'),
+    (0, express_validator_1.body)('cc')
+        .notEmpty()
+        .withMessage('La cédula es requerida')
+        .matches(/^\d{8,12}$/)
+        .withMessage('La cédula debe tener entre 8 y 12 dígitos'),
     (0, express_validator_1.body)('email')
         .isEmail()
         .withMessage('Debe ser un email válido')
@@ -35,8 +40,8 @@ const validateCreateUser = [
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
         .withMessage('La contraseña debe contener al menos una mayúscula, una minúscula y un número'),
     (0, express_validator_1.body)('role')
-        .isIn(['admin', 'instructor', 'guardia', 'usuario'])
-        .withMessage('El rol debe ser: admin, instructor, guardia o usuario')
+        .isIn(['admin', 'instructor', 'guardia'])
+        .withMessage('El rol debe ser: admin, instructor o guardia')
 ];
 // Validaciones para actualizar usuario
 const validateUpdateUser = [

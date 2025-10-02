@@ -100,7 +100,8 @@ const VerReservasPage = () => {
     const statusMap = {
       'pendiente': 'PENDING',
       'aprobada': 'APPROVED', 
-      'rechazada': 'REJECTED'
+      'rechazada': 'REJECTED',
+      'cancelada': 'CANCELLED'
     };
     return reserva.status === statusMap[filter];
   });

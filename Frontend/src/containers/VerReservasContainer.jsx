@@ -179,7 +179,8 @@ const VerReservasContainer = ({
                           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(reserva.status)}`}>
                             {getStatusIcon(reserva.status)}
                             {reserva.status === 'PENDING' ? 'Pendiente' : 
-                              reserva.status === 'APPROVED' ? 'Aprobada' : 'Rechazada'}
+                              reserva.status === 'APPROVED' ? 'Aprobada' : 
+                              reserva.status === 'CANCELLED' ? 'Cancelada' : 'Rechazada'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

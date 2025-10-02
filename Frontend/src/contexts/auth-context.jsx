@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/auth';
 import apiService from '../services/api';
 import sessionManager from '../services/sessionManager';
+import { API_CONFIG } from '../config/api';
 
 const AuthContext = createContext();
 
@@ -92,13 +93,55 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
+  // Renovar token automáticamente
+  const refreshToken = async () => {
+    try {
+      console.log('🔄 Intentando renovar token...');
+      
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.REFRESH_TOKEN}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authService.getToken()}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success && data.token) {
+        // Actualizar token en el servicio de auth
+        authService.setToken(data.token);
+        
+        // Si hay datos de usuario actualizados, actualizarlos también
+        if (data.user) {
+          const updatedUser = { ...user, ...data.user };
+          setUser(updatedUser);
+          authService.setUser(updatedUser);
+        }
+        
+        console.log('✅ Token renovado exitosamente');
+        return { success: true, token: data.token };
+      } else {
+        throw new Error(data.error || 'Error al renovar token');
+      }
+    } catch (error) {
+      console.error('❌ Error al renovar token:', error);
+      
+      // Si falla la renovación, cerrar sesión
+      logout();
+      
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     user,
     isAuthenticated,
     loading,
     login,
     logout,
-    updateUser
+    updateUser,
+    refreshToken
   };
 
   return (

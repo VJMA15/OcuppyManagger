@@ -112,7 +112,7 @@ const GuardiaHeader = ({ collapsed, setCollapsed }) => {
                 "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
               )}
               aria-label="Notificaciones"
-              onClick={() => setShowNotifications(true)}
+              onClick={() => setShowNotifications(!showNotifications)}
             >
               <Bell className="h-5 w-5" />
               <NotificationBadge />

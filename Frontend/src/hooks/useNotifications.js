@@ -17,7 +17,11 @@ export const useNotifications = () => {
     setError(null);
     
     try {
-      await notificationsService.getReservationNotifications(user.id || user.cc);
+      // Pasar tanto el ID como el rol del usuario
+      await notificationsService.getReservationNotifications(
+        user.id || user.cc, 
+        user.rol || user.role
+      );
     } catch (err) {
       console.error('Error loading notifications:', err);
       setError(err.message || 'Error al cargar notificaciones');

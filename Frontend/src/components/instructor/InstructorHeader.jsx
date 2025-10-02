@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { BookOpen, Menu, Sun, Moon, Bell, User, LogOut } from 'lucide-react';
-import { useAuthContext } from '@/contexts/auth-context';
-import { useTheme } from '@/contexts/theme-context';
+import { useAuthContext } from '../../contexts/auth-context';
+import { useTheme } from '../../contexts/theme-context';
 import PropTypes from 'prop-types';
-import profileImg from '@/assets/profile-image.jpg';
-import NotificationPanel from '@/components/notifications/NotificationPanel';
-import NotificationBadge from '@/components/notifications/NotificationBadge';
+import profileImg from '../../assets/profile-image.jpg';
+import NotificationPanel from '../notifications/NotificationPanel';
+import NotificationBadge from '../notifications/NotificationBadge';
 
 const InstructorHeader = ({ collapsed, setCollapsed }) => {
   const { user, logout } = useAuthContext();
@@ -66,7 +66,7 @@ const InstructorHeader = ({ collapsed, setCollapsed }) => {
         <button 
           className="btn-ghost size-10 relative" 
           title="Notificaciones"
-          onClick={() => setShowNotifications(true)}
+          onClick={() => setShowNotifications(!showNotifications)}
         >
           <Bell size={20} />
           <NotificationBadge />

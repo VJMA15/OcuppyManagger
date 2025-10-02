@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Token de Autenticación</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .token-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug - Token de Autenticación</h1>
+        <p>Esta página te ayuda a diagnosticar problemas con el token de autenticación.</p>
+        
+        <div class="section">
+            <h3>📋 Estado Actual del Token</h3>
+            <button onclick="checkTokenStatus()">Verificar Token</button>
+            <div id="tokenStatus"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔐 Probar Login</h3>
+            <input type="text" id="cc" placeholder="Cédula" value="1038647805">
+            <input type="password" id="password" placeholder="Contraseña" value="admin123">
+            <button onclick="testLogin()">Hacer Login</button>
+            <div id="loginResult"></div>
+        </div>
+
+        <div class="section">
+            <h3>🌐 Probar API con Token</h3>
+            <button onclick="testReservasAPI()">Probar GET /api/v1/reservas</button>
+            <button onclick="testAmbientesAPI()">Probar GET /api/v1/ambientes</button>
+            <div id="apiResult"></div>
+        </div>
+
+        <div class="section">
+            <h3>🧹 Limpiar Datos</h3>
+            <button onclick="clearAuthData()">Limpiar Token y Cookies</button>
+            <div id="clearResult"></div>
+        </div>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function setCookie(name, value, days = 7) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = `${name}=${value}; expires=${expires}; path=/`;
+        }
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        function checkTokenStatus() {
+            const token = getCookie('auth_token');
+            
+            if (!token) {
+                showResult('tokenStatus', '❌ No se encontró token de autenticación', 'error');
+                return;
+            }
+
+            try {
+                // Decodificar JWT
+                const parts = token.split('.');
+                if (parts.length !== 3) {
+                    showResult('tokenStatus', '❌ Token con formato inválido', 'error');
+                    return;
+                }
+
+                const payload = JSON.parse(atob(parts[1]));
+                const exp = new Date(payload.exp * 1000);
+                const now = new Date();
+                const isExpired = exp < now;
+
+                let result = `
+                    <div class="${isExpired ? 'error' : 'success'}">
+                        <strong>Token encontrado:</strong><br>
+                        <div class="token-display">${token.substring(0, 100)}...</div>
+                        <strong>Usuario ID:</strong> ${payload.id || 'N/A'}<br>
+                        <strong>Expiración:</strong> ${exp.toLocaleString()}<br>
+                        <strong>Estado:</strong> ${isExpired ? '❌ EXPIRADO' : '✅ VÁLIDO'}<br>
+                        <strong>Tiempo restante:</strong> ${isExpired ? 'Expirado' : Math.round((exp - now) / 1000 / 60)} minutos
+                    </div>
+                `;
+                
+                showResult('tokenStatus', result, isExpired ? 'error' : 'success');
+            } catch (error) {
+                showResult('tokenStatus', `❌ Error al decodificar token: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            const cc = document.getElementById('cc').value;
+            const password = document.getElementById('password').value;
+
+            if (!cc || !password) {
+                showResult('loginResult', '❌ Por favor ingresa cédula y contraseña', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ cc, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    setCookie('auth_token', data.token);
+                    showResult('loginResult', `✅ Login exitoso!<br>
+                        <strong>Usuario:</strong> ${data.user.nombre}<br>
+                        <strong>Rol:</strong> ${data.user.role}<br>
+                        <strong>Token guardado:</strong> ✅`, 'success');
+                } else {
+                    showResult('loginResult', `❌ Error en login: ${data.error || 'Credenciales inválidas'}`, 'error');
+                }
+            } catch (error) {
+                showResult('loginResult', `❌ Error de conexión: ${error.message}`, 'error');
+            }
+        }
+
+        async function testReservasAPI() {
+            const token = getCookie('auth_token');
+            
+            if (!token) {
+                showResult('apiResult', '❌ No hay token disponible. Haz login primero.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/reservas', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('apiResult', `✅ API Reservas funciona correctamente<br>
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Reservas encontradas:</strong> ${data.data ? data.data.length : 0}`, 'success');
+                } else {
+                    showResult('apiResult', `❌ Error en API Reservas<br>
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Error:</strong> ${data.message || 'Error desconocido'}`, 'error');
+                }
+            } catch (error) {
+                showResult('apiResult', `❌ Error de conexión con API Reservas: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAmbientesAPI() {
+            const token = getCookie('auth_token');
+            
+            if (!token) {
+                showResult('apiResult', '❌ No hay token disponible. Haz login primero.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/ambientes', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('apiResult', `✅ API Ambientes funciona correctamente<br>
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Ambientes encontrados:</strong> ${data.data ? data.data.length : 0}`, 'success');
+                } else {
+                    showResult('apiResult', `❌ Error en API Ambientes<br>
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Error:</strong> ${data.message || 'Error desconocido'}`, 'error');
+                }
+            } catch (error) {
+                showResult('apiResult', `❌ Error de conexión con API Ambientes: ${error.message}`, 'error');
+            }
+        }
+
+        function clearAuthData() {
+            // Limpiar cookies
+            document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            
+            // Limpiar localStorage
+            localStorage.removeItem('user_data');
+            localStorage.removeItem('auth_token');
+            
+            // Limpiar sessionStorage
+            sessionStorage.clear();
+            
+            showResult('clearResult', '✅ Datos de autenticación limpiados correctamente', 'success');
+        }
+
+        // Verificar token al cargar la página
+        window.onload = function() {
+            checkTokenStatus();
+        };
+    </script>
+</body>
+</html>

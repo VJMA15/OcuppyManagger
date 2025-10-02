@@ -38,7 +38,7 @@ const reservationSchema = new mongoose_1.Schema({
     },
     environmentId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Environment',
+        ref: 'Ambiente',
         required: true
     },
     startDate: {

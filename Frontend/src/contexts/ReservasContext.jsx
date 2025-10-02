@@ -78,7 +78,8 @@ export const ReservasProvider = ({ children }) => {
     total: reservas.length,
     pendientes: reservas.filter(r => r.status === 'PENDING').length,
     aprobadas: reservas.filter(r => r.status === 'APPROVED').length,
-    rechazadas: reservas.filter(r => r.status === 'REJECTED').length
+    rechazadas: reservas.filter(r => r.status === 'REJECTED').length,
+    canceladas: reservas.filter(r => r.status === 'CANCELLED').length
   };
 
   const value = {

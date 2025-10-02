@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧹 Limpieza de Tokens - Debug</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            border-left-color: #f44336;
+        }
+        .warning {
+            border-left-color: #ff9800;
+        }
+        .info {
+            border-left-color: #2196F3;
+        }
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        button.danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+        }
+        button.danger:hover {
+            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+        }
+        button.warning {
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        }
+        button.warning:hover {
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: rgba(76, 175, 80, 0.3); }
+        .error-status { background: rgba(244, 67, 54, 0.3); }
+        .warning-status { background: rgba(255, 152, 0, 0.3); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Limpieza Completa de Tokens</h1>
+        
+        <div class="section warning">
+            <h3>⚠️ Estado Actual del Sistema</h3>
+            <p>Se han detectado errores 401/403 que indican problemas con el token actual.</p>
+            <p>Esta herramienta limpiará completamente todos los tokens y datos de sesión.</p>
+        </div>
+
+        <div class="section info">
+            <h3>📋 Información Actual</h3>
+            <div id="currentInfo">
+                <p>Cargando información actual...</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🔧 Acciones de Limpieza</h3>
+            <button onclick="checkCurrentState()">🔍 Verificar Estado Actual</button>
+            <button onclick="clearAllTokens()" class="danger">🧹 Limpiar Todos los Tokens</button>
+            <button onclick="clearLocalStorage()" class="warning">🗑️ Limpiar LocalStorage</button>
+            <button onclick="clearSessionStorage()" class="warning">🗑️ Limpiar SessionStorage</button>
+            <button onclick="clearCookies()" class="warning">🍪 Limpiar Cookies</button>
+            <button onclick="fullCleanup()" class="danger">💥 Limpieza Completa</button>
+        </div>
+
+        <div class="section">
+            <h3>🔄 Después de la Limpieza</h3>
+            <button onclick="redirectToLogin()">🔐 Ir a Login</button>
+            <button onclick="reloadPage()">🔄 Recargar Página</button>
+        </div>
+
+        <div class="section">
+            <h3>📊 Log de Actividades</h3>
+            <div id="log">
+                <p>Esperando acciones...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = type === 'error' ? 'error-status' : 
+                               type === 'warning' ? 'warning-status' : 
+                               type === 'success' ? 'success' : '';
+            
+            logDiv.innerHTML += `<div class="status ${statusClass}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function checkCurrentState() {
+            log('🔍 Verificando estado actual del sistema...', 'info');
+            
+            // Verificar cookies
+            const cookies = document.cookie.split(';').map(c => c.trim());
+            const authCookies = cookies.filter(c => c.includes('auth') || c.includes('token'));
+            
+            // Verificar localStorage
+            const localStorageKeys = Object.keys(localStorage);
+            const authLocalStorage = localStorageKeys.filter(k => 
+                k.includes('auth') || k.includes('token') || k.includes('user')
+            );
+            
+            // Verificar sessionStorage
+            const sessionStorageKeys = Object.keys(sessionStorage);
+            const authSessionStorage = sessionStorageKeys.filter(k => 
+                k.includes('auth') || k.includes('token') || k.includes('user')
+            );
+
+            const info = `
+                <strong>🍪 Cookies de autenticación:</strong> ${authCookies.length > 0 ? authCookies.join(', ') : 'Ninguna'}
+                <br><strong>💾 LocalStorage:</strong> ${authLocalStorage.length > 0 ? authLocalStorage.join(', ') : 'Ninguno'}
+                <br><strong>🔄 SessionStorage:</strong> ${authSessionStorage.length > 0 ? authSessionStorage.join(', ') : 'Ninguno'}
+                <br><strong>🌐 URL actual:</strong> ${window.location.href}
+            `;
+            
+            document.getElementById('currentInfo').innerHTML = info;
+            log('✅ Estado verificado correctamente', 'success');
+        }
+
+        function clearAllTokens() {
+            log('🧹 Iniciando limpieza completa de tokens...', 'warning');
+            
+            let cleared = 0;
+            
+            // Limpiar cookies específicas de auth
+            const cookies = document.cookie.split(';');
+            cookies.forEach(cookie => {
+                const eqPos = cookie.indexOf('=');
+                const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                if (name.includes('auth') || name.includes('token')) {
+                    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+                    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+                    cleared++;
+                    log(`🍪 Cookie eliminada: ${name}`, 'success');
+                }
+            });
+            
+            // Limpiar localStorage
+            const localKeys = Object.keys(localStorage);
+            localKeys.forEach(key => {
+                if (key.includes('auth') || key.includes('token') || key.includes('user')) {
+                    localStorage.removeItem(key);
+                    cleared++;
+                    log(`💾 LocalStorage eliminado: ${key}`, 'success');
+                }
+            });
+            
+            // Limpiar sessionStorage
+            const sessionKeys = Object.keys(sessionStorage);
+            sessionKeys.forEach(key => {
+                if (key.includes('auth') || key.includes('token') || key.includes('user')) {
+                    sessionStorage.removeItem(key);
+                    cleared++;
+                    log(`🔄 SessionStorage eliminado: ${key}`, 'success');
+                }
+            });
+            
+            log(`✅ Limpieza completada. ${cleared} elementos eliminados.`, 'success');
+            checkCurrentState();
+        }
+
+        function clearLocalStorage() {
+            log('🗑️ Limpiando LocalStorage...', 'warning');
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                localStorage.removeItem(key);
+                log(`💾 Eliminado: ${key}`, 'success');
+            });
+            log('✅ LocalStorage limpiado completamente', 'success');
+        }
+
+        function clearSessionStorage() {
+            log('🗑️ Limpiando SessionStorage...', 'warning');
+            const keys = Object.keys(sessionStorage);
+            keys.forEach(key => {
+                sessionStorage.removeItem(key);
+                log(`🔄 Eliminado: ${key}`, 'success');
+            });
+            log('✅ SessionStorage limpiado completamente', 'success');
+        }
+
+        function clearCookies() {
+            log('🍪 Limpiando todas las cookies...', 'warning');
+            const cookies = document.cookie.split(';');
+            let cleared = 0;
+            
+            cookies.forEach(cookie => {
+                const eqPos = cookie.indexOf('=');
+                const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                if (name) {
+                    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+                    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+                    cleared++;
+                    log(`🍪 Cookie eliminada: ${name}`, 'success');
+                }
+            });
+            
+            log(`✅ ${cleared} cookies eliminadas`, 'success');
+        }
+
+        function fullCleanup() {
+            log('💥 Iniciando limpieza completa del sistema...', 'error');
+            
+            clearAllTokens();
+            clearLocalStorage();
+            clearSessionStorage();
+            clearCookies();
+            
+            // Limpiar cache si es posible
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                        log(`🗂️ Cache eliminado: ${name}`, 'success');
+                    });
+                });
+            }
+            
+            log('💥 LIMPIEZA COMPLETA FINALIZADA', 'success');
+            log('⚠️ Se recomienda recargar la página o ir al login', 'warning');
+        }
+
+        function redirectToLogin() {
+            log('🔐 Redirigiendo al login...', 'info');
+            // Asumiendo que el login está en la raíz
+            window.location.href = '/';
+        }
+
+        function reloadPage() {
+            log('🔄 Recargando página...', 'info');
+            window.location.reload(true);
+        }
+
+        // Verificar estado al cargar la página
+        window.onload = function() {
+            log('🚀 Herramienta de limpieza de tokens iniciada', 'success');
+            checkCurrentState();
+        };
+    </script>
+</body>
+</html>

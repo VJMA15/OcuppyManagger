@@ -8,27 +8,27 @@ const reportsController = new ReportsController();
 // Aplicar middleware de autenticación a todas las rutas
 router.use(authenticateToken);
 
-// Rutas para estadísticas generales (solo admin y guardia)
+// Rutas para estadísticas generales (admin, guardia e instructor)
 router.get('/estadisticas', 
-  requireRole(['admin', 'guardia']), 
+  requireRole(['admin', 'guardia', 'instructor']), 
   reportsController.getGeneralStats
 );
 
 // Rutas para reportes de reservas
 router.get('/reservas', 
-  requireRole(['admin', 'guardia']), 
+  requireRole(['admin', 'guardia', 'instructor']), 
   reportsController.generateReservationsReport
 );
 
 // Rutas para reportes de entregas
 router.get('/entregas', 
-  requireRole(['admin', 'guardia']), 
+  requireRole(['admin', 'guardia', 'instructor']), 
   reportsController.generateDeliveriesReport
 );
 
 // Rutas para reportes de uso de ambientes
 router.get('/uso-ambientes', 
-  requireRole(['admin', 'guardia']), 
+  requireRole(['admin', 'guardia', 'instructor']), 
   reportsController.generateEnvironmentUsageReport
 );
 

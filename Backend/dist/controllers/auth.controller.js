@@ -31,6 +31,7 @@ const createSendToken = (user, statusCode, res) => {
         user: {
             id: user._id,
             nombre: user.nombre,
+            cc: user.cc,
             email: user.email,
             role: user.role,
             activo: user.activo,
@@ -40,15 +41,21 @@ const createSendToken = (user, statusCode, res) => {
 };
 // Registro de usuario
 exports.register = (0, catchAsync_1.default)(async (req, res, next) => {
-    const { nombre, email, password, role = 'instructor' } = req.body;
+    const { nombre, cc, email, password, role = 'instructor' } = req.body;
     // Verificar si el usuario ya existe
     const existingUser = await user_model_1.default.findOne({ email });
     if (existingUser) {
         return next(new appError_1.default('Ya existe un usuario con este email', 400));
     }
+    // Verificar si la CC ya existe
+    const existingUserByCC = await user_model_1.default.findOne({ cc });
+    if (existingUserByCC) {
+        return next(new appError_1.default('Ya existe un usuario con esta cédula', 400));
+    }
     // Crear nuevo usuario
     const newUser = await user_model_1.default.create({
         nombre,
+        cc,
         email,
         password,
         role

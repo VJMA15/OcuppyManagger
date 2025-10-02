@@ -43,12 +43,48 @@ export const useAmbientes = () => {
     }
   };
 
+  const updateAmbiente = async (id, ambienteData) => {
+    try {
+      const response = await ambientesService.updateAmbiente(id, ambienteData);
+      if (response.success) {
+        setAmbientes(prev => 
+          prev.map(ambiente => 
+            ambiente._id === id ? response.data : ambiente
+          )
+        );
+        return response;
+      } else {
+        throw new Error(response.error || 'Error al actualizar ambiente');
+      }
+    } catch (err) {
+      console.error('Error updating ambiente:', err);
+      throw err;
+    }
+  };
+
+  const deleteAmbiente = async (id) => {
+    try {
+      const response = await ambientesService.deleteAmbiente(id);
+      if (response.success) {
+        setAmbientes(prev => prev.filter(ambiente => ambiente._id !== id));
+        return response;
+      } else {
+        throw new Error(response.error || 'Error al eliminar ambiente');
+      }
+    } catch (err) {
+      console.error('Error deleting ambiente:', err);
+      throw err;
+    }
+  };
+
   return {
     ambientes,
     loading,
     error,
     fetchAmbientes,
-    createAmbiente
+    createAmbiente,
+    updateAmbiente,
+    deleteAmbiente
   };
 };
 

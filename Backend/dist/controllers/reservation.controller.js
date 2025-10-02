@@ -1,8 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReservationController = void 0;
 const reservation_service_1 = require("../services/reservation.service");
-const User = require('../models/user.model');
+const user_model_1 = __importDefault(require("../models/user.model"));
+const bitacora_model_1 = __importDefault(require("../models/bitacora.model"));
 class ReservationController {
     constructor() {
         this.reservationService = new reservation_service_1.ReservationService();
@@ -19,7 +23,7 @@ class ReservationController {
                 });
             }
             // Buscar usuario por CC
-            const user = await User.findOne({ cc: userCC });
+            const user = await user_model_1.default.findOne({ cc: userCC });
             if (!user) {
                 return res.status(404).json({
                     success: false,
@@ -105,10 +109,58 @@ class ReservationController {
                     message: 'Reserva no encontrada'
                 });
             }
+            // Registrar en bitácora
+            await bitacora_model_1.default.registrarAccion(approvedBy, 'APROBAR_RESERVA', 'reserva', id, JSON.stringify({
+                reservaId: id,
+                usuarioSolicitante: reservation.userId,
+                ambiente: reservation.environmentId,
+                fechaReserva: reservation.startDate,
+                fechaAprobacion: new Date()
+            }), req.ip);
             res.json({
                 success: true,
                 data: reservation,
                 message: 'Reserva aprobada exitosamente'
+            });
+        }
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+            res.status(500).json({
+                success: false,
+                message: errorMessage
+            });
+        }
+    }
+    async rejectReservation(req, res) {
+        try {
+            const { id } = req.params;
+            const { reason } = req.body;
+            if (!reason) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'reason es requerido'
+                });
+            }
+            const reservation = await this.reservationService.rejectReservation(id, reason);
+            if (!reservation) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Reserva no encontrada'
+                });
+            }
+            // Registrar en bitácora
+            await bitacora_model_1.default.registrarAccion(req.user?.id || 'sistema', 'RECHAZAR_RESERVA', 'reserva', id, JSON.stringify({
+                reservaId: id,
+                usuarioSolicitante: reservation.userId,
+                ambiente: reservation.environmentId,
+                fechaReserva: reservation.startDate,
+                motivoRechazo: reason,
+                fechaRechazo: new Date()
+            }), req.ip);
+            res.json({
+                success: true,
+                data: reservation,
+                message: 'Reserva rechazada exitosamente'
             });
         }
         catch (error) {

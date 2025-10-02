@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Funcionalidad de Logout</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.danger:hover { background: #c82333; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚪 Debug - Funcionalidad de Logout</h1>
+        <p>Esta herramienta te ayuda a probar y diagnosticar la funcionalidad de cerrar sesión.</p>
+        
+        <div class="test-section">
+            <h3>🔍 Verificación de Estado Actual</h3>
+            <button onclick="checkCurrentSession()">Verificar Sesión Actual</button>
+            <button onclick="checkLogoutMethods()">Verificar Métodos de Logout</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Pruebas de Logout</h3>
+            <button onclick="testLocalStorageLogout()">Probar Logout (localStorage)</button>
+            <button onclick="testCookieLogout()">Probar Logout (Cookies)</button>
+            <button onclick="testApiLogout()">Probar Logout (API)</button>
+            <button onclick="testCompleteLogout()" class="danger">Logout Completo</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Herramientas de Limpieza</h3>
+            <button onclick="clearAllData()" class="danger">Limpiar Todos los Datos</button>
+            <button onclick="clearResults()">Limpiar Resultados</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong> - ${message}`;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function checkCurrentSession() {
+            addResult('🔍 Verificando estado de sesión actual...', 'info');
+            
+            // Verificar localStorage
+            const userData = localStorage.getItem('user_data');
+            const token = localStorage.getItem('token');
+            
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    addResult(`✅ Usuario en localStorage: ${user.nombre || user.email || 'Sin nombre'}`, 'success');
+                    addResult(`👤 Rol: ${user.role || user.rol || 'No definido'}`, 'info');
+                } catch (error) {
+                    addResult(`❌ Error al parsear datos de usuario: ${error.message}`, 'error');
+                }
+            } else {
+                addResult('❌ No hay datos de usuario en localStorage', 'warning');
+            }
+
+            if (token) {
+                addResult('✅ Token encontrado en localStorage', 'success');
+            } else {
+                addResult('❌ No hay token en localStorage', 'warning');
+            }
+
+            // Verificar cookies
+            const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                const [key, value] = cookie.trim().split('=');
+                if (key && value) acc[key] = value;
+                return acc;
+            }, {});
+
+            if (cookies.auth_token) {
+                addResult('✅ Token encontrado en cookies', 'success');
+            } else {
+                addResult('❌ No hay token en cookies', 'warning');
+            }
+
+            if (cookies.user_data) {
+                addResult('✅ Datos de usuario encontrados en cookies', 'success');
+            } else {
+                addResult('❌ No hay datos de usuario en cookies', 'warning');
+            }
+
+            // Verificar sessionStorage
+            const sessionData = sessionStorage.getItem('user_data');
+            if (sessionData) {
+                addResult('✅ Datos encontrados en sessionStorage', 'success');
+            } else {
+                addResult('❌ No hay datos en sessionStorage', 'warning');
+            }
+        }
+
+        function checkLogoutMethods() {
+            addResult('🔍 Verificando métodos de logout disponibles...', 'info');
+            
+            // Verificar si hay funciones de logout en el contexto global
+            if (typeof window.logout === 'function') {
+                addResult('✅ Función window.logout disponible', 'success');
+            } else {
+                addResult('❌ Función window.logout no disponible', 'warning');
+            }
+
+            // Verificar localStorage para métodos de auth
+            const authMethods = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('auth') || key.includes('token') || key.includes('user'))) {
+                    authMethods.push(key);
+                }
+            }
+
+            if (authMethods.length > 0) {
+                addResult(`📋 Claves de autenticación encontradas: ${authMethods.join(', ')}`, 'info');
+            } else {
+                addResult('❌ No se encontraron claves de autenticación', 'warning');
+            }
+        }
+
+        function testLocalStorageLogout() {
+            addResult('🧪 Probando logout via localStorage...', 'info');
+            
+            try {
+                // Limpiar datos específicos de autenticación
+                const keysToRemove = ['user_data', 'token', 'auth_token', 'isAdmin', 'systemName'];
+                let removedKeys = [];
+                
+                keysToRemove.forEach(key => {
+                    if (localStorage.getItem(key)) {
+                        localStorage.removeItem(key);
+                        removedKeys.push(key);
+                    }
+                });
+
+                if (removedKeys.length > 0) {
+                    addResult(`✅ Claves removidas de localStorage: ${removedKeys.join(', ')}`, 'success');
+                } else {
+                    addResult('⚠️ No había claves para remover en localStorage', 'warning');
+                }
+
+                addResult('✅ Logout via localStorage completado', 'success');
+            } catch (error) {
+                addResult(`❌ Error en logout via localStorage: ${error.message}`, 'error');
+            }
+        }
+
+        function testCookieLogout() {
+            addResult('🧪 Probando logout via cookies...', 'info');
+            
+            try {
+                // Obtener todas las cookies
+                const cookies = document.cookie.split(';');
+                let removedCookies = [];
+                
+                cookies.forEach(cookie => {
+                    const [name] = cookie.trim().split('=');
+                    if (name && (name.includes('auth') || name.includes('token') || name.includes('user'))) {
+                        // Eliminar cookie
+                        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+                        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+                        removedCookies.push(name);
+                    }
+                });
+
+                if (removedCookies.length > 0) {
+                    addResult(`✅ Cookies removidas: ${removedCookies.join(', ')}`, 'success');
+                } else {
+                    addResult('⚠️ No había cookies de autenticación para remover', 'warning');
+                }
+
+                addResult('✅ Logout via cookies completado', 'success');
+            } catch (error) {
+                addResult(`❌ Error en logout via cookies: ${error.message}`, 'error');
+            }
+        }
+
+        async function testApiLogout() {
+            addResult('🧪 Probando logout via API...', 'info');
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                addResult('❌ No hay token para hacer logout via API', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    addResult('✅ Logout via API exitoso', 'success');
+                    const data = await response.json();
+                    addResult(`📋 Respuesta: ${data.message || 'Logout completado'}`, 'info');
+                } else {
+                    addResult(`❌ Error en logout via API: ${response.status} - ${response.statusText}`, 'error');
+                    const errorData = await response.text();
+                    addResult(`📋 Detalle del error: ${errorData}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Error de conexión en logout via API: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCompleteLogout() {
+            if (!confirm('¿Estás seguro de que quieres hacer un logout completo? Esto cerrará tu sesión.')) {
+                return;
+            }
+
+            addResult('🚪 Iniciando logout completo...', 'info');
+            
+            // 1. Logout via API
+            await testApiLogout();
+            
+            // 2. Limpiar localStorage
+            testLocalStorageLogout();
+            
+            // 3. Limpiar cookies
+            testCookieLogout();
+            
+            // 4. Limpiar sessionStorage
+            try {
+                sessionStorage.clear();
+                addResult('✅ sessionStorage limpiado', 'success');
+            } catch (error) {
+                addResult(`❌ Error limpiando sessionStorage: ${error.message}`, 'error');
+            }
+
+            addResult('✅ Logout completo finalizado', 'success');
+            addResult('🔄 Redirigiendo a login en 3 segundos...', 'info');
+            
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 3000);
+        }
+
+        function clearAllData() {
+            if (!confirm('¿Estás seguro de que quieres limpiar TODOS los datos? Esto incluye configuraciones y preferencias.')) {
+                return;
+            }
+
+            addResult('🧹 Limpiando todos los datos...', 'info');
+            
+            try {
+                // Limpiar localStorage
+                localStorage.clear();
+                addResult('✅ localStorage limpiado completamente', 'success');
+                
+                // Limpiar sessionStorage
+                sessionStorage.clear();
+                addResult('✅ sessionStorage limpiado completamente', 'success');
+                
+                // Limpiar todas las cookies
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                addResult('✅ Todas las cookies limpiadas', 'success');
+                
+                addResult('✅ Limpieza completa finalizada', 'success');
+            } catch (error) {
+                addResult(`❌ Error en limpieza completa: ${error.message}`, 'error');
+            }
+        }
+
+        // Ejecutar verificación automática al cargar
+        window.onload = function() {
+            addResult('🔄 Iniciando verificación automática de logout...', 'info');
+            checkCurrentSession();
+        };
+    </script>
+</body>
+</html>

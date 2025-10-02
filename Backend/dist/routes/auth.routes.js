@@ -25,6 +25,11 @@ const validateRegister = [
         .withMessage('El nombre es requerido')
         .isLength({ min: 2, max: 50 })
         .withMessage('El nombre debe tener entre 2 y 50 caracteres'),
+    (0, express_validator_1.body)('cc')
+        .notEmpty()
+        .withMessage('La cédula de ciudadanía es requerida')
+        .matches(/^\d{8,12}$/)
+        .withMessage('La cédula debe tener entre 8 y 12 dígitos'),
     (0, express_validator_1.body)('email')
         .isEmail()
         .withMessage('Debe ser un email válido')

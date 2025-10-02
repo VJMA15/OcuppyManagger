@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
 import { Bell, X, Calendar, Clock, User, Building2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
-import { useNotifications } from '@/hooks/useNotifications';
-import { cn } from '@/utils/cn';
+import { useNotifications } from '../../hooks/useNotifications';
+import { useAuthContext } from '../../contexts/auth-context';
+import { cn } from '../../utils/cn';
 
 const NotificationPanel = ({ isOpen, onClose }) => {
+  const { user } = useAuthContext();
   const { notifications, loading, error, actions } = useNotifications();
 
   // Marcar todas como leídas al abrir el panel
@@ -75,6 +77,22 @@ const NotificationPanel = ({ isOpen, onClose }) => {
     }
   };
 
+  // Obtener título del panel según el rol
+  const getPanelTitle = () => {
+    const userRole = user?.rol || user?.role;
+    switch (userRole?.toLowerCase()) {
+      case 'administrador':
+      case 'admin':
+        return 'Gestión de Reservas';
+      case 'instructor':
+        return 'Notificaciones de Reservas';
+      case 'guardia':
+        return 'Supervisión de Reservas';
+      default:
+        return 'Notificaciones de Reservas';
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -92,7 +110,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Notificaciones de Reservas
+              {getPanelTitle()}
             </h2>
           </div>
           <button
@@ -124,7 +142,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             <div className="text-center py-8">
               <Bell className="w-12 h-12 text-gray-400 mx-auto mb-2" />
               <p className="text-gray-600 dark:text-gray-400">
-                No hay notificaciones de reservas
+                No hay notificaciones disponibles
               </p>
             </div>
           ) : (
@@ -146,13 +164,23 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                       {getStatusIcon(reserva.estado || reserva.status)}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <User className="w-4 h-4 text-gray-500" />
                           <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {reserva.userId?.nombre || reserva.instructor?.nombre || 'Usuario desconocido'}
+                            {notification.title || 'Nueva reserva'}
                           </span>
                           {!notification.read && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                           )}
+                        </div>
+                        
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">
+                          {notification.message}
+                        </p>
+                        
+                        <div className="flex items-center gap-2 mb-1">
+                          <User className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                            {reserva.userId?.nombre || reserva.instructor?.nombre || 'Usuario desconocido'}
+                          </span>
                         </div>
                         
                         <div className="flex items-center gap-2 mb-1">

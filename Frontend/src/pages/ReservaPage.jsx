@@ -22,12 +22,21 @@ export default function ReservaPage() {
   const navigate = useNavigate();
   
   const [form, setForm] = useState({
-    nombre: "", // Ahora editable manualmente
-    documento: "", // Ahora editable manualmente
+    nombre: "", 
+    documento: "", 
     ambiente: "",
     fecha: "",
     jornada: "",
     motivo: "",
+    dispositivos: {
+      Cargadores: false,
+      computadores: false,
+      sonido: false,
+      microfono: false,
+      videoBeam: false,
+      pizarra: false,
+      pizarraDigital: false
+    }
   });
 
   // Agregar la definición de jornadas
