@@ -70,6 +70,64 @@ class ReservationsService extends ApiService {
     return this.delete(`/api/v1/reservas/${id}`);
   }
 
+  // Eliminar varias reservas por ID (solo se eliminarán si están REJECTED en backend)
+  async deleteReservationsBulk(ids = []) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return { success: false, message: 'No hay IDs para eliminar' };
+    }
+
+    try {
+      const settled = await Promise.allSettled(
+        ids.map((id) => this.delete(`/api/v1/reservas/${id}`))
+      );
+
+      const deletedIds = [];
+      const failedIds = [];
+      const details = [];
+
+      settled.forEach((result, index) => {
+        const id = ids[index];
+        if (result.status === 'fulfilled') {
+          const value = result.value;
+          const ok = value && value.success !== false; // tratar como éxito si success no es false
+          if (ok) {
+            deletedIds.push(id);
+            details.push({ id, status: 'deleted', response: value });
+          } else {
+            failedIds.push(id);
+            details.push({ id, status: 'failed', response: value });
+          }
+        } else {
+          failedIds.push(id);
+          details.push({ id, status: 'error', error: result.reason?.message || String(result.reason) });
+        }
+      });
+
+      const successCount = deletedIds.length;
+      const failureCount = failedIds.length;
+
+      return {
+        success: successCount > 0,
+        message:
+          failureCount === 0
+            ? `Se eliminaron ${successCount} reservas`
+            : `Se eliminaron ${successCount} reservas, ${failureCount} no pudieron eliminarse`,
+        successCount,
+        failureCount,
+        deletedIds,
+        failedIds,
+        results: details
+      };
+    } catch (err) {
+      return { success: false, message: 'Error al eliminar en lote', error: err?.message };
+    }
+  }
+
+  // Eliminar todas las reservas rechazadas
+  async deleteRejectedReservations() {
+    return this.delete('/api/v1/reservas/rejected');
+  }
+
   // Obtener reservas por estado
   async getReservationsByStatus(status) {
     return this.getReservations({ status });

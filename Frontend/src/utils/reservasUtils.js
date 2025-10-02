@@ -176,3 +176,30 @@ export const translateStatus = (status) => {
   
   return translations[status] || status;
 };
+
+/**
+ * Normaliza un estado (inglés/español, mayúsculas/minúsculas) a inglés en mayúsculas
+ * @param {string} rawStatus - Estado crudo de la reserva (status/estado)
+ * @returns {string} - Estado canónico en inglés y mayúsculas
+ */
+export const normalizeStatus = (rawStatus) => {
+  const s = String(rawStatus || '').trim().toLowerCase();
+  const map = {
+    'pending': 'PENDING',
+    'pendiente': 'PENDING',
+    'approved': 'APPROVED',
+    'aprobada': 'APPROVED',
+    'aprobado': 'APPROVED',
+    'aceptada': 'APPROVED',
+    'aceptado': 'APPROVED',
+    'rejected': 'REJECTED',
+    'rechazada': 'REJECTED',
+    'rechazado': 'REJECTED',
+    'cancelled': 'CANCELLED',
+    'canceled': 'CANCELLED',
+    'cancelada': 'CANCELLED',
+    'completada': 'COMPLETED',
+    'completed': 'COMPLETED'
+  };
+  return map[s] || s.toUpperCase();
+};

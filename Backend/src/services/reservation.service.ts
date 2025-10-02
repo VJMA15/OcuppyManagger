@@ -3,6 +3,33 @@ import { Reservation, ReservationStatus, ReservationDocument } from '../types/re
 import { CreateReservationDto, UpdateReservationDto } from '../dto';
 
 export class ReservationService {
+  // Normaliza estado desde 'status' (inglés) o 'estado' (español) a minúsculas inglés
+  private normalizeStatusLegacy(reservation: any): string | null {
+    const raw = String(
+      reservation?.status ?? reservation?.estado ?? ''
+    )
+      .trim()
+      .toLowerCase();
+    if (!raw) return null;
+    const map: Record<string, string> = {
+      pending: ReservationStatus.PENDING,
+      pendiente: ReservationStatus.PENDING,
+      approved: ReservationStatus.APPROVED,
+      aprobada: ReservationStatus.APPROVED,
+      aprobado: ReservationStatus.APPROVED,
+      aceptada: ReservationStatus.APPROVED,
+      aceptado: ReservationStatus.APPROVED,
+      rejected: ReservationStatus.REJECTED,
+      rechazada: ReservationStatus.REJECTED,
+      rechazado: ReservationStatus.REJECTED,
+      cancelled: ReservationStatus.CANCELLED,
+      canceled: ReservationStatus.CANCELLED,
+      cancelada: ReservationStatus.CANCELLED,
+      completed: ReservationStatus.COMPLETED,
+      completada: ReservationStatus.COMPLETED
+    };
+    return map[raw] || raw;
+  }
   async createReservation(data: CreateReservationDto): Promise<ReservationDocument> {
     // Validar disponibilidad
     await this.validateAvailability(data.environmentId, data.startDate, data.endDate);
@@ -94,6 +121,24 @@ export class ReservationService {
     console.log('🔍 [ReservationService] deleteReservation called with id:', id);
     
     try {
+      // Primero obtener la reserva para validar el estado
+      const existing = await ReservationModel.findById(id);
+      if (!existing) {
+        console.log('❌ [ReservationService] Reservation not found for deletion with id:', id);
+        return null;
+      }
+
+      const normalized = this.normalizeStatusLegacy(existing);
+      if (normalized !== ReservationStatus.REJECTED && normalized !== ReservationStatus.APPROVED) {
+        console.log('⚠️ [ReservationService] Attempt to delete reservation with non-deletable status:', {
+          id,
+          status: existing.status,
+          estado: (existing as any).estado,
+          normalized
+        });
+        throw new Error('Solo se pueden eliminar reservas con estado REJECTED o APPROVED');
+      }
+
       const reservation = await ReservationModel.findByIdAndDelete(id);
       
       if (!reservation) {
@@ -105,6 +150,25 @@ export class ReservationService {
       return reservation;
     } catch (error) {
       console.error('❌ [ReservationService] Error in deleteReservation:', error);
+      throw error;
+    }
+  }
+
+  async deleteRejectedReservations(): Promise<{ deletedCount: number }> {
+    console.log('🔍 [ReservationService] deleteRejectedReservations called');
+    try {
+      // Soporta documentos legado con campo 'estado: rechazad(a/o)'
+      const result = await ReservationModel.deleteMany({
+        $or: [
+          { status: ReservationStatus.REJECTED },
+          { estado: 'rechazada' },
+          { estado: 'rechazado' }
+        ]
+      } as any);
+      console.log('✅ [ReservationService] Rejected reservations deleted:', result.deletedCount || 0);
+      return { deletedCount: result.deletedCount || 0 };
+    } catch (error) {
+      console.error('❌ [ReservationService] Error in deleteRejectedReservations:', error);
       throw error;
     }
   }

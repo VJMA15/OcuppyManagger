@@ -16,4 +16,9 @@ router.patch('/:id/approve', requireRole(['admin', 'guardia', 'instructor']), re
 router.patch('/:id/reject', requireRole(['admin', 'guardia', 'instructor']), reservationController.rejectReservation.bind(reservationController));
 router.patch('/:id/cancel', reservationController.cancelReservation.bind(reservationController));
 
+// Eliminar reservas rechazadas
+// Importante: definir rutas específicas ANTES de las rutas con parámetros para evitar colisiones
+router.delete('/rejected', requireRole(['admin', 'guardia']), reservationController.deleteRejectedReservations.bind(reservationController));
+router.delete('/:id', requireRole(['admin', 'guardia']), reservationController.deleteReservation.bind(reservationController));
+
 export default router;

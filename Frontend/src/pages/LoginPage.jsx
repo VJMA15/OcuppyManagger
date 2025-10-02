@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuthContext } from '@/contexts/auth-context';
 import LoginContainer from '@/containers/LoginContainer';
+import { Navigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const [form, setForm] = useState({ cc: "", password: "" });
@@ -40,7 +41,7 @@ const LoginPage = () => {
     setShowPassword(!showPassword);
   };
 
-  // If already authenticated, redirect based on role
+  // If already authenticated, redirect based on role (SPA-friendly)
   if (isAuthenticated) {
     const userRole = user?.role || user?.rol;
     const redirectPath = 
@@ -49,8 +50,7 @@ const LoginPage = () => {
       userRole === 'guardia' ? '/guardia' :
       '/ambientes';
     
-    window.location.href = redirectPath;
-    return null;
+    return <Navigate to={redirectPath} replace />;
   }
 
   return (

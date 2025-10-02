@@ -7,11 +7,12 @@ export default defineConfig({
     plugins: [react()],
     server: {
         port: 8080,
-        strictPort: false,
+        strictPort: true,
         open: true,
         proxy: {
             '/api': {
-                target: 'http://localhost:5000',
+                // Forzar IPv4 para evitar intentos a ::1 (IPv6)
+                target: 'http://127.0.0.1:5000',
                 changeOrigin: true,
                 secure: false,
                 configure: (proxy, options) => {

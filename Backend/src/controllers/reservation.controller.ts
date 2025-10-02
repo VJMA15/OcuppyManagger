@@ -345,6 +345,84 @@ export class ReservationController {
     }
   }
 
+  async deleteReservation(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const userId = (req as any).user?.id || (req as any).user?._id || 'sistema';
+
+      // Obtener reserva y validar estado en el servicio
+      const deleted = await this.reservationService.deleteReservation(id);
+
+      if (!deleted) {
+        return res.status(404).json({
+          success: false,
+          message: 'Reserva no encontrada'
+        });
+      }
+
+      // Registrar en bitácora
+      await Bitacora.registrarAccion(
+        userId,
+        'ELIMINAR_RESERVA',
+        'reserva',
+        id,
+        JSON.stringify({
+          reservaId: id,
+          usuarioSolicitante: deleted.userId,
+          ambiente: deleted.environmentId,
+          estadoPrevio: deleted.status,
+          fechaEliminacion: new Date()
+        }),
+        req.ip
+      );
+
+      res.json({
+        success: true,
+        message: 'Reserva eliminada exitosamente',
+        data: deleted
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      const statusCode = errorMessage.includes('estado') || errorMessage.includes('REJECTED') || errorMessage.includes('APPROVED') ? 400 : 500;
+      res.status(statusCode).json({
+        success: false,
+        message: errorMessage
+      });
+    }
+  }
+
+  async deleteRejectedReservations(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.id || (req as any).user?._id || 'sistema';
+      const result = await this.reservationService.deleteRejectedReservations();
+
+      // Registrar en bitácora
+      await Bitacora.registrarAccion(
+        userId,
+        'ELIMINAR_RESERVAS_RECHAZADAS_MASIVO',
+        'reserva',
+        'masivo',
+        JSON.stringify({
+          eliminadas: result.deletedCount,
+          fechaEliminacion: new Date()
+        }),
+        req.ip
+      );
+
+      res.json({
+        success: true,
+        message: `Se eliminaron ${result.deletedCount} reservas rechazadas`,
+        data: result
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      res.status(500).json({
+        success: false,
+        message: errorMessage
+      });
+    }
+  }
+
   private buildFilters(query: any) {
     const filters: any = {};
     
