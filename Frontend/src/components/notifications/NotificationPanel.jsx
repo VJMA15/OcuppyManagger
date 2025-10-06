@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Bell, X, Calendar, Clock, User, Building2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useAuthContext } from '../../contexts/auth-context';
@@ -57,6 +57,29 @@ const NotificationPanel = ({ isOpen, onClose }) => {
         return 'text-red-600 dark:text-red-400';
       default:
         return 'text-gray-600 dark:text-gray-400';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    const s = (status || '').toString().toLowerCase();
+    switch (s) {
+      case 'approved':
+      case 'aprobada':
+        return 'Aprobada';
+      case 'pending':
+      case 'pendiente':
+        return 'Pendiente';
+      case 'rejected':
+      case 'rechazada':
+        return 'Rechazada';
+      case 'cancelled':
+      case 'cancelada':
+        return 'Cancelada';
+      case 'active':
+      case 'activa':
+        return 'Activa';
+      default:
+        return status || 'Sin estado';
     }
   };
 
@@ -149,17 +172,39 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             <div className="space-y-3">
               {notifications.slice(0, 10).map((notification, index) => {
                 const reserva = notification.data || notification;
+                const autorNombre = (
+                  reserva.usuario?.nombreCompleto ||
+                  [reserva.usuario?.nombre, reserva.usuario?.apellido].filter(Boolean).join(' ') ||
+                  reserva.autorNombre ||
+                  reserva.userName ||
+                  reserva.userId?.nombre ||
+                  reserva.instructor?.nombre ||
+                  'Usuario desconocido'
+                );
+                const autorDocumentoRaw = reserva.usuario?.documento || reserva.documento || reserva.userCC || '';
+                const autorDocumento = autorDocumentoRaw && autorDocumentoRaw !== 'N/A' ? autorDocumentoRaw : '';
+                const autorRol = reserva.usuario?.rol || reserva.usuario?.role || reserva.rol || reserva.role || '';
+                const estadoLabel = getStatusLabel(reserva.estado || reserva.status);
                 return (
                   <div
                     key={notification.id || reserva._id || index}
                     className={cn(
-                      "p-3 rounded-lg border transition-colors cursor-pointer",
+                      "p-3 rounded-lg border transition-colors cursor-pointer relative",
                       notification.read 
                         ? "bg-gray-50 dark:bg-gray-700/30 border-gray-200 dark:border-gray-600" 
                         : "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/30"
                     )}
-                    onClick={() => actions.markAsRead(notification.id)}
+                    onClick={() => actions.markAsRead(notification.id || (notification.data && notification.data._id))}
                   >
+                    {/* Botón para eliminar notificación */}
+                    <button
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      aria-label="Cerrar notificación"
+                      title="Cerrar"
+                      onClick={(e) => { e.stopPropagation(); actions.removeNotification(notification.id || (notification.data && notification.data._id)); }}
+                    >
+                      <X className="w-4 h-4 text-gray-500" />
+                    </button>
                     <div className="flex items-start gap-3">
                       {getStatusIcon(reserva.estado || reserva.status)}
                       <div className="flex-1 min-w-0">
@@ -179,7 +224,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                         <div className="flex items-center gap-2 mb-1">
                           <User className="w-4 h-4 text-gray-500" />
                           <span className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                            {reserva.userId?.nombre || reserva.instructor?.nombre || 'Usuario desconocido'}
+                            {autorNombre}{autorDocumento ? ` (${autorDocumento})` : (autorRol ? ` (${autorRol})` : '')}
                           </span>
                         </div>
                         
@@ -203,7 +248,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                             getStatusColor(reserva.estado || reserva.status),
                             "bg-gray-100 dark:bg-gray-600"
                           )}>
-                            {reserva.estado || reserva.status || 'Sin estado'}
+                            {estadoLabel}
                           </span>
                         </div>
                         

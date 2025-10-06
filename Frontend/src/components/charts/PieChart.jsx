@@ -1,4 +1,4 @@
-import React from 'react';
+// JSX runtime moderno no requiere importar React por defecto
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 const COLORS = {

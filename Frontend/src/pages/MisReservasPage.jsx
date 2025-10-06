@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, User, Filter, Search, Plus, Eye, Edit, Trash2, ArrowLeft, Building2, FileText, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../contexts/auth-context';
-import reservationsService from '../services/reservationsService';
-import { Button, Card, CardContent } from '../components/ui';
+import { useAuthContext } from '@/contexts/auth-context';
+import reservationsService from '@/services/reservationsService';
+import { Button, Card, CardContent } from '@/components/ui';
 
 const MisReservasPage = () => {
   const navigate = useNavigate();

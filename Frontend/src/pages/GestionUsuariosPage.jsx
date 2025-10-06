@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Users, 
   Plus, 
@@ -18,11 +18,9 @@ import {
   User
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../contexts/auth-context';
-import usersService from '../services/users';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { useAuthContext } from '@/contexts/auth-context';
+import usersService from '@/services/users';
+import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 
 export default function GestionUsuariosPage() {
   const navigate = useNavigate();

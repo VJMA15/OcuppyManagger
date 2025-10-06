@@ -1,4 +1,3 @@
-import React from "react";
 import PropTypes from "prop-types";
 
 const StatsCard = ({ title, value, icon: Icon, color, subtitle, onClick }) => {
@@ -40,4 +39,4 @@ StatsCard.propTypes = {
   onClick: PropTypes.func,
 };
 
-export default StatsCard; 
+export default StatsCard;

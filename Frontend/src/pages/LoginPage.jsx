@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuthContext } from '@/contexts/auth-context';
 import LoginContainer from '@/containers/LoginContainer';
 import { Navigate } from 'react-router-dom';

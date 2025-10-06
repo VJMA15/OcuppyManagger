@@ -1,12 +1,11 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/theme-context';
 import { AuthProvider } from './contexts/auth-context';
-import { ReservasProvider } from './contexts/ReservasContext';
 import { useAuthContext } from './contexts/auth-context';
 
 // Layouts
 import Layout from './routes/layout';
+import { ReservasProvider } from '@/contexts/ReservasContext';
 import InstructorLayout from './layouts/InstructorLayout';
 import GuardiaLayout from './layouts/GuardiaLayout';
 
@@ -28,7 +27,6 @@ import GestionUsuariosPage from './pages/GestionUsuariosPage';
 import RegistrosPage from './pages/RegistrosPage';
 import BitacoraPage from './pages/BitacoraPage';
 import EntregasPage from './pages/EntregasPage';
-import SettingsPage from './pages/SettingsPage';
 
 // Instructor Pages
 import InstructorReservaPage from './pages/InstructorReservaPage';
@@ -87,42 +85,51 @@ const AppRoutes = () => {
       {/* Admin Routes */}
       <Route path="/dashboard" element={
         <ProtectedRoute allowedRoles={['admin']}>
-          <Layout>
-            <DashboardPage />
-          </Layout>
+          <ReservasProvider>
+            <Layout>
+              <DashboardPage />
+            </Layout>
+          </ReservasProvider>
         </ProtectedRoute>
       } />
       
       <Route path="/dashboard/*" element={
         <ProtectedRoute allowedRoles={['admin']}>
-          <Layout>
-            <Routes>
-              <Route path="reserva" element={<ReservaPage />} />
-              <Route path="ver-reservas" element={<VerReservasPage />} />
-              <Route path="mis-reservas" element={<MisReservasPage />} />
-              <Route path="crear-reserva" element={<CrearReservaPage />} />
-              <Route path="ambientes" element={<AmbientesPage />} />
-              <Route path="reports" element={<ReportsPage />} />
-              <Route path="reportes" element={<ReportsPage />} />
-              <Route path="registrar-usuario" element={<RegistrarUsuarioPage />} />
-              <Route path="editar-usuario/:id" element={<EditarUsuarioPage />} />
-              <Route path="gestion-usuarios" element={<GestionUsuariosPage />} />
-              <Route path="registros" element={<RegistrosPage />} />
-              <Route path="bitacora" element={<BitacoraPage />} />
-              <Route path="entregas" element={<EntregasPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="configuracion" element={<SettingsPage />} />
-            </Routes>
-          </Layout>
+          <ReservasProvider>
+            <Layout>
+              <Routes>
+                <Route path="reserva" element={<ReservaPage />} />
+                <Route path="ver-reservas" element={<VerReservasPage />} />
+                <Route path="mis-reservas" element={<MisReservasPage />} />
+                <Route path="crear-reserva" element={<CrearReservaPage />} />
+                <Route path="ambientes" element={<AmbientesPage />} />
+                <Route path="reports" element={<ReportsPage />} />
+                <Route path="reportes" element={<ReportsPage />} />
+                <Route path="registrar-usuario" element={<RegistrarUsuarioPage />} />
+                <Route path="editar-usuario/:id" element={<EditarUsuarioPage />} />
+                <Route path="gestion-usuarios" element={<GestionUsuariosPage />} />
+                <Route path="registros" element={<RegistrosPage />} />
+                <Route path="bitacora" element={<BitacoraPage />} />
+                <Route path="entregas" element={<EntregasPage />} />
+              </Routes>
+            </Layout>
+          </ReservasProvider>
         </ProtectedRoute>
       } />
 
       {/* Instructor Routes */}
+      <Route path="/instructor" element={
+        <ProtectedRoute allowedRoles={['instructor']}>
+          <InstructorLayout>
+            <InstructorAmbientesPage />
+          </InstructorLayout>
+        </ProtectedRoute>
+      } />
+      
       <Route path="/instructor/*" element={
         <ProtectedRoute allowedRoles={['instructor']}>
           <InstructorLayout>
             <Routes>
-              <Route index element={<InstructorAmbientesPage />} />
               <Route path="ambientes" element={<InstructorAmbientesPage />} />
               <Route path="nueva-reserva" element={<InstructorReservaPage />} />
               <Route path="mis-reservas" element={<MisReservasPage />} />
@@ -185,18 +192,11 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <ThemeProvider>
-      <Router 
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true
-        }}
-      >
+      <BrowserRouter>
         <AuthProvider>
-          <ReservasProvider>
-            <AppRoutes />
-          </ReservasProvider>
+          <AppRoutes />
         </AuthProvider>
-      </Router>
+      </BrowserRouter>
     </ThemeProvider>
   );
 };

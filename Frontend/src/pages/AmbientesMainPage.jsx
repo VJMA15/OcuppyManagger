@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, MapPin, Users, Eye, CheckCircle, XCircle, X, Building2, Star } from 'lucide-react';
-import { useAmbientes } from '../hooks/useAmbientes';
-import { Modal } from '../components/ui';
+import { useAmbientes } from '@/hooks/useAmbientes';
+import { Modal } from '@/components/ui';
 
 const AmbientesMainPage = () => {
   const navigate = useNavigate();

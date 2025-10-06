@@ -1,5 +1,3 @@
-import React from "react";
-
 const DashboardHeader = () => {
     return (
         <div className="flex flex-col gap-4">
@@ -23,4 +21,4 @@ const DashboardHeader = () => {
     );
 };
 
-export default DashboardHeader; 
+export default DashboardHeader;

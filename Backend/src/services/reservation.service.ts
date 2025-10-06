@@ -129,14 +129,18 @@ export class ReservationService {
       }
 
       const normalized = this.normalizeStatusLegacy(existing);
-      if (normalized !== ReservationStatus.REJECTED && normalized !== ReservationStatus.APPROVED) {
+      if (
+        normalized !== ReservationStatus.REJECTED &&
+        normalized !== ReservationStatus.APPROVED &&
+        normalized !== ReservationStatus.CANCELLED
+      ) {
         console.log('⚠️ [ReservationService] Attempt to delete reservation with non-deletable status:', {
           id,
           status: existing.status,
           estado: (existing as any).estado,
           normalized
         });
-        throw new Error('Solo se pueden eliminar reservas con estado REJECTED o APPROVED');
+        throw new Error('Solo se pueden eliminar reservas con estado REJECTED, APPROVED o CANCELLED');
       }
 
       const reservation = await ReservationModel.findByIdAndDelete(id);

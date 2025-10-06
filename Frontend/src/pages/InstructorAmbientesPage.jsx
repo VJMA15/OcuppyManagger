@@ -1,13 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, MapPin, Users, Building2, Calendar, Clock, BookOpen, X, User, AlertCircle, FileText, CheckCircle } from 'lucide-react';
-import { useAmbientes } from '../hooks/useAmbientes';
-import { useAuthContext } from '../contexts/auth-context';
-import { useTheme } from '../hooks/use-theme';
-import Modal from '../components/ui/Modal';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import reservationsService from '../services/reservationsService';
+import { useAmbientes } from '@/hooks/useAmbientes';
+import { useAuthContext } from '@/contexts/auth-context';
+import { useTheme } from '@/hooks/use-theme';
+import { Modal, Card, CardContent, CardHeader, CardTitle, CardDescription, Button } from '@/components/ui';
+import reservationsService from '@/services/reservationsService';
 
 // Estilos personalizados para los botones de estado (modo claro y oscuro)
 const statusStyles = {
@@ -27,7 +25,8 @@ const typeStyles = {
 };
 
 // Componente para cada tarjeta de ambiente
-const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit }) => {
+const AmbienteCard = memo(({ ambiente, onAmbienteClick, onReservaSubmit }) => {
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});

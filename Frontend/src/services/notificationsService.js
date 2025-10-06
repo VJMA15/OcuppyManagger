@@ -1,18 +1,114 @@
-import reservasService from './reservasService';
+import reservationsService from './reservationsService';
+import { enrichReservasWithDetails } from '@/utils/reservasUtils';
+
+// Helper para traducir estados al español de forma consistente
+const toSpanishStatus = (statusRaw) => {
+  const s = (statusRaw || '').toString().toLowerCase();
+  switch (s) {
+    case 'approved':
+    case 'aprobada':
+      return 'Aprobada';
+    case 'pending':
+    case 'pendiente':
+      return 'Pendiente';
+    case 'rejected':
+    case 'rechazada':
+      return 'Rechazada';
+    case 'cancelled':
+    case 'cancelada':
+      return 'Cancelada';
+    case 'active':
+    case 'activa':
+      return 'Activa';
+    default:
+      return statusRaw || 'Pendiente';
+  }
+};
 
 class NotificationsService {
   constructor() {
     this.listeners = [];
     this.notifications = [];
     this.unreadCount = 0;
+    // Lista de IDs descartados (cerrados) que no deben reaparecer
+    this.dismissedIds = this.loadDismissed();
+    // Lista de IDs marcados como leídos que debe persistir entre recargas
+    this.readIds = this.loadRead();
+
+    // Sincronizar cambios de descartes entre pestañas/ventanas
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'notifications_dismissed') {
+          try {
+            this.dismissedIds = e.newValue ? JSON.parse(e.newValue) : [];
+          } catch {
+            this.dismissedIds = [];
+          }
+          // Aplicar filtrado al estado actual visible
+          this.notifications = this.notifications.filter(n => !this.dismissedIds.includes(n.id));
+          this.updateUnreadCount();
+          this.notifyListeners();
+        }
+      });
+    }
+  }
+
+  // Cargar IDs descartados desde localStorage
+  loadDismissed() {
+    try {
+      const raw = localStorage.getItem('notifications_dismissed');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Persistir IDs descartados
+  persistDismissed() {
+    try {
+      localStorage.setItem('notifications_dismissed', JSON.stringify(this.dismissedIds));
+    } catch (e) {
+      // Silenciar errores de almacenamiento
+    }
+  }
+
+  // Cargar IDs leídos desde localStorage
+  loadRead() {
+    try {
+      const raw = localStorage.getItem('notifications_read');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Persistir IDs leídos
+  persistRead() {
+    try {
+      localStorage.setItem('notifications_read', JSON.stringify(this.readIds));
+    } catch (e) {
+      // Silenciar errores
+    }
+  }
+
+  // Limpiar descartes (p.ej. al hacer logout)
+  clearDismissed() {
+    this.dismissedIds = [];
+    try {
+      localStorage.removeItem('notifications_dismissed');
+    } catch (e) {
+      // Silenciar errores
+    }
   }
 
   // Obtener notificaciones de reservas filtradas por rol
   async getReservationNotifications(currentUserId, userRole) {
     try {
-      const response = await reservasService.getReservas();
+      const response = await reservationsService.getReservations();
       
       if (response.success && response.data) {
+        // Enriquecer reservas con datos de usuario y ambiente para mostrar información completa
+        const enriched = await enrichReservasWithDetails(response.data || []);
         let filteredReservations = [];
         
         // Filtrar según el rol del usuario
@@ -20,22 +116,22 @@ class NotificationsService {
           case 'administrador':
           case 'admin':
             // Los administradores ven todas las reservas
-            filteredReservations = response.data;
+            filteredReservations = enriched;
             break;
             
           case 'instructor':
             // Los instructores solo ven reservas aprobadas o rechazadas (no pendientes)
-            filteredReservations = response.data.filter(reserva => {
-              const estado = reserva.estado?.toLowerCase();
-              const isNotOwnReservation = reserva.userId?._id !== currentUserId && reserva.userId?.cc !== currentUserId;
+            filteredReservations = enriched.filter(reserva => {
+              const estado = (reserva.estado || reserva.status || '').toLowerCase();
+              const isNotOwnReservation = reserva.usuario?.id !== currentUserId && reserva.usuario?.documento !== currentUserId;
               return isNotOwnReservation && (estado === 'aprobada' || estado === 'rechazada');
             });
             break;
             
           case 'guardia':
             // Los guardias ven reservas que requieren supervisión o están en proceso
-            filteredReservations = response.data.filter(reserva => {
-              const estado = reserva.estado?.toLowerCase();
+            filteredReservations = enriched.filter(reserva => {
+              const estado = (reserva.estado || reserva.status || '').toLowerCase();
               return estado === 'pendiente' || estado === 'en_proceso' || estado === 'activa';
             });
             break;
@@ -51,33 +147,37 @@ class NotificationsService {
         );
         
         // Convertir a formato de notificación con información específica por rol
-        const notifications = sortedReservations.map(reserva => {
+        const notificationsRaw = sortedReservations.map(reserva => {
           let title = 'Nueva reserva';
-          let message = `${reserva.userId?.nombre || 'Usuario'} ha realizado una reserva`;
+          const nombreAutor = reserva.usuario?.nombre || reserva.nombre || 'Usuario';
+          const nombreAmbiente = reserva.ambiente?.nombre || reserva.ambienteNombre || 'ambiente';
+          const estadoLabel = toSpanishStatus(reserva.estado || reserva.status || 'pendiente');
+          let message = `${nombreAutor} ha realizado una reserva`;
           
           // Personalizar mensaje según el rol
           switch (userRole?.toLowerCase()) {
             case 'administrador':
             case 'admin':
               title = 'Gestión de Reserva';
-              message = `Reserva de ${reserva.userId?.nombre || 'Usuario'} - Estado: ${reserva.estado || 'Pendiente'}`;
+              message = `Reserva de ${nombreAutor} — Estado: ${estadoLabel}`;
               break;
               
-            case 'instructor':
+            case 'instructor': {
               title = 'Estado de Reserva';
-              const estado = reserva.estado?.toLowerCase();
+              const estado = (reserva.estado || reserva.status || '').toLowerCase();
               if (estado === 'aprobada') {
-                message = `Tu colega ${reserva.userId?.nombre || 'Usuario'} tuvo su reserva APROBADA en ${reserva.ambienteId?.nombre || 'un ambiente'}`;
+                message = `Tu colega ${nombreAutor} tuvo su reserva Aprobada en ${nombreAmbiente}`;
               } else if (estado === 'rechazada') {
-                message = `Tu colega ${reserva.userId?.nombre || 'Usuario'} tuvo su reserva RECHAZADA en ${reserva.ambienteId?.nombre || 'un ambiente'}`;
+                message = `Tu colega ${nombreAutor} tuvo su reserva Rechazada en ${nombreAmbiente}`;
               } else {
-                message = `Reserva de ${reserva.userId?.nombre || 'Colega'} - Estado: ${reserva.estado}`;
+                message = `Reserva de ${nombreAutor} — Estado: ${estadoLabel}`;
               }
               break;
+            }
               
             case 'guardia':
               title = 'Reserva para Supervisión';
-              message = `Reserva ${reserva.estado || 'pendiente'} en ${reserva.ambienteId?.nombre || 'ambiente'}`;
+              message = `Reserva ${estadoLabel} en ${nombreAmbiente}`;
               break;
           }
           
@@ -88,10 +188,12 @@ class NotificationsService {
             message,
             data: reserva,
             timestamp: new Date(reserva.createdAt || reserva.fechaCreacion),
-            read: false,
+            read: this.readIds.includes(reserva._id),
             userRole: userRole // Agregar rol para referencia
           };
         });
+        // Filtrar notificaciones que ya fueron descartadas (cerradas)
+        const notifications = notificationsRaw.filter(n => !this.dismissedIds.includes(n.id));
         
         this.notifications = notifications;
         this.updateUnreadCount();
@@ -117,6 +219,10 @@ class NotificationsService {
     const notification = this.notifications.find(n => n.id === notificationId);
     if (notification) {
       notification.read = true;
+      if (notificationId && !this.readIds.includes(notificationId)) {
+        this.readIds.push(notificationId);
+        this.persistRead();
+      }
       this.updateUnreadCount();
       this.notifyListeners();
     }
@@ -124,9 +230,14 @@ class NotificationsService {
 
   // Marcar todas las notificaciones como leídas
   markAllAsRead() {
+    const ids = this.notifications.map(n => n.id).filter(Boolean);
     this.notifications.forEach(notification => {
       notification.read = true;
     });
+    // Unir y persistir IDs leídos
+    const set = new Set([...(this.readIds || []), ...ids]);
+    this.readIds = Array.from(set);
+    this.persistRead();
     this.updateUnreadCount();
     this.notifyListeners();
   }
@@ -163,6 +274,13 @@ class NotificationsService {
 
   // Limpiar todas las notificaciones
   clearAll() {
+    // Descartar permanentemente todas las notificaciones actuales
+    const currentIds = this.notifications.map(n => n.id).filter(Boolean);
+    const set = new Set([...this.dismissedIds, ...currentIds]);
+    this.dismissedIds = Array.from(set);
+    this.persistDismissed();
+
+    // Limpiar visibles
     this.notifications = [];
     this.unreadCount = 0;
     this.notifyListeners();
@@ -186,6 +304,13 @@ class NotificationsService {
 
   // Eliminar notificación
   removeNotification(notificationId) {
+    // Agregar a descartadas para que no reaparezca al recargar
+    if (notificationId && !this.dismissedIds.includes(notificationId)) {
+      this.dismissedIds.push(notificationId);
+      this.persistDismissed();
+    }
+
+    // Remover de la lista visible
     this.notifications = this.notifications.filter(n => n.id !== notificationId);
     this.updateUnreadCount();
     this.notifyListeners();

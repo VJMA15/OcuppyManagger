@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   CheckCircle, 
   XCircle, 
@@ -104,24 +104,9 @@ const VerReservasPage = () => {
     }
   };
 
-  const handleEliminarRechazadas = async () => {
-    try {
-      setError(null);
-      const response = await reservationsService.deleteRejectedReservations();
-      if (response?.success !== false) {
-        console.log('🧹 Eliminación masiva de rechazadas realizada, refrescando contexto...');
-        await refreshReservas();
-      } else {
-        setError(response.message || 'No se pudieron eliminar las reservas rechazadas');
-      }
-    } catch (err) {
-      console.error('Error al eliminar rechazadas:', err);
-      setError('Error al eliminar las reservas rechazadas');
-    }
-  };
-
+  
   const handleCreateReserva = () => {
-    navigate('/admin/reserva');
+    navigate('/dashboard/reserva');
   };
 
   const handleBack = () => {
@@ -162,22 +147,22 @@ const VerReservasPage = () => {
   const handleEliminarSeleccionadas = async () => {
     try {
       setError(null);
-      // Limitar a estados eliminables: REJECTED y APPROVED (case-insensitive) sobre toda la lista
+      // Limitar a estados eliminables: REJECTED, APPROVED y CANCELLED (case-insensitive)
       const selectedSet = new Set(selectedIds.map(String));
       let deletableSelectedIds = reservas
         .filter(r => selectedSet.has(String(r._id || r.id)))
-        .filter(r => ['REJECTED','APPROVED'].includes(normalizeStatus(r.status || r.estado)))
+        .filter(r => ['REJECTED','APPROVED','CANCELLED'].includes(normalizeStatus(r.status || r.estado)))
         .map(r => String(r._id || r.id));
 
       if (deletableSelectedIds.length === 0) {
         // Fallback defensivo: intentar con las visibles por si hay desajuste de datos
         deletableSelectedIds = filteredReservas
           .filter(r => selectedSet.has(String(r._id || r.id)))
-          .filter(r => ['REJECTED','APPROVED'].includes(normalizeStatus(r.status || r.estado)))
+          .filter(r => ['REJECTED','APPROVED','CANCELLED'].includes(normalizeStatus(r.status || r.estado)))
           .map(r => String(r._id || r.id));
 
         if (deletableSelectedIds.length === 0) {
-          setError('Selecciona reservas aprobadas o rechazadas para eliminar');
+          setError('Selecciona reservas aprobadas, rechazadas o canceladas para eliminar');
           return;
         }
       }
@@ -214,7 +199,6 @@ const VerReservasPage = () => {
       onAprobar={handleAprobar}
       onRechazar={handleRechazar}
       onEliminar={handleEliminar}
-      onDeleteRejected={handleEliminarRechazadas}
       onToggleSelect={toggleSelect}
       onToggleSelectAll={toggleSelectAllVisible}
       onDeleteSelected={handleEliminarSeleccionadas}

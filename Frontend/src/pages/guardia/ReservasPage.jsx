@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, Search, Filter, User, CheckCircle, XCircle, MoreVertical, AlertCircle, MapPin, Users as UsersIcon, Plus, Edit, Trash2, Eye, FileText, Edit3, Building2, Sun } from 'lucide-react';
+import { Calendar, Clock, Search, Filter, User, CheckCircle, XCircle, MoreVertical, AlertCircle, MapPin, Users as UsersIcon, Plus, Edit, Trash2, Eye, FileText, Edit3, Building2, Sun, Settings } from 'lucide-react';
 import { useGuardia } from '@/contexts/GuardiaContext';
 
 const EntregaAmbientesPage = () => {

@@ -197,7 +197,7 @@ const LoginContainer = ({
         </div>
 
         {/* Credenciales de desarrollo - solo en desarrollo */}
-        {process.env.NODE_ENV === 'development' && (
+        {import.meta.env.DEV && (
           <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
             <div className="flex items-start">
               <div className="flex-shrink-0">

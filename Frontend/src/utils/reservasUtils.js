@@ -54,12 +54,14 @@ export const enrichReservasWithDetails = async (reservas) => {
           id: userData._id || userData.id,
           nombre: userData.nombre || userData.name || 'Usuario desconocido',
           email: userData.email || '',
-          documento: userData.documento || userData.cedula || 'N/A'
+          documento: userData.documento || userData.cedula || 'N/A',
+          rol: userData.rol || userData.role || 'Usuario'
         } : {
           id: reserva.userId,
           nombre: 'Usuario desconocido',
           email: '',
-          documento: 'N/A'
+          documento: 'N/A',
+          rol: 'Usuario'
         },
         ambiente: ambienteData ? {
           id: ambienteData._id || ambienteData.id,
@@ -75,6 +77,7 @@ export const enrichReservasWithDetails = async (reservas) => {
         // Campos adicionales para compatibilidad con el frontend
         nombre: userData?.nombre || userData?.name || 'Usuario desconocido',
         documento: userData?.documento || userData?.cedula || 'N/A',
+        rol: userData?.rol || userData?.role || 'Usuario',
         ambienteNombre: ambienteData?.nombre || ambienteData?.name || 'Ambiente desconocido'
       };
     });

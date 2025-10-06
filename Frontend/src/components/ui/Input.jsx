@@ -1,7 +1,7 @@
-import React from 'react';
+import { forwardRef } from 'react';
 import { cn } from '../../utils/cn';
 
-export const Input = React.forwardRef(({ 
+export const Input = forwardRef(({ 
   className, 
   type = 'text', 
   label,

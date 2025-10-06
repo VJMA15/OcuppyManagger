@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Eye, EyeOff, Lock, User, Building2, CreditCard, Mail, ArrowLeft, UserPlus, CheckCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import usersService from '@/services/users';

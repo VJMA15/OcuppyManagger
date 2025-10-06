@@ -1,4 +1,4 @@
-import React from 'react';
+// React JSX runtime moderno no requiere default import
 import {
   Calendar,
   Clock,
@@ -31,7 +31,6 @@ const VerReservasContainer = ({
   onRechazar,
   onCreateReserva,
   onEliminar,
-  onDeleteRejected,
   onToggleSelect,
   onToggleSelectAll,
   onDeleteSelected,
@@ -91,13 +90,6 @@ const VerReservasContainer = ({
               >
                 <Trash2 className="w-4 h-4" />
                 Eliminar seleccionadas
-              </button>
-              <button
-                onClick={onDeleteRejected}
-                className="px-4 py-2 border border-red-300 text-red-700 bg-white hover:bg-red-50 rounded-lg transition-all duration-200 flex items-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Eliminar rechazadas
               </button>
               <button
                 onClick={onCreateReserva}
@@ -181,7 +173,7 @@ const VerReservasContainer = ({
                           {/** Normalizar estado para consistencia UI **/}
                           {(() => {
                             const normalizedStatus = normalizeStatus(reserva.status ?? reserva.estado);
-                            const isDeletable = ['REJECTED','APPROVED'].includes(normalizedStatus);
+                            const isDeletable = ['REJECTED','APPROVED','CANCELLED'].includes(normalizedStatus);
                             return (
                           <input
                             type="checkbox"
@@ -189,7 +181,7 @@ const VerReservasContainer = ({
                             checked={selectedIds?.includes(String(reserva._id || reserva.id)) || false}
                             onChange={() => onToggleSelect(String(reserva._id || reserva.id))}
                             aria-label="Seleccionar reserva"
-                            title="Solo se eliminarán reservas Aprobadas o Rechazadas"
+                            title="Solo se eliminarán reservas Aprobadas, Rechazadas o Canceladas"
                           />
                             );
                           })()}
@@ -202,7 +194,7 @@ const VerReservasContainer = ({
                                 {reserva.usuario?.nombre || reserva.nombre || 'Usuario desconocido'}
                               </div>
                               <div className="text-sm text-slate-500 dark:text-slate-400">
-                                {reserva.usuario?.documento || reserva.documento || 'N/A'}
+                                {reserva.usuario?.documento || reserva.documento || (reserva.usuario?.rol || reserva.rol || reserva.usuario?.role || reserva.role || 'Usuario')}
                               </div>
                             </div>
                           </div>

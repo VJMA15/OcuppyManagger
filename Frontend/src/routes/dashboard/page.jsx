@@ -1,4 +1,4 @@
-import React from "react";
+// Modern JSX runtime no requiere importar React como default
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, AlertCircle, CreditCard, Package, TrendingUp, CalendarIcon, Building2, Clock, XCircle } from "lucide-react";
 
@@ -10,7 +10,7 @@ import Footer from "@/layouts/footer";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsCard from "@/components/dashboard/StatsCard";
 import UpcomingReservations from "@/components/dashboard/UpcomingReservations";
-import ActivityChart from "@/components/dashboard/ActivityChart";
+// import ActivityChart from "@/components/dashboard/ActivityChart"; // Eliminado por usar datos ficticios
 
 // Hooks
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -57,7 +57,7 @@ const DashboardPage = () => {
                 text: "text-red-600 dark:text-red-400"
             },
             subtitle: "Ambientes ocupados actualmente",
-            onClick: () => navigate('/ambientes?filter=ocupados')
+            // onClick eliminado: ya no se navega a ambientes ocupados
         },
         {
             title: "Pendientes",
@@ -177,12 +177,7 @@ const DashboardPage = () => {
                                 </p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => navigate('/ambientes?filter=ocupados')}
-                            className="px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg transition-colors"
-                        >
-                            Ver Ambientes Ocupados
-                        </button>
+                        {/* Botón eliminado por no ser necesario */}
                     </div>
                     
                     {/* Lista de ambientes ocupados */}
@@ -218,10 +213,9 @@ const DashboardPage = () => {
             )}
 
             {/* Sección de Reservas Próximas */}
-            <UpcomingReservations reservations={upcomingReservations || []} />
+            <UpcomingReservations reservations={upcomingReservations || []} loading={loadingReservations} />
 
-            {/* Gráfico de Actividad */}
-            <ActivityChart data={overviewData} />
+            {/* Gráfico de Actividad eliminado: usaba datos ficticios */}
 
             <Footer />
         </div>

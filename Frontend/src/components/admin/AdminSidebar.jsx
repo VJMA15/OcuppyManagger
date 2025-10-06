@@ -11,27 +11,27 @@ const adminNavLinks = [
     links: [
       {
         label: "Dashboard",
-        path: "/admin",
+        path: "/dashboard",
         icon: BarChart3
       },
       {
         label: "Gestión de Usuarios",
-        path: "/admin/usuarios",
+        path: "/dashboard/gestion-usuarios",
         icon: Users
       },
       {
         label: "Gestión de Ambientes",
-        path: "/admin/ambientes",
+        path: "/dashboard/ambientes",
         icon: Building2
       },
       {
         label: "Reservas",
-        path: "/admin/reservas",
+        path: "/dashboard/ver-reservas",
         icon: Calendar
       },
       {
         label: "Reportes",
-        path: "/admin/reportes",
+        path: "/dashboard/reportes",
         icon: BarChart3
       }
     ]
@@ -41,17 +41,17 @@ const adminNavLinks = [
     links: [
       {
         label: "Configuración",
-        path: "/admin/configuracion",
+        path: "/dashboard/settings",
         icon: Settings
       },
       {
         label: "Auditoría",
-        path: "/admin/auditoria",
+        path: "/dashboard/bitacora",
         icon: UserCheck
       },
       {
-        label: "Base de Datos",
-        path: "/admin/database",
+        label: "Registros",
+        path: "/dashboard/registros",
         icon: Database
       }
     ]

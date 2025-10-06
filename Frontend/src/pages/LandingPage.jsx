@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Building2, 
@@ -22,8 +22,8 @@ import AccessRequestForm from '@/components/AccessRequestForm';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [showAccessForm, setShowAccessForm] = React.useState(false);
+const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const [showAccessForm, setShowAccessForm] = useState(false);
 
   const features = [
     {

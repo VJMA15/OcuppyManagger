@@ -1,4 +1,3 @@
-import { API_CONFIG } from '../config/api';
 import ApiService from './apiService';
 
 class ReservationsService extends ApiService {

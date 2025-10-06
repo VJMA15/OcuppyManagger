@@ -40,6 +40,11 @@ export const useNotifications = () => {
     notificationsService.markAllAsRead();
   }, []);
 
+  // Eliminar una notificación
+  const removeNotification = useCallback((notificationId) => {
+    notificationsService.removeNotification(notificationId);
+  }, []);
+
   // Limpiar todas las notificaciones
   const clearAll = useCallback(() => {
     notificationsService.clearAll();
@@ -84,6 +89,7 @@ export const useNotifications = () => {
     actions: {
       markAsRead,
       markAllAsRead,
+      removeNotification,
       clearAll,
       refresh,
       loadNotifications

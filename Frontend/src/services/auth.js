@@ -14,7 +14,7 @@ class AuthService {
     try {
       Cookies.set(this.TOKEN_KEY, token, {
         expires: 7, // 7 días
-        secure: process.env.NODE_ENV === 'production',
+        secure: import.meta.env.PROD,
         sameSite: 'strict',
         httpOnly: false // Para acceso desde JS
       });
@@ -68,7 +68,7 @@ class AuthService {
     try {
       Cookies.set(this.USER_KEY, JSON.stringify(userData), {
         expires: 7,
-        secure: process.env.NODE_ENV === 'production',
+        secure: import.meta.env.PROD,
         sameSite: 'strict'
       });
     } catch (error) {
@@ -99,6 +99,13 @@ class AuthService {
     
     Cookies.remove(this.TOKEN_KEY);
     Cookies.remove(this.USER_KEY);
+
+    // Limpiar descartes de notificaciones persistidos
+    try {
+      localStorage.removeItem('notifications_dismissed');
+    } catch {
+      // Silenciar errores
+    }
     
     console.log('🔓 Sesión cerrada correctamente');
   }

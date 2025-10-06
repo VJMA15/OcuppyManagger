@@ -1,17 +1,22 @@
+import { useState } from "react";
 import { useTheme } from "../hooks/use-theme";
 
 import { Bell, ChevronsLeft, Moon, Search, Sun, User } from "lucide-react";
 import { useAuthContext } from "../contexts/auth-context";
 
 import profileImg from "../assets/profile-image.jpg";
+import NotificationPanel from "../components/notifications/NotificationPanel";
+import NotificationBadge from "../components/notifications/NotificationBadge";
 
 import PropTypes from "prop-types";
 
 export const Header = ({ collapsed, setCollapsed }) => {
     const { theme, setTheme } = useTheme();
     const { user } = useAuthContext();
+    const [showNotifications, setShowNotifications] = useState(false);
 
     return (
+        <>
         <header className="relative z-10 flex h-[60px] items-center justify-between bg-white px-4 shadow-md transition-colors dark:bg-slate-900">
             <div className="flex items-center gap-2">
                 <span className="font-bold text-lg text-sena">
@@ -59,8 +64,14 @@ export const Header = ({ collapsed, setCollapsed }) => {
                         className="hidden dark:block"
                     />
                 </button>
-                <button className="btn-ghost size-10">
+                <button 
+                    className="btn-ghost size-10 relative"
+                    aria-label="Notificaciones"
+                    title="Notificaciones"
+                    onClick={() => setShowNotifications(!showNotifications)}
+                >
                     <Bell size={20} />
+                    <NotificationBadge />
                 </button>
                 
                 <button className="size-10 overflow-hidden rounded-full">
@@ -72,6 +83,11 @@ export const Header = ({ collapsed, setCollapsed }) => {
                 </button>
             </div>
         </header>
+        <NotificationPanel 
+            isOpen={showNotifications}
+            onClose={() => setShowNotifications(false)}
+        />
+        </>
     );
 };
 

@@ -1,7 +1,7 @@
-import React from 'react';
+import { forwardRef } from 'react';
 import { cn } from '../../utils/cn';
 
-const Label = React.forwardRef(({ 
+const Label = forwardRef(({ 
   className, 
   ...props 
 }, ref) => {

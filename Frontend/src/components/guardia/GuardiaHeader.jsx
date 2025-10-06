@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Shield, Menu, Sun, Moon, Bell, User, LogOut, Clock } from 'lucide-react';
 import { useAuthContext } from '../../contexts/auth-context';
 import { useTheme } from '../../contexts/theme-context';

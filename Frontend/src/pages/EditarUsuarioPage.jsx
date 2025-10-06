@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Lock, User, Building2, CreditCard, Mail, ArrowLeft, UserPlus, CheckCircle, AlertCircle, Save } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import usersService from '../services/users';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
+import usersService from '@/services/users';
+import { Button, Input, Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui';
 
 export default function EditarUsuarioPage() {
   const { id } = useParams();
@@ -307,7 +305,7 @@ export default function EditarUsuarioPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate('/admin/gestion-usuarios')}
+                    onClick={() => navigate('/dashboard/gestion-usuarios')}
                     className="flex-1"
                   >
                     Cancelar

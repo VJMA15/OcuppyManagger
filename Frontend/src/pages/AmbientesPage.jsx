@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAmbientes } from '../hooks/useAmbientes';
-import AmbientesContainer from '../containers/AmbientesContainer';
-import { Button } from '../components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select.jsx';
+import { useAmbientes } from '@/hooks/useAmbientes';
+import AmbientesContainer from '@/containers/AmbientesContainer';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 import { Plus } from 'lucide-react';
 
 const AmbientesPage = () => {
