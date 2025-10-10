@@ -1,4 +1,4 @@
-// React JSX runtime moderno no requiere default import
+import React from 'react';
 import {
   Calendar,
   Clock,
@@ -24,25 +24,23 @@ const VerReservasContainer = ({
   error,
   filter,
   selectedIds,
+  pendingIds,
   
   // Handlers
   onFilterChange,
   onAprobar,
   onRechazar,
-  onCreateReserva,
   onEliminar,
   onToggleSelect,
   onToggleSelectAll,
   onDeleteSelected,
+  onCreateReserva,
   onBack,
   
   // Helper functions
   getStatusColor,
   getStatusIcon
 }) => {
-  // Calcular si todas las visibles están seleccionadas
-  const visibleIds = (filteredReservas || []).map(r => String(r._id || r.id));
-  const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds?.includes(id));
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
@@ -81,24 +79,13 @@ const VerReservasContainer = ({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={onDeleteSelected}
-                disabled={!selectedIds || selectedIds.length === 0}
-                className={`px-4 py-2 border ${selectedIds && selectedIds.length > 0 ? 'border-red-300 text-red-700 bg-white hover:bg-red-50' : 'border-slate-200 text-slate-400 bg-white'} rounded-lg transition-all duration-200 flex items-center gap-2`}
-                title="Eliminar reservas seleccionadas (solo rechazadas)"
-              >
-                <Trash2 className="w-4 h-4" />
-                Eliminar seleccionadas
-              </button>
-              <button
-                onClick={onCreateReserva}
-                className="px-4 py-2 bg-gradient-to-r from-sena to-sena-dark hover:from-sena-dark hover:to-sena text-white rounded-lg transition-all duration-200 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Nueva Reserva
-              </button>
-            </div>
+            <button
+              onClick={onCreateReserva}
+              className="px-4 py-2 bg-gradient-to-r from-sena to-sena-dark hover:from-sena-dark hover:to-sena text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Nueva Reserva
+            </button>
           </div>
         </div>
       </div>
@@ -112,6 +99,7 @@ const VerReservasContainer = ({
             <select
               value={filter}
               onChange={(e) => onFilterChange(e.target.value)}
+              id="filter-select"
               className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
             >
               <option value="all">Todas las reservas</option>
@@ -119,6 +107,15 @@ const VerReservasContainer = ({
               <option value="aprobada">Aprobadas</option>
               <option value="rechazada">Rechazadas</option>
             </select>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={onDeleteSelected}
+                className="px-3 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                disabled={!selectedIds || selectedIds.length === 0}
+              >
+                Eliminar seleccionadas
+              </button>
+            </div>
           </div>
         </div>
 
@@ -129,17 +126,13 @@ const VerReservasContainer = ({
               <table className="w-full">
                 <thead className="bg-slate-50 dark:bg-slate-800">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-slate-300 text-sena focus:ring-sena"
-                          checked={allSelected}
-                          onChange={onToggleSelectAll}
-                          aria-label="Seleccionar todas las visibles"
-                        />
-                        Seleccionar
-                      </div>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      <input
+                        type="checkbox"
+                        onChange={onToggleSelectAll}
+                        className="h-4 w-4 rounded border-slate-300 dark:border-slate-600"
+                        title="Seleccionar visibles"
+                      />
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Usuario
@@ -168,21 +161,20 @@ const VerReservasContainer = ({
                   ) : (
                     filteredReservas.map((reserva) => (
                       <tr key={reserva._id || reserva.id}>
-                        {/* Checkbox selección (selecciona cualquiera; solo se eliminarán las rechazadas) */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {/** Normalizar estado para consistencia UI **/}
+                        <td className="px-4 py-4 whitespace-nowrap">
                           {(() => {
-                            const normalizedStatus = normalizeStatus(reserva.status ?? reserva.estado);
-                            const isDeletable = ['REJECTED','APPROVED','CANCELLED'].includes(normalizedStatus);
+                            const st = normalizeStatus(reserva.status || reserva.estado);
+                            const idStr = String(reserva._id || reserva.id);
+                            const isDeletable = ['APPROVED','REJECTED','CANCELLED'].includes(st);
                             return (
-                          <input
-                            type="checkbox"
-                            className={`h-4 w-4 rounded focus:ring-sena ${isDeletable ? 'border-slate-300 text-sena' : 'border-slate-200 text-slate-300'}`}
-                            checked={selectedIds?.includes(String(reserva._id || reserva.id)) || false}
-                            onChange={() => onToggleSelect(String(reserva._id || reserva.id))}
-                            aria-label="Seleccionar reserva"
-                            title="Solo se eliminarán reservas Aprobadas, Rechazadas o Canceladas"
-                          />
+                              <input
+                                type="checkbox"
+                                checked={selectedIds?.includes(idStr) || false}
+                                onChange={() => onToggleSelect(idStr)}
+                                disabled={!isDeletable}
+                                className="h-4 w-4 rounded border-slate-300 dark:border-slate-600"
+                                title={isDeletable ? 'Seleccionar' : 'Solo se seleccionan aprobadas/rechazadas/canceladas'}
+                              />
                             );
                           })()}
                         </td>
@@ -194,7 +186,7 @@ const VerReservasContainer = ({
                                 {reserva.usuario?.nombre || reserva.nombre || 'Usuario desconocido'}
                               </div>
                               <div className="text-sm text-slate-500 dark:text-slate-400">
-                                {reserva.usuario?.documento || reserva.documento || (reserva.usuario?.rol || reserva.rol || reserva.usuario?.role || reserva.role || 'Usuario')}
+                                {reserva.usuario?.documento || reserva.documento || 'N/A'}
                               </div>
                             </div>
                           </div>
@@ -228,51 +220,61 @@ const VerReservasContainer = ({
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {(() => {
-                            const normalizedStatus = normalizeStatus(reserva.status ?? reserva.estado);
+                            const st = normalizeStatus(reserva.status || reserva.estado);
                             return (
-                              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(normalizedStatus)}`}>
-                                {getStatusIcon(normalizedStatus)}
-                                {translateStatus(normalizedStatus)}
+                              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(st)}`}>
+                                {getStatusIcon(st)}
+                                {translateStatus(st)}
                               </span>
                             );
                           })()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          {normalizeStatus(reserva.status ?? reserva.estado) === 'PENDING' && (
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => onAprobar(reserva._id || reserva.id)}
-                                className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors"
-                              >
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Aprobar
-                              </button>
-                              <button
-                                onClick={() => onRechazar(reserva._id || reserva.id)}
-                                className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-white hover:bg-red-50 transition-colors"
-                              >
-                                <XCircle className="w-3 h-3 mr-1" />
-                                Rechazar
-                              </button>
-                            </div>
-                          )}
-                          {normalizeStatus(reserva.status ?? reserva.estado) === 'REJECTED' && (
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => onEliminar(reserva._id || reserva.id)}
-                                className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-white hover:bg-red-50 transition-colors"
-                              >
-                                <Trash2 className="w-3 h-3 mr-1" />
-                                Eliminar
-                              </button>
-                            </div>
-                          )}
+                          {(() => {
+                            const st = normalizeStatus(reserva.status || reserva.estado);
+                            const idVal = reserva._id || reserva.id;
+                            if (st === 'PENDING') {
+                              return (
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => onAprobar(idVal)}
+                                    disabled={pendingIds?.includes(String(idVal))}
+                                    className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-50"
+                                  >
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    Aprobar
+                                  </button>
+                                  <button
+                                    onClick={() => onRechazar(idVal)}
+                                    disabled={pendingIds?.includes(String(idVal))}
+                                    className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-white hover:bg-red-50 transition-colors disabled:opacity-50"
+                                  >
+                                    <XCircle className="w-3 h-3 mr-1" />
+                                    Rechazar
+                                  </button>
+                                </div>
+                              );
+                            }
+                            if (['APPROVED','REJECTED','CANCELLED'].includes(st)) {
+                              return (
+                                <button
+                                  onClick={() => onEliminar(idVal)}
+                                  disabled={pendingIds?.includes(String(idVal))}
+                                  className="inline-flex items-center px-3 py-1 border border-slate-300 text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 transition-colors disabled:opacity-50"
+                                  title="Eliminar esta reserva"
+                                >
+                                  <Trash2 className="w-3 h-3 mr-1" />
+                                  Eliminar
+                                </button>
+                              );
+                            }
+                            return null;
+                          })()}
                         </td>
                       </tr>
                     ))
                   )}
                 </tbody>
-                
               </table>
             </div>
           </CardContent>

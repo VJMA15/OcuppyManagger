@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { ReservationService } from '../services/reservation.service';
 import { CreateReservationDto } from '../dto/create-reservation.dto';
-import { ReservationStatus } from '../types/reservation.types';
 import User from '../models/user.model';
 import Bitacora from '../models/bitacora.model';
 
@@ -31,8 +30,20 @@ export class ReservationController {
         });
       }
       
+      // Normalizar fecha (puede venir como 'fecha' desde el frontend)
+      const rawDate = (req.body.reservationDate || req.body.fecha || req.body.startDate);
+      const normalizedDate = rawDate ? new Date(rawDate) : null;
+      if (!normalizedDate) {
+        return res.status(400).json({
+          success: false,
+          message: 'La fecha de la reserva es requerida'
+        });
+      }
+      normalizedDate.setHours(0, 0, 0, 0);
+
       const reservationData: CreateReservationDto = {
         ...req.body,
+        reservationDate: normalizedDate,
         userId: user._id // Usar el ObjectId del usuario autenticado
       };
 
@@ -45,158 +56,26 @@ export class ReservationController {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      res.status(400).json({
+      const isDuplicate = (error as any)?.code === 11000;
+      const isPendingLimit = typeof errorMessage === 'string' && errorMessage.toLowerCase().includes('reserva pendiente');
+      const statusCode = isDuplicate || isPendingLimit ? 409 : 400; // 400 para disponibilidad, 409 para conflicto de pendiente
+      res.status(statusCode).json({
         success: false,
-        message: errorMessage
+        message: isDuplicate
+          ? 'Ya tienes una reserva pendiente. Cancélala o espera a que se resuelva.'
+          : errorMessage
       });
     }
   }
 
   async getReservations(req: Request, res: Response) {
-    console.log('🔍 [ReservationController] getReservations endpoint called');
-    console.log('📊 [ReservationController] Request query:', JSON.stringify(req.query, null, 2));
-    console.log('👤 [ReservationController] User from token:', req.user ? { id: req.user.id, role: req.user.role } : 'No user');
-    
     try {
-      // Construir filtros basados en los parámetros de consulta
-      const filters: any = {};
-      
-      console.log('🔧 [ReservationController] Building filters...');
-      
-      if (req.query.status) {
-        filters.status = req.query.status;
-        console.log('🔍 [ReservationController] Added status filter:', req.query.status);
-      }
-      
-      if (req.query.userId) {
-        filters.userId = req.query.userId;
-        console.log('🔍 [ReservationController] Added userId filter:', req.query.userId);
-      }
-      
-      if (req.query.environmentId) {
-        filters.environmentId = req.query.environmentId;
-        console.log('🔍 [ReservationController] Added environmentId filter:', req.query.environmentId);
-      }
-      
-      console.log('✅ [ReservationController] Final filters:', JSON.stringify(filters, null, 2));
-      
-      // Llamar al servicio
-      console.log('⏳ [ReservationController] Calling reservationService.getReservations...');
+      const filters = this.buildFilters(req.query);
       const reservations = await this.reservationService.getReservations(filters);
-      
-      console.log('✅ [ReservationController] Service call successful');
-      console.log(`📈 [ReservationController] Returning ${reservations.length} reservations`);
-      
-      res.status(200).json({
-        success: true,
-        data: reservations,
-        count: reservations.length
-      });
-      
-    } catch (error) {
-      console.error('❌ [ReservationController] Error in getReservations:', error);
-      console.error('❌ [ReservationController] Error name:', error instanceof Error ? error.name : 'Unknown');
-      console.error('❌ [ReservationController] Error message:', error instanceof Error ? error.message : 'Unknown error');
-      console.error('❌ [ReservationController] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-      
-      res.status(500).json({
-        success: false,
-        message: 'Error al obtener las reservas',
-        error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : 'Internal server error'
-      });
-    }
-  }
-
-  async cancelReservation(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const userId = (req as any).user?.id || (req as any).user?._id;
-      const userRole = (req as any).user?.role;
-
-      console.log('🔍 [CancelReservation] Datos del usuario:', {
-        userId,
-        userRole,
-        userObject: (req as any).user
-      });
-
-      // Verificar que la reserva existe
-      const existingReservation = await this.reservationService.getReservationById(id);
-      
-      if (!existingReservation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Reserva no encontrada'
-        });
-      }
-
-      console.log('🔍 [CancelReservation] Datos de la reserva:', {
-        reservationId: existingReservation._id,
-        reservationUserId: existingReservation.userId,
-        reservationUserIdString: existingReservation.userId.toString()
-      });
-
-      // Verificar que el usuario puede cancelar esta reserva (es el propietario o es admin/guardia/instructor)
-      const isOwner = existingReservation.userId.toString() === userId?.toString();
-      const isAdminOrGuard = userRole === 'admin' || userRole === 'guardia';
-      const isInstructor = userRole === 'instructor';
-
-      console.log('🔍 [CancelReservation] Verificación de permisos:', {
-        isOwner,
-        isAdminOrGuard,
-        isInstructor,
-        comparison: `${existingReservation.userId.toString()} === ${userId?.toString()}`
-      });
-
-      // Los instructores pueden cancelar sus propias reservas, los admin/guardia pueden cancelar cualquiera
-      if (!isOwner && !isAdminOrGuard) {
-        return res.status(403).json({
-          success: false,
-          message: 'No tienes permisos para cancelar esta reserva'
-        });
-      }
-
-      // Verificar que la reserva se puede cancelar (no está ya cancelada o completada)
-      if (existingReservation.status === ReservationStatus.CANCELLED) {
-        return res.status(400).json({
-          success: false,
-          message: 'La reserva ya está cancelada'
-        });
-      }
-
-      const reservation = await this.reservationService.updateReservation(id, { 
-        status: ReservationStatus.CANCELLED,
-        cancelledAt: new Date(),
-        cancelledBy: userId
-      });
-      
-      if (!reservation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Reserva no encontrada'
-        });
-      }
-
-      // Registrar en bitácora
-      await Bitacora.registrarAccion(
-        userId || 'sistema',
-        'CANCELAR_RESERVA',
-        'reserva',
-        id,
-        JSON.stringify({
-          reservaId: id,
-          usuarioSolicitante: reservation.userId,
-          ambiente: reservation.environmentId,
-          fechaReserva: reservation.startDate,
-          fechaCancelacion: new Date(),
-          canceladoPor: userId
-        }),
-        req.ip
-      );
       
       res.json({
         success: true,
-        data: reservation,
-        message: 'Reserva cancelada exitosamente'
+        data: reservations
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
@@ -209,13 +88,13 @@ export class ReservationController {
 
   async getMyReservations(req: Request, res: Response) {
     try {
-      // Obtener el userId del token JWT autenticado
-      const userId = (req as any).user?.id || (req as any).user?.userId;
+      // Ahora el userId debe venir como parámetro de query
+      const { userId } = req.query;
       
       if (!userId) {
         return res.status(400).json({
           success: false,
-          message: 'Usuario no autenticado correctamente'
+          message: 'userId es requerido'
         });
       }
 
@@ -345,81 +224,125 @@ export class ReservationController {
     }
   }
 
+  async cancelReservation(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      // Obtener usuario autenticado
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ success: false, message: 'Usuario no autenticado' });
+      }
+
+      // Buscar reserva para validar permisos y estado
+      const reservation = await this.reservationService.getReservationById(id);
+      if (!reservation) {
+        return res.status(404).json({ success: false, message: 'Reserva no encontrada' });
+      }
+
+      // Validar estado
+      if (reservation.status === 'cancelled') {
+        return res.status(400).json({ success: false, message: 'La reserva ya está cancelada' });
+      }
+      if (reservation.status === 'completed') {
+        return res.status(400).json({ success: false, message: 'No se puede cancelar una reserva completada' });
+      }
+
+      // Permitir cancelar si es admin/guardia o dueño de la reserva
+      const isPrivileged = ['admin', 'guardia'].includes(currentUser.role);
+      const isOwner = String(reservation.userId) === String(currentUser._id || currentUser.id);
+      if (!isPrivileged && !isOwner) {
+        return res.status(403).json({ success: false, message: 'No tienes permisos para cancelar esta reserva' });
+      }
+
+      const cancelled = await this.reservationService.cancelReservation(id, reason);
+
+      // Registrar en bitácora
+      try {
+        await Bitacora.registrarAccion(
+          currentUser._id?.toString() || currentUser.id || 'sistema',
+          'reserva_cancelada',
+          'reserva',
+          id,
+          JSON.stringify({
+            reservaId: id,
+            usuarioSolicitante: reservation.userId,
+            ambiente: reservation.environmentId,
+            fechaReserva: reservation.startDate,
+            motivoCancelacion: reason || '',
+            fechaCancelacion: new Date()
+          }),
+          req.ip,
+          req.get('User-Agent') || ''
+        );
+      } catch (bitErr) {
+        console.error('Error registrando cancelación en bitácora:', bitErr);
+      }
+
+      res.json({ success: true, data: cancelled, message: 'Reserva cancelada exitosamente' });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      res.status(500).json({ success: false, message: errorMessage });
+    }
+  }
+
   async deleteReservation(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const userId = (req as any).user?.id || (req as any).user?._id || 'sistema';
+      const currentUser = (req as any).user;
 
-      // Obtener reserva y validar estado en el servicio
-      const deleted = await this.reservationService.deleteReservation(id);
-
-      if (!deleted) {
-        return res.status(404).json({
-          success: false,
-          message: 'Reserva no encontrada'
-        });
+      if (!currentUser) {
+        return res.status(401).json({ success: false, message: 'Usuario no autenticado' });
       }
 
-      // Registrar en bitácora
-      await Bitacora.registrarAccion(
-        userId,
-        'ELIMINAR_RESERVA',
-        'reserva',
-        id,
-        JSON.stringify({
-          reservaId: id,
-          usuarioSolicitante: deleted.userId,
-          ambiente: deleted.environmentId,
-          estadoPrevio: deleted.status,
-          fechaEliminacion: new Date()
-        }),
-        req.ip
-      );
+      const reservation = await this.reservationService.getReservationById(id);
+      if (!reservation) {
+        return res.status(404).json({ success: false, message: 'Reserva no encontrada' });
+      }
 
-      res.json({
-        success: true,
-        message: 'Reserva eliminada exitosamente',
-        data: deleted
-      });
+      // Permisos: admin/guardia pueden eliminar cualquiera; el dueño puede eliminar sus reservas
+      const isPrivileged = ['admin', 'guardia'].includes(currentUser.role);
+      const isOwner = String(reservation.userId) === String(currentUser._id || currentUser.id);
+      if (!isPrivileged && !isOwner) {
+        return res.status(403).json({ success: false, message: 'No tienes permisos para eliminar esta reserva' });
+      }
+
+      // Estados permitidos para eliminar desde la UI: REJECTED, CANCELLED, APPROVED
+      const normalizedStatus = String(reservation.status).toUpperCase();
+      if (!['REJECTED','CANCELLED','APPROVED'].includes(normalizedStatus)) {
+        return res.status(400).json({ success: false, message: 'Solo se pueden eliminar reservas aprobadas, rechazadas o canceladas' });
+      }
+
+      const deleted = await this.reservationService.deleteReservation(id);
+      if (!deleted) {
+        return res.status(404).json({ success: false, message: 'Reserva no encontrada para eliminar' });
+      }
+
+      return res.json({ success: true, data: deleted, message: 'Reserva eliminada exitosamente' });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      const statusCode = errorMessage.includes('estado') || errorMessage.includes('REJECTED') || errorMessage.includes('APPROVED') ? 400 : 500;
-      res.status(statusCode).json({
-        success: false,
-        message: errorMessage
-      });
+      return res.status(500).json({ success: false, message: errorMessage });
     }
   }
 
   async deleteRejectedReservations(req: Request, res: Response) {
     try {
-      const userId = (req as any).user?.id || (req as any).user?._id || 'sistema';
+      const currentUser = (req as any).user;
+      if (!currentUser) {
+        return res.status(401).json({ success: false, message: 'Usuario no autenticado' });
+      }
+
+      // Solo admin o guardia pueden eliminar rechazadas en lote
+      if (!['admin','guardia'].includes(currentUser.role)) {
+        return res.status(403).json({ success: false, message: 'No tienes permisos para eliminar reservas rechazadas' });
+      }
+
       const result = await this.reservationService.deleteRejectedReservations();
-
-      // Registrar en bitácora
-      await Bitacora.registrarAccion(
-        userId,
-        'ELIMINAR_RESERVAS_RECHAZADAS_MASIVO',
-        'reserva',
-        'masivo',
-        JSON.stringify({
-          eliminadas: result.deletedCount,
-          fechaEliminacion: new Date()
-        }),
-        req.ip
-      );
-
-      res.json({
-        success: true,
-        message: `Se eliminaron ${result.deletedCount} reservas rechazadas`,
-        data: result
-      });
+      return res.json({ success: true, deletedCount: result.deletedCount, message: `Eliminadas ${result.deletedCount} reservas rechazadas` });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      res.status(500).json({
-        success: false,
-        message: errorMessage
-      });
+      return res.status(500).json({ success: false, message: errorMessage });
     }
   }
 
@@ -437,5 +360,22 @@ export class ReservationController {
     }
     
     return filters;
+  }
+
+  async getAvailability(req: Request, res: Response) {
+    try {
+      const { environmentId, date } = req.query as { environmentId?: string; date?: string };
+      if (!environmentId || !date) {
+        return res.status(400).json({
+          success: false,
+          message: 'Parámetros requeridos: environmentId y date'
+        });
+      }
+      const availability = await this.reservationService.getDailyAvailability(environmentId, new Date(date));
+      res.json({ success: true, data: availability });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      res.status(500).json({ success: false, message: errorMessage });
+    }
   }
 }

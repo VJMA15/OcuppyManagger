@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Eye, EyeOff, Lock, User, Building2, CreditCard, Mail, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import logoSena from '@/assets/logo-sena.png';

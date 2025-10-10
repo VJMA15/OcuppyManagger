@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import apiService from '@/services/api';
 
 /**
@@ -11,7 +11,7 @@ const useReservas = () => {
   const [error, setError] = useState(null);
 
   // Función para obtener reservas desde la API
-  const fetchReservas = async () => {
+  const fetchReservas = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -35,12 +35,12 @@ const useReservas = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Cargar reservas al montar el componente
+  // Cargar reservas al montar el componente - SIN fetchReservas en dependencias
   useEffect(() => {
     fetchReservas();
-  }, []);
+  }, []); // Array vacío para evitar bucles infinitos
 
   // Función para crear una nueva reserva
   const createReserva = async (nuevaReserva) => {

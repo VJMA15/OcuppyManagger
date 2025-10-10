@@ -54,14 +54,12 @@ export const enrichReservasWithDetails = async (reservas) => {
           id: userData._id || userData.id,
           nombre: userData.nombre || userData.name || 'Usuario desconocido',
           email: userData.email || '',
-          documento: userData.documento || userData.cedula || 'N/A',
-          rol: userData.rol || userData.role || 'Usuario'
+          documento: userData.documento || userData.cedula || 'N/A'
         } : {
           id: reserva.userId,
           nombre: 'Usuario desconocido',
           email: '',
-          documento: 'N/A',
-          rol: 'Usuario'
+          documento: 'N/A'
         },
         ambiente: ambienteData ? {
           id: ambienteData._id || ambienteData.id,
@@ -77,7 +75,6 @@ export const enrichReservasWithDetails = async (reservas) => {
         // Campos adicionales para compatibilidad con el frontend
         nombre: userData?.nombre || userData?.name || 'Usuario desconocido',
         documento: userData?.documento || userData?.cedula || 'N/A',
-        rol: userData?.rol || userData?.role || 'Usuario',
         ambienteNombre: ambienteData?.nombre || ambienteData?.name || 'Ambiente desconocido'
       };
     });
@@ -164,6 +161,34 @@ export const getStatusColor = (status) => {
 };
 
 /**
+ * Normaliza el estado de la reserva a formato estándar
+ * @param {string} status - Estado de la reserva (puede venir en diferentes formatos)
+ * @returns {string} - Estado normalizado en mayúsculas
+ */
+export const normalizeStatus = (status) => {
+  if (!status) return 'PENDING';
+  
+  const statusStr = String(status).toUpperCase().trim();
+  
+  // Mapear diferentes variaciones al formato estándar
+  const statusMap = {
+    'PENDIENTE': 'PENDING',
+    'APROBADA': 'APPROVED',
+    'APROBADO': 'APPROVED',
+    'RECHAZADA': 'REJECTED',
+    'RECHAZADO': 'REJECTED',
+    'CANCELADA': 'CANCELLED',
+    'CANCELADO': 'CANCELLED',
+    'COMPLETADA': 'COMPLETED',
+    'COMPLETADO': 'COMPLETED',
+    'FINALIZADA': 'COMPLETED',
+    'FINALIZADO': 'COMPLETED'
+  };
+  
+  return statusMap[statusStr] || statusStr;
+};
+
+/**
  * Traduce el estado de la reserva al español
  * @param {string} status - Estado en inglés
  * @returns {string} - Estado en español
@@ -178,31 +203,4 @@ export const translateStatus = (status) => {
   };
   
   return translations[status] || status;
-};
-
-/**
- * Normaliza un estado (inglés/español, mayúsculas/minúsculas) a inglés en mayúsculas
- * @param {string} rawStatus - Estado crudo de la reserva (status/estado)
- * @returns {string} - Estado canónico en inglés y mayúsculas
- */
-export const normalizeStatus = (rawStatus) => {
-  const s = String(rawStatus || '').trim().toLowerCase();
-  const map = {
-    'pending': 'PENDING',
-    'pendiente': 'PENDING',
-    'approved': 'APPROVED',
-    'aprobada': 'APPROVED',
-    'aprobado': 'APPROVED',
-    'aceptada': 'APPROVED',
-    'aceptado': 'APPROVED',
-    'rejected': 'REJECTED',
-    'rechazada': 'REJECTED',
-    'rechazado': 'REJECTED',
-    'cancelled': 'CANCELLED',
-    'canceled': 'CANCELLED',
-    'cancelada': 'CANCELLED',
-    'completada': 'COMPLETED',
-    'completed': 'COMPLETED'
-  };
-  return map[s] || s.toUpperCase();
 };

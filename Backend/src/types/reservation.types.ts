@@ -3,14 +3,18 @@ import { Document, Schema } from 'mongoose';
 export interface Reservation {
   userId: Schema.Types.ObjectId;
   environmentId: Schema.Types.ObjectId;
+  reservationDate: Date; // fecha normalizada (día)
+  jornada: 'mañana' | 'tarde' | 'noche';
   startDate: Date;
   endDate: Date;
   status: ReservationStatus;
   purpose: string;
-  equipment: Equipment[];
+  equipment?: Equipment[];
   approvedBy?: Schema.Types.ObjectId;
   approvedAt?: Date;
   rejectionReason?: string;
+  completedAt?: Date;
+  expiredAt?: Date;
 }
 
 // Tipo para el documento de MongoDB
@@ -24,7 +28,8 @@ export enum ReservationStatus {
   APPROVED = 'approved',
   REJECTED = 'rejected',
   CANCELLED = 'cancelled',
-  COMPLETED = 'completed'
+  COMPLETED = 'completed',
+  EXPIRED = 'expired'
 }
 
 export interface Equipment {
@@ -33,10 +38,10 @@ export interface Equipment {
 }
 
 export enum EquipmentType {
-  PROJECTOR = 'projector',
-  COMPUTER = 'computer',
-  SOUND_SYSTEM = 'sound_system',
-  MICROPHONE = 'microphone',
-  VIDEO_BEAM = 'video_beam',
-  DIGITAL_BOARD = 'digital_board'
+  PROJECTOR = 'PROJECTOR',
+  COMPUTER = 'COMPUTER',
+  SOUND_SYSTEM = 'SOUND_SYSTEM',
+  MICROPHONE = 'MICROPHONE',
+  VIDEO_BEAM = 'VIDEO_BEAM',
+  DIGITAL_BOARD = 'DIGITAL_BOARD'
 }

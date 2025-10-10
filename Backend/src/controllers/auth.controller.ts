@@ -172,7 +172,7 @@ export const refreshToken = catchAsync(async (req: Request, res: Response, next:
     console.log('🔄 [RefreshToken] Token decodificado:', { id: decoded.id, role: decoded.role });
     
     // Verificar si el usuario existe
-    const currentUser = await User.findById(decoded.id).select('+activo');
+    const currentUser = await User.findById(decoded.id);
     if (!currentUser) {
       console.log('❌ [RefreshToken] Usuario no encontrado en BD');
       return next(new AppError('El usuario ya no existe', 401));
@@ -192,37 +192,7 @@ export const refreshToken = catchAsync(async (req: Request, res: Response, next:
     }
 
     console.log('✅ [RefreshToken] Generando nuevo token...');
-    
-    // Generar nuevo token
-    const newToken = signToken((currentUser._id as any).toString());
-    
-    const cookieOptions = {
-      expires: new Date(
-        Date.now() + (parseInt(process.env.JWT_COOKIE_EXPIRES_IN!) || 7) * 24 * 60 * 60 * 1000
-      ),
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
-    };
-
-    res.cookie('jwt', newToken, cookieOptions);
-
-    // Crear respuesta sin password
-    const userResponse = {
-      id: currentUser._id,
-      nombre: currentUser.nombre,
-      cc: currentUser.cc,
-      email: currentUser.email,
-      role: currentUser.role,
-      activo: currentUser.activo,
-      createdAt: currentUser.createdAt,
-      updatedAt: currentUser.updatedAt
-    };
-
-    res.status(200).json({
-      success: true,
-      token: newToken,
-      user: userResponse
-    });
+    createSendToken(currentUser, 200, res);
     
   } catch (error) {
     console.log('❌ [RefreshToken] Error al verificar token:', error instanceof Error ? error.message : 'Unknown error');

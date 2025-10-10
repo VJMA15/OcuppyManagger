@@ -36,7 +36,11 @@ class AmbientesService {
         message: data.message
       };
     } catch (error) {
-      console.error('API Error:', error);
+      // No loguear 429 para evitar ruido durante cooldown
+      const is429 = (error && error.status === 429) || (typeof error?.message === 'string' && error.message.includes('429'));
+      if (!is429) {
+        console.error('API Error:', error);
+      }
       return {
         success: false,
         error: error.message,

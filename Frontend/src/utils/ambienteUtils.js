@@ -148,6 +148,56 @@ export const obtenerAmbientesOcupados = (ambientes = [], reservas = []) => {
 };
 
 /**
+ * Obtiene ambientes ocupados por fecha y jornada específicas
+ * @param {Array} ambientes
+ * @param {Array} reservas
+ * @param {string} fecha - YYYY-MM-DD
+ * @param {string} jornada - 'mañana' | 'tarde' | 'noche'
+ * @returns {Array}
+ */
+export const obtenerAmbientesOcupadosPorFechaJornada = (ambientes = [], reservas = [], fecha, jornada) => {
+    try {
+        if (!Array.isArray(ambientes) || !Array.isArray(reservas) || !fecha || !jornada) {
+            return [];
+        }
+
+        const jornadaTarget = (jornada || '').toLowerCase();
+
+        return ambientes.filter(ambiente => {
+            const ambienteId = ambiente.id || ambiente._id;
+            const match = reservas.find(reserva => {
+                const ambienteIdReserva = reserva.ambienteId || reserva.ambiente;
+                const estado = (reserva.estado || '').toLowerCase();
+                const fechaReserva = reserva.fecha;
+
+                let jornadaReserva = (reserva.jornada || '').toLowerCase();
+                if (!jornadaReserva && reserva.hora) {
+                    try {
+                        const horaReserva = parseInt(String(reserva.hora).split(':')[0]);
+                        if (horaReserva >= 6 && horaReserva < 12) jornadaReserva = 'mañana';
+                        else if (horaReserva >= 12 && horaReserva < 18) jornadaReserva = 'tarde';
+                        else jornadaReserva = 'noche';
+                    } catch {
+                        jornadaReserva = '';
+                    }
+                }
+
+                return (
+                    ambienteIdReserva === ambienteId &&
+                    fechaReserva === fecha &&
+                    jornadaReserva === jornadaTarget &&
+                    (estado === 'aprobada' || estado === 'aprobado')
+                );
+            });
+            return !!match;
+        });
+    } catch (e) {
+        console.error('Error obteniendo ocupados por fecha/jornada:', e);
+        return [];
+    }
+};
+
+/**
  * Actualiza el estado de todos los ambientes basado en las reservas actuales
  * @param {Array} ambientes - Array de ambientes del backend
  * @param {Array} reservas - Array de reservas del backend

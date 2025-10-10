@@ -1,16 +1,10 @@
 node_modules/
-# Ignore build outputs
 dist/
-Frontend/dist/
-Backend/dist/
-
-# Environment files
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-
 .DS_Store
 npm-debug.log*
 yarn-debug.log*
@@ -18,6 +12,7 @@ yarn-error.log*
 .vscode/
 .idea/
 *.log
-
-# Ignore load test result artifacts
+node_modules
+node_modules
+node_modules
 load-tests/results/

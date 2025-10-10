@@ -5,7 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
-  { ignores: ['dist', 'src/pages/**/*backup*.jsx', 'debug-*.js'] },
+  { ignores: ['dist'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
@@ -29,19 +29,12 @@ export default [
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
       'react/jsx-no-target-blank': 'off',
-      // Esta regla genera falsos positivos en textos con comillas
-      'react/no-unescaped-entities': 'off',
-      'react/display-name': 'off',
-      'no-case-declarations': 'off',
-      // Desactivar prop-types: el proyecto no usa PropTypes
-      'react/prop-types': 'off',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
       // Ignorar el import de React cuando no se usa con el runtime JSX moderno
-      // Reducir severidad de variables no usadas mientras estamos limpiando
-      'no-unused-vars': ['warn', { varsIgnorePattern: '^React$', argsIgnorePattern: '^_' }],
+      'no-unused-vars': ['error', { varsIgnorePattern: '^React$', argsIgnorePattern: '^_' }],
     },
   },
   // Overrides para archivos de configuración basados en Node

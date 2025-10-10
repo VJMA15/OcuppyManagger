@@ -1,3 +1,4 @@
+import React from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useTheme } from "@/hooks/use-theme";
 import PropTypes from "prop-types";
@@ -59,4 +60,4 @@ ActivityChart.propTypes = {
     })).isRequired
 };
 
-export default ActivityChart;
+export default ActivityChart; 

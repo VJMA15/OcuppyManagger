@@ -1,23 +1,7 @@
-import { Schema, model, Document } from 'mongoose';
-import { ReservationStatus, EquipmentType, ReservationDocument } from '../types/reservation.types';
+import { Schema, model } from 'mongoose';
+import { ReservationDocument, ReservationStatus, EquipmentType } from '../types/reservation.types';
 
-// Define the Reservation interface locally
-interface Reservation {
-  userId: Schema.Types.ObjectId;
-  environmentId: Schema.Types.ObjectId;
-  startDate: Date;
-  endDate: Date;
-  status: ReservationStatus;
-  purpose: string;
-  equipment?: Array<{
-    type: EquipmentType;
-    quantity: number;
-  }>;
-  approvedBy?: Schema.Types.ObjectId;
-  approvedAt?: Date;
-  rejectionReason?: string;
-}
-
+// ... existing code ...
 const equipmentSchema = new Schema({
   type: {
     type: String,
@@ -40,6 +24,17 @@ const reservationSchema = new Schema<ReservationDocument>({
   environmentId: {
     type: Schema.Types.ObjectId,
     ref: 'Ambiente',
+    required: true
+  },
+  // Fecha de la reserva (solo día, normalizada a medianoche) para restricciones por jornada
+  reservationDate: {
+    type: Date,
+    required: true
+  },
+  // Jornada de la reserva
+  jornada: {
+    type: String,
+    enum: ['mañana', 'tarde', 'noche'],
     required: true
   },
   startDate: {
@@ -70,6 +65,13 @@ const reservationSchema = new Schema<ReservationDocument>({
     type: String,
     maxlength: 500
   }
+  ,
+  completedAt: {
+    type: Date
+  },
+  expiredAt: {
+    type: Date
+  }
 }, {
   timestamps: true
 });
@@ -78,5 +80,17 @@ const reservationSchema = new Schema<ReservationDocument>({
 reservationSchema.index({ userId: 1, startDate: 1 });
 reservationSchema.index({ environmentId: 1, startDate: 1, endDate: 1 });
 reservationSchema.index({ status: 1 });
+// Evitar más de una reserva pendiente por usuario
+reservationSchema.index(
+  { userId: 1 },
+  { unique: true, partialFilterExpression: { status: 'pending' } }
+);
+
+// Índice único compuesto para evitar reservas duplicadas por ambiente-fecha-jornada
+// Único solo para reservas aprobadas, permitiendo múltiples pendientes
+reservationSchema.index(
+  { environmentId: 1, reservationDate: 1, jornada: 1 },
+  { unique: true, partialFilterExpression: { status: 'approved' } }
+);
 
 export const ReservationModel = model<ReservationDocument>('Reservation', reservationSchema);

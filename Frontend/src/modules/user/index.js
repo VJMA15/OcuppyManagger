@@ -1,24 +1,25 @@
+import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/auth-context";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import UserLayout from "@/routes/UserLayout";
+import { AuthProvider } from "@/shared/contexts/auth-context";
+import RequireAuth from "./components/RequireAuth";
+import UserLayout from "./layouts/UserLayout";
 
 // Páginas del usuario
-import AmbientesMainPage from "@/pages/AmbientesMainPage";
-import AmbienteDetailPage from "@/pages/AmbienteDetailPage";
+import AmbientesMainPage from "./pages/AmbientesMainPage";
+import AmbienteDetailPage from "./pages/AmbienteDetailPage";
 
 const UserContent = () => {
   return (
-    <ProtectedRoute>
+    <RequireAuth>
       <UserLayout>
         <Routes>
           <Route index element={<AmbientesMainPage />} />
           <Route path="ambientes" element={<AmbientesMainPage />} />
           <Route path="ambientes/:id" element={<AmbienteDetailPage />} />
-          <Route path="*" element={<Navigate to="/ambientes" replace />} />
+          <Route path="*" element={<Navigate to="/user/ambientes" replace />} />
         </Routes>
       </UserLayout>
-    </ProtectedRoute>
+    </RequireAuth>
   );
 };
 

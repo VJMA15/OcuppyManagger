@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Building2, 
@@ -22,8 +22,8 @@ import AccessRequestForm from '@/components/AccessRequestForm';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-const [showAccessForm, setShowAccessForm] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [showAccessForm, setShowAccessForm] = React.useState(false);
 
   const features = [
     {
@@ -63,7 +63,8 @@ const [showAccessForm, setShowAccessForm] = useState(false);
   };
 
   const handleGuestAccess = () => {
-    navigate('/ambientes?mode=guest');
+    // Deshabilitado: no navegar a ninguna parte
+    return;
   };
 
   const handleContactAdmin = () => {
@@ -193,7 +194,6 @@ const [showAccessForm, setShowAccessForm] = useState(false);
                 sin necesidad de cuenta de usuario.
               </p>
               <Button 
-                onClick={handleGuestAccess}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
               >
                 <Eye className="mr-2 h-4 w-4" />
@@ -474,14 +474,7 @@ const [showAccessForm, setShowAccessForm] = useState(false);
             <div>
               <h4 className="text-base sm:text-lg font-semibold mb-4 text-gray-800">Acceso Rápido</h4>
               <ul className="space-y-2 text-gray-600 text-sm sm:text-base">
-                <li>
-                  <button 
-                    onClick={handleGuestAccess}
-                    className="hover:text-blue-600 transition-colors text-left"
-                  >
-                    Ver Ambientes (Guest)
-                  </button>
-                </li>
+                {/* Enlace de acceso Guest eliminado */}
                 <li>
                   <button 
                     onClick={handleLogin}

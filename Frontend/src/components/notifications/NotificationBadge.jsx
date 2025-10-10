@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNotifications } from '../../hooks/useNotifications';
-import { cn } from '../../utils/cn';
+import { useNotifications } from '@/hooks/useNotifications';
+import { cn } from '@/utils/cn';
 
 const NotificationBadge = ({ className }) => {
   const { unreadCount } = useNotifications();

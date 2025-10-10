@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { reservationApi } from '../services/reservationApi';
 
 export const useReservations = (filters = {}) => {
@@ -6,19 +6,30 @@ export const useReservations = (filters = {}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Memoizar los filtros para evitar recreación innecesaria
+  const memoizedFilters = useMemo(() => filters, [
+    filters.status,
+    filters.userId,
+    filters.environmentId,
+    filters.startDate,
+    filters.endDate,
+    filters.page,
+    filters.limit
+  ]);
+
   const fetchReservations = useCallback(async () => {
     setLoading(true);
     setError(null);
     
     try {
-      const data = await reservationApi.getReservations(filters);
+      const data = await reservationApi.getReservations(memoizedFilters);
       setReservations(data);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [memoizedFilters]);
 
   const createReservation = useCallback(async (reservationData) => {
     try {

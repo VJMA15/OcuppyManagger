@@ -1,5 +1,6 @@
 // Modern JSX runtime no requiere importar React como default
 import { useNavigate } from "react-router-dom";
+// import { useState, useMemo } from "react";
 import { CheckCircle, AlertCircle, CreditCard, Package, TrendingUp, CalendarIcon, Building2, Clock, XCircle } from "lucide-react";
 
 import { overviewData } from "@/constants";
@@ -45,7 +46,7 @@ const DashboardPage = () => {
                 text: "text-emerald-600 dark:text-emerald-400"
             },
             subtitle: `De ${ambientes} ambientes totales`,
-            onClick: () => navigate('/ambientes')
+            // onClick eliminado: no navegar desde tarjeta de disponibles
         },
         {
             title: "Ocupados",
@@ -69,7 +70,7 @@ const DashboardPage = () => {
                 text: "text-yellow-600 dark:text-yellow-400"
             },
             subtitle: "Esperando aprobación",
-            onClick: () => navigate('/ver-reservas')
+            onClick: () => navigate('/admin/ver-reservas?filter=pendiente')
         },
         {
             title: "Aprobadas",
@@ -81,7 +82,7 @@ const DashboardPage = () => {
                 text: "text-green-600 dark:text-green-400"
             },
             subtitle: "Reservas confirmadas",
-            onClick: () => navigate('/ver-reservas')
+            onClick: () => navigate('/admin/ver-reservas?filter=aprobada')
         }
     ];
 
@@ -91,6 +92,9 @@ const DashboardPage = () => {
             <DashboardHeader />
 
             {/* Botones de prueba para desarrollo */}
+
+
+            {/* Filtros de Fecha y Jornada removidos temporalmente */}
 
 
             {/* Tarjetas de Estadísticas */}
@@ -144,7 +148,10 @@ const DashboardPage = () => {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+                <div
+                    className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    onClick={() => navigate('/admin/ver-reservas?filter=rechazada')}
+                >
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">

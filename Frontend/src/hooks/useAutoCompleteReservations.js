@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 /**
  * Hook para manejar la auto-completación de reservas
@@ -8,7 +8,7 @@ export const useAutoCompleteReservations = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastCheck, setLastCheck] = useState(null);
 
-  const checkAndCompleteReservations = async () => {
+  const checkAndCompleteReservations = useCallback(async () => {
     if (isProcessing) return;
     
     setIsProcessing(true);
@@ -34,7 +34,7 @@ export const useAutoCompleteReservations = () => {
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, []); // Removiendo isProcessing de las dependencias para evitar bucles
 
   // Verificar cada 5 minutos
   useEffect(() => {
@@ -47,7 +47,7 @@ export const useAutoCompleteReservations = () => {
     }, 5 * 60 * 1000); // 5 minutos
 
     return () => clearInterval(interval);
-  }, []);
+  }, []); // Array de dependencias vacío para evitar recrear el intervalo
 
   // Función manual para forzar verificación
   const forceCheck = () => {

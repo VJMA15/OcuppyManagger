@@ -88,11 +88,11 @@ router.get('/profile', getUserProfile);
 
 // ==================== RUTAS DE ADMINISTRADOR ====================
 
-// Obtener todos los usuarios (admin e instructor)
-router.get('/', requireRole(['admin', 'instructor']), getAllUsers);
+// Obtener todos los usuarios (solo admin)
+router.get('/', requireRole(['admin']), getAllUsers);
 
-// Obtener un usuario específico (admin e instructor)
-router.get('/:id', requireRole(['admin', 'instructor']), getUser);
+// Obtener un usuario específico (solo admin)
+router.get('/:id', requireRole(['admin']), getUser);
 
 // Crear nuevo usuario (solo admin)
 router.post('/', requireRole(['admin']), validateCreateUser, handleValidationErrors, createUser);

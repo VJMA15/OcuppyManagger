@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Shield, Menu, Sun, Moon, Bell, User, LogOut, Clock } from 'lucide-react';
 import { useAuthContext } from '../../contexts/auth-context';
 import { useTheme } from '../../contexts/theme-context';
@@ -112,7 +112,7 @@ const GuardiaHeader = ({ collapsed, setCollapsed }) => {
                 "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
               )}
               aria-label="Notificaciones"
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={() => setShowNotifications(true)}
             >
               <Bell className="h-5 w-5" />
               <NotificationBadge />

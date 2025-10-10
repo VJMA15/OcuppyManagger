@@ -14,7 +14,7 @@ class AuthService {
     try {
       Cookies.set(this.TOKEN_KEY, token, {
         expires: 7, // 7 días
-        secure: import.meta.env.PROD,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         httpOnly: false // Para acceso desde JS
       });
@@ -68,7 +68,7 @@ class AuthService {
     try {
       Cookies.set(this.USER_KEY, JSON.stringify(userData), {
         expires: 7,
-        secure: import.meta.env.PROD,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict'
       });
     } catch (error) {
@@ -99,13 +99,6 @@ class AuthService {
     
     Cookies.remove(this.TOKEN_KEY);
     Cookies.remove(this.USER_KEY);
-
-    // Limpiar descartes de notificaciones persistidos
-    try {
-      localStorage.removeItem('notifications_dismissed');
-    } catch {
-      // Silenciar errores
-    }
     
     console.log('🔓 Sesión cerrada correctamente');
   }
@@ -141,10 +134,26 @@ class AuthService {
         body: JSON.stringify({ cc, password }),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      let data = null;
+      if (contentType.includes('application/json')) {
+        data = await response.json().catch(() => null);
+      } else {
+        const text = await response.text().catch(() => '');
+        try { data = JSON.parse(text); } catch { data = { raw: text }; }
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error en el login');
+        const status = response.status;
+        // Mensajes amigables sin lanzar para casos comunes
+        if (status === 401 || status === 404) {
+          return { success: false, error: 'C.C o contraseña incorrecta' };
+        }
+        if (status === 429) {
+          // Evitar ruido de consola y devolver mensaje de pausa
+          return { success: false, error: 'En pausa por límite de tasa. Reintentar automáticamente.' };
+        }
+        throw new Error(data?.error || 'Error en el login');
       }
 
       if (data.success && data.user) {
@@ -166,7 +175,11 @@ class AuthService {
         throw new Error('Respuesta inválida del servidor');
       }
     } catch (error) {
-      console.error('❌ Error en login:', error);
+      // Suprimir logs para 429
+      const is429 = (error && error.status === 429) || (typeof error?.message === 'string' && error.message.includes('429'));
+      if (!is429) {
+        console.error('❌ Error en login:', error);
+      }
       return { success: false, error: error.message };
     }
   }
@@ -182,15 +195,21 @@ class AuthService {
         body: JSON.stringify(userData),
       });
 
-      const data = await response.json();
-
+      const contentType2 = response.headers.get('content-type') || '';
+      let data2 = null;
+      if (contentType2.includes('application/json')) {
+        data2 = await response.json().catch(() => null);
+      } else {
+        const text = await response.text().catch(() => '');
+        try { data2 = JSON.parse(text); } catch { data2 = { raw: text }; }
+      }
       if (!response.ok) {
-        throw new Error(data.message || 'Error en el registro');
+        throw new Error((data2 && (data2.message || data2.error)) || 'Error en el registro');
       }
 
-      if (data.status === 'success') {
+      if (data2 && data2.status === 'success') {
         console.log('✅ Registro exitoso');
-        return { success: true, message: data.message };
+        return { success: true, message: data2.message };
       } else {
         throw new Error('Respuesta inválida del servidor');
       }

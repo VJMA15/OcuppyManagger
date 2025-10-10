@@ -8,17 +8,18 @@ const NotificationPanel = ({ isOpen, onClose }) => {
   const { user } = useAuthContext();
   const { notifications, loading, error, actions } = useNotifications();
 
-  // Marcar todas como leídas al abrir el panel
+  // Marcar todas como leídas una sola vez al abrir el panel
   useEffect(() => {
-    if (isOpen && notifications.length > 0) {
-      // Marcar como leídas después de un pequeño delay para mejor UX
-      const timer = setTimeout(() => {
-        actions.markAllAsRead();
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, notifications.length, actions]);
+    if (!isOpen) return;
+    const hasUnread = notifications?.some(n => !n.read);
+    if (!hasUnread) return;
+
+    const timer = setTimeout(() => {
+      actions.markAllAsRead();
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
   // Debug: Log para verificar el estado
   useEffect(() => {
@@ -91,12 +92,26 @@ const NotificationPanel = ({ isOpen, onClose }) => {
       return date.toLocaleDateString('es-ES', {
         day: '2-digit',
         month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        year: 'numeric'
       });
     } catch (error) {
       return 'Fecha inválida';
+    }
+  };
+
+  const formatTime = (dateString) => {
+    if (!dateString) return 'Hora no disponible';
+    try {
+      const date = new Date(dateString);
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const hours12 = hours % 12 || 12;
+      const hh = String(hours12).padStart(2, '0');
+      const mm = String(minutes).padStart(2, '0');
+      return `${hh}:${mm} ${period}`;
+    } catch (error) {
+      return 'Hora inválida';
     }
   };
 
@@ -172,15 +187,19 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             <div className="space-y-3">
               {notifications.slice(0, 10).map((notification, index) => {
                 const reserva = notification.data || notification;
-                const autorNombre = (
-                  reserva.usuario?.nombreCompleto ||
-                  [reserva.usuario?.nombre, reserva.usuario?.apellido].filter(Boolean).join(' ') ||
-                  reserva.autorNombre ||
-                  reserva.userName ||
-                  reserva.userId?.nombre ||
-                  reserva.instructor?.nombre ||
-                  'Usuario desconocido'
-                );
+                const currentUserId = user?._id || user?.id || user?.userId || user?.cc;
+                const isOwn = currentUserId && String(reserva.userId || reserva.usuario?.id) === String(currentUserId);
+                const autorNombre = isOwn
+                  ? (user?.nombre || 'Tú')
+                  : (
+                      reserva.usuario?.nombreCompleto ||
+                      [reserva.usuario?.nombre, reserva.usuario?.apellido].filter(Boolean).join(' ') ||
+                      reserva.autorNombre ||
+                      reserva.userName ||
+                      reserva.userId?.nombre ||
+                      reserva.instructor?.nombre ||
+                      ((notification.userRole || '').toLowerCase() === 'instructor' ? 'Colega' : 'Usuario desconocido')
+                    );
                 const autorDocumentoRaw = reserva.usuario?.documento || reserva.documento || reserva.userCC || '';
                 const autorDocumento = autorDocumentoRaw && autorDocumentoRaw !== 'N/A' ? autorDocumentoRaw : '';
                 const autorRol = reserva.usuario?.rol || reserva.usuario?.role || reserva.rol || reserva.role || '';
@@ -224,21 +243,28 @@ const NotificationPanel = ({ isOpen, onClose }) => {
                         <div className="flex items-center gap-2 mb-1">
                           <User className="w-4 h-4 text-gray-500" />
                           <span className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                            {autorNombre}{autorDocumento ? ` (${autorDocumento})` : (autorRol ? ` (${autorRol})` : '')}
+                            {autorNombre}{autorDocumento ? ` (${autorDocumento})` : (autorRol ? ` (Rol: ${autorRol})` : '')}
                           </span>
                         </div>
                         
                         <div className="flex items-center gap-2 mb-1">
                           <Building2 className="w-4 h-4 text-gray-500" />
                           <span className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                            {reserva.ambienteId?.nombre || reserva.ambiente?.nombre || 'Ambiente no especificado'}
+                            {reserva.ambienteId?.nombre || reserva.ambiente?.nombre || reserva.ambienteNombre || 'Ambiente no especificado'}
                           </span>
                         </div>
                         
                         <div className="flex items-center gap-2 mb-2">
                           <Calendar className="w-4 h-4 text-gray-500" />
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatDate(reserva.fecha || reserva.startDate || notification.timestamp)}
+                            {formatDate(reserva.fecha || reserva.startDate)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 mb-2">
+                          <Clock className="w-4 h-4 text-gray-500" />
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {formatTime(notification.timestamp || reserva.createdAt || reserva.fechaCreacion)}
                           </span>
                         </div>
                         

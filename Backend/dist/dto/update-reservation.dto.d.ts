@@ -7,5 +7,10 @@ export interface UpdateReservationDto {
         quantity: number;
     }[];
     status?: string;
+    cancelledAt?: Date;
+    cancelledBy?: string;
+    approvedBy?: string;
+    approvedAt?: Date;
+    rejectionReason?: string;
 }
 //# sourceMappingURL=update-reservation.dto.d.ts.map

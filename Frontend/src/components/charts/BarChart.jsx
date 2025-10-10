@@ -1,4 +1,4 @@
-// JSX runtime moderno no requiere importar React por defecto
+import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const COLORS = {

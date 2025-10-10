@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
   Calendar, 
@@ -17,9 +17,11 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '@/contexts/auth-context';
-import useBitacora from '@/hooks/useBitacora';
-import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
+import { useAuthContext } from '../contexts/auth-context';
+import useBitacora from '../hooks/useBitacora';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 
 const BitacoraPage = () => {
   const navigate = useNavigate();

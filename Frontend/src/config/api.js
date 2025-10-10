@@ -11,8 +11,7 @@ export const API_CONFIG = {
       LOGIN: '/api/v1/auth/login',
       VERIFY: '/api/v1/auth/verify',
       REGISTER: '/api/v1/auth/register',
-      USER_BY_CC: '/api/v1/auth/user-by-cc',
-      REFRESH_TOKEN: '/api/v1/auth/refresh-token'
+      USER_BY_CC: '/api/v1/auth/user-by-cc'
     },
     USERS: {
       PROFILE: '/api/v1/users/profile',
@@ -32,6 +31,7 @@ export const API_CONFIG = {
       CREATE: '/api/v1/reservas',
       UPDATE: (id) => `/api/v1/reservas/${id}`,
       DELETE: (id) => `/api/v1/reservas/${id}`,
+      // Alinear con backend: endpoint es /my-reservations
       MY_RESERVAS: '/api/v1/reservas/my-reservations',
     },
     ENTREGAS: {
@@ -68,7 +68,7 @@ export const API_CONFIG = {
     'Content-Type': 'application/json',
   },
   
-  TIMEOUT: 5000, // 5 segundos para respuestas más rápidas
+  TIMEOUT: 15000, // 15 segundos para evitar abortar peticiones lentas
 };
 
 export default API_CONFIG;

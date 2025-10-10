@@ -66,7 +66,7 @@ export const useAuth = () => {
         
         // 🎯 REDIRECCIÓN BASADA EN ROL usando navigate
         if (userRole === 'admin') {
-          navigate('/dashboard', { replace: true });
+          navigate('/admin', { replace: true });
         } else {
           navigate('/ambientes', { replace: true });
         }

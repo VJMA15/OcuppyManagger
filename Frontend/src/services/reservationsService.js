@@ -1,6 +1,22 @@
+import { API_CONFIG } from '../config/api';
 import ApiService from './apiService';
 
 class ReservationsService extends ApiService {
+  // Invalida caché de listados de reservas (GET /api/v1/reservas[?...])
+  invalidateReservationsCache() {
+    try {
+      const prefix = `GET:${this.baseURL}/api/v1/reservas`;
+      if (this.registry && this.registry.cache && typeof this.registry.cache.keys === 'function') {
+        for (const key of Array.from(this.registry.cache.keys())) {
+          if (key.startsWith(prefix)) {
+            this.registry.cache.delete(key);
+          }
+        }
+      }
+    } catch (_) {
+      // No romper flujo si no existe registro
+    }
+  }
   // Obtener todas las reservas con filtros opcionales
   async getReservations(filters = {}) {
     const queryParams = new URLSearchParams();
@@ -17,29 +33,48 @@ class ReservationsService extends ApiService {
     return this.get(endpoint);
   }
 
-  // Obtener mis reservas (no requiere userId, se obtiene del token)
-  async getMyReservations() {
-    return this.get('/api/v1/reservas/my-reservations');
+  // Obtener mis reservas (requiere userId en query según backend)
+  async getMyReservations(userId) {
+    try {
+      const uid = userId;
+      const endpoint = uid
+        ? `/api/v1/reservas/my-reservations?userId=${encodeURIComponent(uid)}`
+        : '/api/v1/reservas/my-reservations';
+
+      return this.get(endpoint);
+    } catch (error) {
+      console.error('Error obteniendo mis reservas:', error);
+      throw error;
+    }
   }
 
   // Crear nueva reserva
   async createReservation(reservationData) {
-    return this.post('/api/v1/reservas', reservationData);
+    const result = await this.post('/api/v1/reservas', reservationData);
+    // Mutación: invalidar caché para reflejar cambios inmediatamente
+    this.invalidateReservationsCache();
+    return result;
   }
 
   // Aprobar reserva
   async approveReservation(reservationId, approvedBy) {
-    return this.patch(`/api/v1/reservas/${reservationId}/approve`, { approvedBy });
+    const result = await this.patch(`/api/v1/reservas/${reservationId}/approve`, { approvedBy });
+    this.invalidateReservationsCache();
+    return result;
   }
 
   // Rechazar reserva
   async rejectReservation(reservationId, reason) {
-    return this.patch(`/api/v1/reservas/${reservationId}/reject`, { reason });
+    const result = await this.patch(`/api/v1/reservas/${reservationId}/reject`, { reason });
+    this.invalidateReservationsCache();
+    return result;
   }
 
   // Cancelar reserva
   async cancelReservation(reservationId) {
-    return this.patch(`/api/v1/reservas/${reservationId}/cancel`);
+    const result = await this.patch(`/api/v1/reservas/${reservationId}/cancel`);
+    this.invalidateReservationsCache();
+    return result;
   }
 
   // Verificar disponibilidad
@@ -61,12 +96,16 @@ class ReservationsService extends ApiService {
 
   // Actualizar reserva
   async updateReservation(id, reservationData) {
-    return this.put(`/api/v1/reservas/${id}`, reservationData);
+    const result = await this.put(`/api/v1/reservas/${id}`, reservationData);
+    this.invalidateReservationsCache();
+    return result;
   }
 
   // Eliminar reserva
   async deleteReservation(id) {
-    return this.delete(`/api/v1/reservas/${id}`);
+    const result = await this.delete(`/api/v1/reservas/${id}`);
+    this.invalidateReservationsCache();
+    return result;
   }
 
   // Eliminar varias reservas por ID (solo se eliminarán si están REJECTED en backend)
@@ -105,6 +144,11 @@ class ReservationsService extends ApiService {
       const successCount = deletedIds.length;
       const failureCount = failedIds.length;
 
+      // Invalidate cache if any success
+      if (successCount > 0) {
+        this.invalidateReservationsCache();
+      }
+
       return {
         success: successCount > 0,
         message:
@@ -124,7 +168,9 @@ class ReservationsService extends ApiService {
 
   // Eliminar todas las reservas rechazadas
   async deleteRejectedReservations() {
-    return this.delete('/api/v1/reservas/rejected');
+    const result = await this.delete('/api/v1/reservas/rejected');
+    this.invalidateReservationsCache();
+    return result;
   }
 
   // Obtener reservas por estado

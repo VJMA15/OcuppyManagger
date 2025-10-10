@@ -136,18 +136,14 @@ class SessionManager {
       // Cerrar sesión usando el servicio de auth
       authService.logout();
       
-      // Redirigir al login solo si no estamos ya en una página de auth
-      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth')) {
-        window.location.href = '/login';
-      }
+      // Redirigir al login
+      window.location.href = '/login';
       
       console.log('🔓 Sesión cerrada por timeout');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      // Redirigir de todas formas si no estamos en login
-      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth')) {
-        window.location.href = '/login';
-      }
+      // Redirigir de todas formas
+      window.location.href = '/login';
     }
   }
 

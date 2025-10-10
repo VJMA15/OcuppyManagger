@@ -21,13 +21,18 @@ import {
   BookOpen
 } from 'lucide-react';
 // UI Components
-import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Card, CardContent, Badge, Modal } from '@/components/ui';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select.jsx';
+import Card, { CardContent } from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
+import Modal from '../components/ui/Modal';
 
 // Forms
-import AmbienteForm from '@/components/forms/AmbienteForm';
+import AmbienteForm from '../components/forms/AmbienteForm';
 
 // Utils
-import { cn } from '@/utils/cn';
+import { cn } from '../utils/cn';
 
 const AmbientesContainer = ({
   // Datos

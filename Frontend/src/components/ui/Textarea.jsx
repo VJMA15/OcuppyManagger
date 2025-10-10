@@ -1,7 +1,7 @@
-import { forwardRef } from 'react';
+import React from 'react';
 import { cn } from '../../utils/cn';
 
-const Textarea = forwardRef(({ 
+const Textarea = React.forwardRef(({ 
   className, 
   label,
   icon: Icon,

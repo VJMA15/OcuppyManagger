@@ -66,10 +66,16 @@ export const AuthProvider = ({ children }) => {
         console.log('🔐 Login exitoso desde contexto');
         return { success: true, user: response.user };
       } else {
-        throw new Error(response.error || 'Credenciales inválidas');
+        // No lanzar: devolver mensaje amigable
+        const message = response.error || 'C.C o contraseña incorrecta';
+        return { success: false, message };
       }
     } catch (error) {
-      console.error('❌ Error en login desde contexto:', error);
+      // Evitar ruido si es 429
+      const is429 = (error && error.status === 429) || (typeof error?.message === 'string' && error.message.includes('429'));
+      if (!is429) {
+        console.error('❌ Error en login desde contexto:', error);
+      }
       return { 
         success: false, 
         message: error.message || 'Error de conexión con el servidor' 

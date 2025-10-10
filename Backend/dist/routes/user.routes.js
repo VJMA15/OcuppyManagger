@@ -71,10 +71,10 @@ router.use(auth_middleware_1.authenticateToken);
 // Obtener perfil del usuario autenticado
 router.get('/profile', user_controller_1.getUserProfile);
 // ==================== RUTAS DE ADMINISTRADOR ====================
-// Obtener todos los usuarios (solo admin)
-router.get('/', (0, auth_middleware_1.requireRole)(['admin']), user_controller_1.getAllUsers);
-// Obtener un usuario específico (solo admin)
-router.get('/:id', (0, auth_middleware_1.requireRole)(['admin']), user_controller_1.getUser);
+// Obtener todos los usuarios (admin e instructor)
+router.get('/', (0, auth_middleware_1.requireRole)(['admin', 'instructor']), user_controller_1.getAllUsers);
+// Obtener un usuario específico (admin e instructor)
+router.get('/:id', (0, auth_middleware_1.requireRole)(['admin', 'instructor']), user_controller_1.getUser);
 // Crear nuevo usuario (solo admin)
 router.post('/', (0, auth_middleware_1.requireRole)(['admin']), validateCreateUser, handleValidationErrors, user_controller_1.createUser);
 // Actualizar usuario (solo admin)

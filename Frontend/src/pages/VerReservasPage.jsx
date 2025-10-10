@@ -5,20 +5,24 @@ import {
   AlertCircle,
   Clock as ClockIcon 
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthContext } from '../contexts/auth-context';
 import { useReservasContext } from '@/contexts/ReservasContext';
 import reservationsService from '../services/reservationsService';
 import { enrichReservasWithDetails, normalizeStatus } from '../utils/reservasUtils';
 import VerReservasContainer from "@/containers/VerReservasContainer";
+import useHotkeys from "@/hooks/useHotkeys";
 
 const VerReservasPage = () => {
   const navigate = useNavigate();
   const { user } = useAuthContext();
-  const { reservas, loading, refreshReservas, error: contextError } = useReservasContext();
+  const { reservas, loading, refreshReservas, updateReservaLocal, removeReservaLocal, error: contextError } = useReservasContext();
+  const [searchParams] = useSearchParams();
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [pendingIds, setPendingIds] = useState([]);
+  const [didRefresh, setDidRefresh] = useState(false);
 
   // Usar el error del contexto si existe
   useEffect(() => {
@@ -26,6 +30,24 @@ const VerReservasPage = () => {
       setError(contextError);
     }
   }, [contextError]);
+
+  // Inicializar filtro desde la URL si existe (?filter=pendiente|aprobada|rechazada|all)
+  useEffect(() => {
+    const initialFilter = (searchParams.get('filter') || '').toLowerCase();
+    if (['pendiente','aprobada','rechazada','all'].includes(initialFilter)) {
+      setFilter(initialFilter);
+    }
+  }, [searchParams]);
+
+  // Forzar recarga si venimos con ?refresh=1 (p. ej., tras crear una reserva)
+  useEffect(() => {
+    const shouldRefresh = (searchParams.get('refresh') || '') === '1';
+    if (shouldRefresh && !didRefresh) {
+      // fuerza recarga suave para evitar parpadeo
+      refreshReservas({ force: true, soft: true });
+      setDidRefresh(true);
+    }
+  }, [searchParams, didRefresh, refreshReservas]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -53,14 +75,20 @@ const VerReservasPage = () => {
     }
   };
 
+  const markPending = (id) => setPendingIds(prev => Array.from(new Set([...prev, String(id)])));
+  const unmarkPending = (id) => setPendingIds(prev => prev.filter(x => String(x) !== String(id)));
+
   const handleAprobar = async (id) => {
     try {
       setError(null);
+      markPending(id);
       const response = await reservationsService.approveReservation(id, user?.id);
       if (response.success) {
-        console.log('✅ Reserva aprobada, refrescando contexto...');
-        // Solo refrescar el contexto global - no manejar estado local
-        await refreshReservas();
+        console.log('✅ Reserva aprobada exitosamente');
+        // Actualización optimista inmediata
+        updateReservaLocal(id, { status: 'APPROVED', approvedBy: user?.id });
+        // Refetch con retraso para sincronizar sin parpadeos
+        setTimeout(() => { refreshReservas({ force: true }); }, 1200);
       } else {
         setError(response.message || 'Error al aprobar la reserva');
       }
@@ -68,16 +96,22 @@ const VerReservasPage = () => {
       console.error('Error al aprobar reserva:', err);
       setError('Error al aprobar la reserva');
     }
+    finally {
+      unmarkPending(id);
+    }
   };
 
   const handleRechazar = async (id, reason = 'Rechazada por el administrador') => {
     try {
       setError(null);
+      markPending(id);
       const response = await reservationsService.rejectReservation(id, reason);
       if (response.success) {
-        console.log('✅ Reserva rechazada, refrescando contexto...');
-        // Solo refrescar el contexto global - no manejar estado local
-        await refreshReservas();
+        console.log('✅ Reserva rechazada exitosamente');
+        // Actualización optimista inmediata
+        updateReservaLocal(id, { status: 'REJECTED', rejectionReason: reason });
+        // Refetch con retraso para sincronizar sin parpadeos
+        setTimeout(() => { refreshReservas({ force: true }); }, 1200);
       } else {
         setError(response.message || 'Error al rechazar la reserva');
       }
@@ -85,22 +119,32 @@ const VerReservasPage = () => {
       console.error('Error al rechazar reserva:', err);
       setError('Error al rechazar la reserva');
     }
+    finally {
+      unmarkPending(id);
+    }
   };
 
   const handleEliminar = async (id) => {
     try {
       setError(null);
+      markPending(id);
       const response = await reservationsService.deleteReservation(id);
       // La API devuelve success true si se elimina correctamente
       if (response?.success !== false) {
-        console.log('🗑️ Reserva rechazada eliminada, refrescando contexto...');
-        await refreshReservas();
+        console.log('🗑️ Reserva rechazada eliminada exitosamente');
+        // Eliminación optimista inmediata en la UI
+        removeReservaLocal(id);
+        // Refetch con retraso para sincronizar sin parpadeos
+        setTimeout(() => { refreshReservas({ force: true }); }, 1200);
       } else {
         setError(response.message || 'No se pudo eliminar la reserva');
       }
     } catch (err) {
       console.error('Error al eliminar reserva:', err);
       setError('Error al eliminar la reserva');
+    }
+    finally {
+      unmarkPending(id);
     }
   };
 
@@ -144,6 +188,36 @@ const VerReservasPage = () => {
     );
   };
 
+  // Eliminación de rechazadas no necesaria; botón removido
+
+  // Hotkeys: Ctrl+D (eliminar seleccionadas), N (nueva), Esc (volver), / (enfocar filtro)
+  useHotkeys([
+    {
+      combo: 'ctrl+d',
+      handler: () => {
+        if (selectedIds.length > 0) {
+          handleEliminarSeleccionadas();
+        }
+      }
+    },
+    {
+      combo: 'n',
+      handler: () => handleCreateReserva()
+    },
+    {
+      combo: 'esc',
+      handler: () => handleBack(),
+      allowWhenTyping: true // permitir cerrar aunque esté enfocado el filtro
+    },
+    {
+      combo: '/',
+      handler: () => {
+        const el = document.getElementById('filter-select');
+        if (el) el.focus();
+      }
+    }
+  ]);
+
   const handleEliminarSeleccionadas = async () => {
     try {
       setError(null);
@@ -167,15 +241,25 @@ const VerReservasPage = () => {
         }
       }
 
+      // Marcar como pendientes y eliminar localmente de inmediato
+      deletableSelectedIds.forEach(id => markPending(id));
+      deletableSelectedIds.forEach(id => removeReservaLocal(id));
+
       const response = await reservationsService.deleteReservationsBulk(deletableSelectedIds);
       if (response?.successCount > 0) {
         // Quitar de la selección las que sí se eliminaron
         const removed = new Set((response.deletedIds || []).map(String));
         setSelectedIds(prev => prev.filter(id => !removed.has(id)));
-        await refreshReservas();
+        // Desmarcar pendientes de las eliminadas
+        (response.deletedIds || []).forEach(id => unmarkPending(id));
+        console.log('🗑️ Reservas eliminadas exitosamente');
+        // Refetch con retraso para sincronizar sin parpadeos
+        setTimeout(() => { refreshReservas({ force: true }); }, 1200);
       }
 
       if (response?.failureCount > 0) {
+        // Desmarcar pendientes de las que fallaron
+        (response.failedIds || []).forEach(id => unmarkPending(id));
         setError(response?.message || `Algunas reservas no pudieron eliminarse (${response.failureCount})`);
       }
     } catch (err) {
@@ -193,6 +277,7 @@ const VerReservasPage = () => {
       error={error}
       filter={filter}
       selectedIds={selectedIds}
+      pendingIds={pendingIds}
       
       // Handlers
       onFilterChange={setFilter}

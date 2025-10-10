@@ -1,7 +1,7 @@
-import { forwardRef } from 'react';
+import React from 'react';
 import { cn } from '../../utils/cn';
 
-export const Button = forwardRef(({ 
+export const Button = React.forwardRef(({ 
   className, 
   variant = 'default', 
   size = 'default', 

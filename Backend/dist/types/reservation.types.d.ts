@@ -1,17 +1,19 @@
+import { Document, Schema } from 'mongoose';
 export interface Reservation {
-    id: string;
-    userId: string;
-    environmentId: string;
+    userId: Schema.Types.ObjectId;
+    environmentId: Schema.Types.ObjectId;
     startDate: Date;
     endDate: Date;
     status: ReservationStatus;
     purpose: string;
     equipment: Equipment[];
-    createdAt: Date;
-    updatedAt: Date;
-    approvedBy?: string;
+    approvedBy?: Schema.Types.ObjectId;
     approvedAt?: Date;
     rejectionReason?: string;
+}
+export interface ReservationDocument extends Reservation, Document {
+    createdAt: Date;
+    updatedAt: Date;
 }
 export declare enum ReservationStatus {
     PENDING = "pending",

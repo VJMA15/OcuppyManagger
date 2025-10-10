@@ -5,9 +5,13 @@ import { useAuthContext } from './contexts/auth-context';
 
 // Layouts
 import Layout from './routes/layout';
+import AdminLayout from './layouts/AdminLayout';
 import { ReservasProvider } from '@/contexts/ReservasContext';
 import InstructorLayout from './layouts/InstructorLayout';
 import GuardiaLayout from './layouts/GuardiaLayout';
+
+// Modules
+import AdminModule from './modules/admin/index.jsx';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -20,7 +24,6 @@ import CrearReservaPage from './pages/CrearReservaPage';
 import AmbientesPage from './pages/AmbientesPage';
 import AmbientesMainPage from './pages/AmbientesMainPage';
 import AmbienteDetailPage from './pages/AmbienteDetailPage';
-import ReportsPage from './pages/ReportsPage';
 import RegistrarUsuarioPage from './pages/RegistrarUsuarioPage';
 import EditarUsuarioPage from './pages/EditarUsuarioPage';
 import GestionUsuariosPage from './pages/GestionUsuariosPage';
@@ -68,75 +71,39 @@ const AppRoutes = () => {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      
-      {/* Redirect authenticated users */}
-      {isAuthenticated && (
-        <Route path="/login" element={
+      <Route path="/login" element={
+        isAuthenticated ? (
           <Navigate to={
-            user?.role === 'admin' ? '/dashboard' :
+            user?.role === 'admin' ? '/admin' :
             user?.role === 'instructor' ? '/instructor' :
             user?.role === 'guardia' ? '/guardia' :
             '/ambientes'
           } replace />
-        } />
-      )}
-
-      {/* Admin Routes */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <ReservasProvider>
-            <Layout>
-              <DashboardPage />
-            </Layout>
-          </ReservasProvider>
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/dashboard/*" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <ReservasProvider>
-            <Layout>
-              <Routes>
-                <Route path="reserva" element={<ReservaPage />} />
-                <Route path="ver-reservas" element={<VerReservasPage />} />
-                <Route path="mis-reservas" element={<MisReservasPage />} />
-                <Route path="crear-reserva" element={<CrearReservaPage />} />
-                <Route path="ambientes" element={<AmbientesPage />} />
-                <Route path="reports" element={<ReportsPage />} />
-                <Route path="reportes" element={<ReportsPage />} />
-                <Route path="registrar-usuario" element={<RegistrarUsuarioPage />} />
-                <Route path="editar-usuario/:id" element={<EditarUsuarioPage />} />
-                <Route path="gestion-usuarios" element={<GestionUsuariosPage />} />
-                <Route path="registros" element={<RegistrosPage />} />
-                <Route path="bitacora" element={<BitacoraPage />} />
-                <Route path="entregas" element={<EntregasPage />} />
-              </Routes>
-            </Layout>
-          </ReservasProvider>
-        </ProtectedRoute>
+        ) : (
+          <LoginPage />
+        )
       } />
 
-      {/* Instructor Routes */}
+      {/* Admin Routes - Using AdminModule */}
+      <Route path="/admin/*" element={<AdminModule />} />
+
+      {/* Legacy Admin Routes - Remove to prevent conflicts */}
+      {/* <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/dashboard/*" element={<Navigate to="/admin/dashboard" replace />} /> */}
+
+      {/* Instructor Routes (Nested) */}
       <Route path="/instructor" element={
         <ProtectedRoute allowedRoles={['instructor']}>
-          <InstructorLayout>
-            <InstructorAmbientesPage />
-          </InstructorLayout>
+          <InstructorLayout />
         </ProtectedRoute>
-      } />
-      
-      <Route path="/instructor/*" element={
-        <ProtectedRoute allowedRoles={['instructor']}>
-          <InstructorLayout>
-            <Routes>
-              <Route path="ambientes" element={<InstructorAmbientesPage />} />
-              <Route path="nueva-reserva" element={<InstructorReservaPage />} />
-              <Route path="mis-reservas" element={<MisReservasPage />} />
-            </Routes>
-          </InstructorLayout>
-        </ProtectedRoute>
-      } />
+      }>
+        <Route index element={<InstructorAmbientesPage />} />
+        <Route path="ambientes" element={<InstructorAmbientesPage />} />
+        <Route path="nueva-reserva" element={<InstructorReservaPage />} />
+        <Route path="mis-reservas" element={<MisReservasPage />} />
+        {/* Reportes removidos para instructores */}
+        <Route path="*" element={<Navigate to="/instructor" replace />} />
+      </Route>
 
       {/* Guardia Routes */}
       <Route path="/guardia" element={

@@ -2,16 +2,7 @@ export { Button } from './Button';
 export { Input } from './Input';
 export { Textarea } from './Textarea';
 export { Label } from './Label';
-export { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue, 
-  SelectGroup, 
-  SelectLabel, 
-  SelectSeparator 
-} from './Select';
+export { Select } from './Select';
 export { Card, CardHeader, CardTitle, CardDescription, CardContent } from './Card';
 export { default as Badge } from './Badge';
 export { default as Modal } from './Modal';

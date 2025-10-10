@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, MapPin, Users, Eye, CheckCircle, XCircle, X, Building2, Star } from 'lucide-react';
-import { useAmbientes } from '@/hooks/useAmbientes';
-import { Modal } from '@/components/ui';
+import { useAmbientes } from '../hooks/useAmbientes';
+import { Modal } from '../components/ui';
 
 const AmbientesMainPage = () => {
   const navigate = useNavigate();
@@ -239,8 +239,8 @@ const AmbientesMainPage = () => {
                   )}
                   
                   <button
-                    onClick={() => handleAmbienteClick(ambiente)}
-                    className="w-full bg-gradient-to-r from-sena to-sena-soft-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-sena-soft-600 hover:to-sena transition-all duration-200 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                    className="w-full bg-gradient-to-r from-sena to-sena-soft-600 text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-3 shadow-lg opacity-80 cursor-default"
+                    disabled
                   >
                     <Eye className="w-5 h-5" />
                     {isGuestMode ? 'Ver Información Completa' : 'Ver Detalles'}

@@ -1,4 +1,6 @@
 export interface UpdateReservationDto {
+  reservationDate?: Date;
+  jornada?: 'mañana' | 'tarde' | 'noche';
   startDate?: Date;
   endDate?: Date;
   purpose?: string;
@@ -7,9 +9,4 @@ export interface UpdateReservationDto {
     quantity: number;
   }[];
   status?: string;
-  cancelledAt?: Date;
-  cancelledBy?: string;
-  approvedBy?: string;
-  approvedAt?: Date;
-  rejectionReason?: string;
 }

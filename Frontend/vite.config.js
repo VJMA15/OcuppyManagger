@@ -6,13 +6,12 @@ import path from "path";
 export default defineConfig({
     plugins: [react()],
     server: {
-        port: 8080,
-        strictPort: true,
+        port: 5173,
+        strictPort: false,
         open: true,
         proxy: {
             '/api': {
-                // Forzar IPv4 para evitar intentos a ::1 (IPv6)
-                target: 'http://127.0.0.1:5000',
+                target: 'http://localhost:5000',
                 changeOrigin: true,
                 secure: false,
                 configure: (proxy, options) => {

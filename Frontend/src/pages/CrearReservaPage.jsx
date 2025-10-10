@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, User, Save, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/auth-context';
 import reservationsService from '../services/reservationsService';
 import ambientesService from '../services/ambientesService';
+import { Button } from '../components/ui';
 
 const CrearReservaPage = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const CrearReservaPage = () => {
   const [errors, setErrors] = useState({});
   const [disponibilidad, setDisponibilidad] = useState(null);
   const [checkingDisponibilidad, setCheckingDisponibilidad] = useState(false);
+  const [showPendingModal, setShowPendingModal] = useState(false);
 
   useEffect(() => {
     fetchAmbientes();
@@ -68,6 +70,34 @@ const CrearReservaPage = () => {
       setCheckingDisponibilidad(false);
     }
   };
+
+  // Div emergente de conflicto por reserva pendiente
+  const PendingConflictModal = () => (
+    showPendingModal ? (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md mx-4 border border-slate-200 dark:border-slate-700 w-full">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center border border-yellow-200 dark:border-yellow-700">
+              <AlertCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                No puedes crear otra reserva
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                Ya tienes una reserva pendiente. No puedes crear otra reserva hasta que la existente sea rechazada, aceptada o cancelada.
+              </p>
+              <div className="flex justify-end mt-6">
+                <Button variant="outline" onClick={() => setShowPendingModal(false)}>
+                  Entendido
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    ) : null
+  );
 
   useEffect(() => {
     if (formData.environmentId && formData.startDate && formData.endDate) {
@@ -179,12 +209,38 @@ const CrearReservaPage = () => {
           navigate('/dashboard/mis-reservas');
         }, 2000);
       } else {
-        setError(response.message || 'Error al crear la reserva');
+        const msg = String(response.message || '').toLowerCase();
+        const isPendingConflict =
+          msg.includes('reserva pendiente') ||
+          msg.includes('ya tienes una reserva') ||
+          msg.includes('pendiente') ||
+          (msg.includes('otra reserva') && msg.includes('proceso')) ||
+          msg.includes('409') ||
+          msg.includes('conflict');
+        if (isPendingConflict) {
+          setError('');
+          setShowPendingModal(true);
+        } else {
+          setError(response.message || 'Error al crear la reserva');
+        }
       }
       
     } catch (err) {
       console.error('Error creating reserva:', err);
-      setError(err.message || 'Error al crear la reserva');
+      const msg = String(err?.message || '').toLowerCase();
+      const isPendingConflict =
+        msg.includes('reserva pendiente') ||
+        msg.includes('ya tienes una reserva') ||
+        msg.includes('pendiente') ||
+        (msg.includes('otra reserva') && msg.includes('proceso')) ||
+        msg.includes('409') ||
+        msg.includes('conflict');
+      if (isPendingConflict) {
+        setError('');
+        setShowPendingModal(true);
+      } else {
+        setError(err.message || 'Error al crear la reserva');
+      }
     } finally {
       setLoading(false);
     }
@@ -233,7 +289,7 @@ const CrearReservaPage = () => {
             )}
 
             {/* Error Message */}
-            {error && (
+            {error && !showPendingModal && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
                 <AlertCircle className="h-5 w-5 text-red-600" />
                 <p className="text-red-800">{error}</p>
@@ -421,6 +477,8 @@ const CrearReservaPage = () => {
           </form>
         </div>
       </div>
+      {/* Modal: Conflicto por reserva pendiente */}
+      <PendingConflictModal />
     </div>
   );
 };

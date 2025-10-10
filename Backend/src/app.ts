@@ -24,6 +24,7 @@ import entregaRoutes from './routes/entrega.routes';
 import registrosRoutes from './routes/registros.routes';
 import bitacoraRoutes from './routes/bitacora.routes';
 import reportsRoutes from './routes/reports.routes';
+import startReservationScheduler from './services/reservation.scheduler';
 
 // Importar manejadores de errores
 import AppError from './utils/appError';
@@ -168,6 +169,9 @@ mongoose
     if (process.env.NODE_ENV !== 'test') {
       app.listen(PORT, () => {
         console.log(`🚀 Servidor iniciado en http://localhost:${PORT}`);
+        // Iniciar tarea programada para actualizar estados de reservas
+        startReservationScheduler();
+        console.log('⏱️ Tarea programada de reservas iniciada.');
       });
     }
   })

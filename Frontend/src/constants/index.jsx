@@ -10,22 +10,22 @@ export const navbarLinks = [
             {
                 label: "Dashboard",
                 icon: Home,
-                path: "/dashboard", // ✅ Esta ruta sí funciona (index route)
+                path: "/admin/dashboard",
             },
             {
-                label: "Ver Reservas",
+                label: "Reservas",
                 icon: NotepadText,
-                path: "/dashboard/ver-reservas", // ✅ CORRECTO
+                path: "/admin/ver-reservas",
+            },
+            {
+                label: "Reportes",
+                icon: BarChart3,
+                path: "/admin/reportes",
             },
             {
                 label: "Mis Reservas",
                 icon: Calendar,
-                path: "/dashboard/mis-reservas", // ✅ CORRECTO
-            },
-            {
-                label: "Crear Reserva",
-                icon: PackagePlus,
-                path: "/dashboard/reserva", // ✅ CORREGIDO
+                path: "/admin/mis-reservas",
             },
         ],
     },
@@ -35,52 +35,42 @@ export const navbarLinks = [
             {
                 label: "Ambientes",
                 icon: Building2,
-                path: "/dashboard/ambientes", // ✅ CORRECTO
+                path: "/admin/ambientes",
             },
             {
-                label: "Gestión de Usuarios",
-                icon: Users,
-                path: "/dashboard/gestion-usuarios", // ✅ CORREGIDO
+                label: "Nueva Reserva",
+                icon: PackagePlus,
+                path: "/admin/reserva",
             },
             {
                 label: "Registrar Usuario",
                 icon: UserPlus,
-                path: "/dashboard/registrar-usuario", // ✅ CORRECTO
+                path: "/admin/registrar-usuario",
             },
             {
-                label: "Entregas",
-                icon: Package,
-                path: "/dashboard/entregas", // ✅ AGREGADO
+                label: "Gestión de Usuarios",
+                icon: Users,
+                path: "/admin/gestion-usuarios",
             },
             {
-                label: "Configuración",
-                icon: Settings,
-                path: "/dashboard/settings", // ✅ AGREGADO
+                label: "Registros",
+                icon: FileText,
+                path: "/admin/registros",
+            },
+            {
+                label: "Bitácora",
+                icon: Activity,
+                path: "/admin/bitacora",
             },
         ],
     },
     {
-        title: "Reportes",
+        title: "Configuración",
         links: [
             {
-                label: "Informes",
-                icon: ChartColumn,
-                path: "/dashboard/reports", // ✅ CORRECTO
-            },
-            {
-                label: "Reportes",
-                icon: BarChart3,
-                path: "/dashboard/reportes", // ✅ CORRECTO
-            },
-            {
-                label: "Bitácora",
-                icon: FileText,
-                path: "/dashboard/bitacora", // ✅ AGREGADO
-            },
-            {
-                label: "Registros",
-                icon: Activity,
-                path: "/dashboard/registros", // ✅ AGREGADO
+                label: "Configuración",
+                icon: Settings,
+                path: "/admin/settings",
             },
         ],
     },
@@ -354,12 +344,7 @@ export const instructorNavLinks = [
             {
                 label: "Nueva Reserva",
                 icon: PackagePlus,
-                path: "/instructor/reserva",
-            },
-            {
-                label: "Reportes",
-                icon: BarChart3,
-                path: "/instructor/reportes",
+                path: "/instructor/nueva-reserva",
             },
         ],
     },

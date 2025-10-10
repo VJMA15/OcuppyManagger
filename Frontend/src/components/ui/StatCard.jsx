@@ -1,3 +1,4 @@
+import React from 'react';
 import { cn } from '../../utils/cn';
 
 const StatCard = ({ title, value, icon: Icon, variant = 'default', className }) => {
