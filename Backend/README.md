@@ -7,26 +7,48 @@ El sistema sigue el patrón MVC (Modelo–Vista–Controlador) bajo una arquitec
 (Figura 1: Diagrama de Arquitectura del Sistema)
 Frontend (React.js) → API REST (Node.js / Express) → MongoDB
 
+
+
 # Estructura del Proyecto
 El proyecto se divide en dos capas principales: backend y frontend, organizadas de la siguiente manera:
+
 occupymanager/
+
 │
+
 ├── backend/
+
 │   ├── config/          # Configuración y conexión a MongoDB
+
 │   ├── controllers/     # Lógica de negocio
+
 │   ├── models/          # Esquemas Mongoose
+
 │   ├── routes/          # Rutas de la API REST
+
 │   └── middlewares/     # Validación JWT y roles
+
 │
+
 ├── frontend/
+
 │   ├── src/
+
 │   │   ├── components/  # Componentes React reutilizables
+
 │   │   ├── pages/       # Páginas (Dashboard, Login, Reservas)
+
 │   │   ├── services/    # Llamadas API con Axios
+
 │   │   └── App.js       # Punto de entrada principal
+
 │   └── public/          # Archivos estáticos
+
 │
+
 └── README.md            # Documentación general del repositorio
+
+
 
 # Dependencias del Proyecto
 Dependencia	Versión	Uso Principal
@@ -40,6 +62,8 @@ jsonwebtoken	9.x	Gestión de tokens JWT
 dotenv	16.x	Gestión de variables de entorno
 pm2	5.x	Ejecución persistente en servidor
 
+
+
 # API REST
 El backend expone una API RESTful que permite realizar operaciones sobre usuarios, ambientes y reservas. Los endpoints principales son:
 • POST /api/login – Autenticación de usuario (Administrador/Instructor)
@@ -48,11 +72,15 @@ El backend expone una API RESTful que permite realizar operaciones sobre usuario
 • PUT /api/reservas/:id/aprobar – Aprobar o rechazar reserva (Administrador)
 • GET /api/reportes – Generar reportes de ocupación (Administrador)
 
+
+
 # Configuración y Despliegue
 Configuración de entorno (.env):
 PORT=3000
 MONGO_URI=mongodb://localhost:27017/occupymanager
 JWT_SECRET=claveSegura
+
+
 
 # Pasos para el despliegue:
 1. Clonar el repositorio del proyecto.
@@ -67,11 +95,15 @@ Se aplicaron pruebas funcionales, unitarias y de rendimiento.
 • Cypress: validación de interfaz React.
 • JMeter: rendimiento con hasta 30 usuarios concurrentes.
 
+
+
 # Seguridad
 • Hash de contraseñas con bcrypt.
 • Tokens JWT para autenticación segura.
 • Middleware de autorización por rol.
 • Conexión HTTPS en despliegue institucional.
+
+
 
 # Plan de Mantenimiento
 El mantenimiento del sistema se divide en:
