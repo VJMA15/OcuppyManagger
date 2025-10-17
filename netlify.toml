@@ -1,13 +1,13 @@
 [build]
   base = "Frontend"
   publish = "dist"
-  command = "npm run build"
+  command = "npm ci && npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_FLAGS = "--no-optional"
+  NPM_FLAGS = "--no-optional --no-audit --no-fund"
+  ROLLUP_SKIP_NODEJS_RESOLUTION = "true"
 
-# Esta configuración resuelve el problema con @rollup/rollup-linux-x64-gnu
 [[redirects]]
   from = "/*"
   to = "/index.html"
