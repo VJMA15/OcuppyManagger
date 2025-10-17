@@ -4,7 +4,7 @@
   command = "npm install --no-optional && npm run build"
 
 [build.environment]
-  NODE_VERSION = "22.14.0"
+  NODE_VERSION = "20"
   NPM_FLAGS = "--no-optional --no-audit --no-fund"
   ROLLUP_SKIP_NODEJS_RESOLUTION = "true"
   SKIP_INSTALL_DEPS = "true"
