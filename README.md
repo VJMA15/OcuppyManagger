@@ -40,7 +40,7 @@ JWT_EXPIRES_IN=90d
 ```
 
 #### Frontend (configuración en src/config/api.js)
-La URL de la API está configurada por defecto en `http://localhost:5000/api/v1`
+La URL de la API está configurada por defecto en `https://ocuppymanagger-api.netlify.app/api/v1`
 
 ## 🚀 Ejecutar el Proyecto
 
@@ -68,8 +68,8 @@ cd Frontend && npm run dev
 ## 🌐 URLs de Acceso
 
 - **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000/api/v1
-- **Documentación API**: http://localhost:5000/api-docs
+- **Backend API**: https://ocuppymanagger-api.netlify.app/api/v1
+- **Documentación API**: https://ocuppymanagger-api.netlify.app/api-docs
 
 ## 📁 Estructura del Proyecto
 

@@ -10,7 +10,7 @@ async function testAuthHeaders() {
   console.log('🔍 Probando headers de autenticación...');
   
   // Configuración de la petición
-  const apiUrl = 'http://localhost:5000/api/v1/users';
+  const apiUrl = 'https://ocuppymanagger-api.netlify.app/api/v1/users';
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${testToken}`

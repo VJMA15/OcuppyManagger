@@ -3,7 +3,7 @@ async function testUsersAPI() {
   try {
     // Primero hacer login para obtener el token
     console.log('🔐 Haciendo login...');
-    const loginResponse = await fetch('http://localhost:5000/api/v1/auth/verify', {
+    const loginResponse = await fetch('https://ocuppymanagger-api.netlify.app/api/v1/auth/verify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -32,7 +32,7 @@ async function testUsersAPI() {
     
     // Ahora probar obtener usuarios
     console.log('👥 Obteniendo lista de usuarios...');
-    const usersResponse = await fetch('http://localhost:5000/api/v1/users', {
+    const usersResponse = await fetch('https://ocuppymanagger-api.netlify.app/api/v1/users', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -63,7 +63,7 @@ async function testUsersAPI() {
       role: 'instructor'
     };
 
-    const createResponse = await fetch('http://localhost:5000/api/v1/users', {
+    const createResponse = await fetch('https://ocuppymanagger-api.netlify.app/api/v1/users', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -80,7 +80,7 @@ async function testUsersAPI() {
       const userId = createData.data.user._id;
       console.log('🗑️ Eliminando usuario de prueba...');
       
-      const deleteResponse = await fetch(`http://localhost:5000/api/v1/users/${userId}`, {
+      const deleteResponse = await fetch(`https://ocuppymanagger-api.netlify.app/api/v1/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

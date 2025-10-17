@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'https://ocuppymanagger-api.netlify.app';
 
 async function testReservasAPI() {
   console.log('🔐 Haciendo login...');

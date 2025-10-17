@@ -3,7 +3,7 @@ async function testAmbientesAPI() {
   try {
     // Primero hacer login para obtener el token
     console.log('🔐 Haciendo login...');
-    const loginResponse = await fetch('http://localhost:5000/api/v1/auth/verify', {
+    const loginResponse = await fetch('https://ocuppymanagger-api.netlify.app/api/v1/auth/verify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -26,7 +26,7 @@ async function testAmbientesAPI() {
     
     // 1. Obtener todos los ambientes
     console.log('\n🏢 Obteniendo lista de ambientes...');
-    const ambientesResponse = await fetch('http://localhost:5000/api/v1/ambientes', {
+    const ambientesResponse = await fetch('https://ocuppymanagger-api.netlify.app/api/v1/ambientes', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -60,7 +60,7 @@ async function testAmbientesAPI() {
       estado: 'Disponible'
     };
 
-    const createResponse = await fetch('http://localhost:5000/api/v1/ambientes', {
+    const createResponse = await fetch('https://ocuppymanagger-api.netlify.app/api/v1/ambientes', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -77,7 +77,7 @@ async function testAmbientesAPI() {
       
       // 3. Obtener el ambiente específico
       console.log('\n🔍 Obteniendo ambiente específico...');
-      const getAmbienteResponse = await fetch(`http://localhost:5000/api/v1/ambientes/${ambienteId}`, {
+      const getAmbienteResponse = await fetch(`https://ocuppymanagger-api.netlify.app/api/v1/ambientes/${ambienteId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -98,7 +98,7 @@ async function testAmbientesAPI() {
         descripcion: 'Ambiente de prueba actualizado'
       };
 
-      const updateResponse = await fetch(`http://localhost:5000/api/v1/ambientes/${ambienteId}`, {
+      const updateResponse = await fetch(`https://ocuppymanagger-api.netlify.app/api/v1/ambientes/${ambienteId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -123,7 +123,7 @@ async function testAmbientesAPI() {
         fechaFin: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString() // 2 horas después
       };
 
-      const disponibilidadResponse = await fetch('http://localhost:5000/api/v1/ambientes/verificar-disponibilidad', {
+      const disponibilidadResponse = await fetch('https://ocuppymanagger-api.netlify.app/api/v1/ambientes/verificar-disponibilidad', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -139,7 +139,7 @@ async function testAmbientesAPI() {
 
       // 6. Eliminar el ambiente de prueba
       console.log('\n🗑️ Eliminando ambiente de prueba...');
-      const deleteResponse = await fetch(`http://localhost:5000/api/v1/ambientes/${ambienteId}`, {
+      const deleteResponse = await fetch(`https://ocuppymanagger-api.netlify.app/api/v1/ambientes/${ambienteId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -1,7 +1,7 @@
 // Configuración de desarrollo
 export const DEV_CONFIG = {
   // URL base de la API en desarrollo
-  API_URL: 'http://localhost:5000',
+  API_URL: 'https://ocuppymanagger-api.netlify.app',
   
   // Configuración de la aplicación
   APP_NAME: 'Occupy Manager',

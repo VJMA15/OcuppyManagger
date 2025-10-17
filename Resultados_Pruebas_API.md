@@ -4,7 +4,7 @@
 
 Se realizaron pruebas sistemáticas de la API de OcuppyManager para validar tanto **respuestas correctas** como **respuestas incorrectas**. Las pruebas cubrieron los endpoints críticos de autenticación, ambientes y casos de error generales.
 
-**Estado del Servidor**: ✅ Funcionando correctamente en `http://localhost:5000`
+**Estado del Servidor**: ✅ Funcionando correctamente en `https://ocuppymanagger-api.netlify.app`
 
 ## 📋 Casos de Prueba Ejecutados
 

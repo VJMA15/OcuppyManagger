@@ -6,7 +6,7 @@ async function loginAndTestReportes() {
     console.log('🔐 Intentando hacer login...');
     
     // Hacer login
-    const loginResponse = await fetch('http://localhost:5000/api/v1/auth/verify', {
+    const loginResponse = await fetch('https://ocuppymanagger-api.netlify.app/api/v1/auth/verify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ async function loginAndTestReportes() {
     // Probar endpoint de reportes
     console.log('\n📊 Probando endpoint de reportes...');
     
-    const reportesResponse = await fetch('http://localhost:5000/api/v1/reportes/estadisticas', {
+    const reportesResponse = await fetch('https://ocuppymanagger-api.netlify.app/api/v1/reportes/estadisticas', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${loginData.token}`,

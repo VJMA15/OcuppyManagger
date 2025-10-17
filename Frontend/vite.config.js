@@ -11,7 +11,7 @@ export default defineConfig({
         open: true,
         proxy: {
             '/api': {
-                target: 'http://localhost:5000',
+                target: 'https://ocuppymanagger-api.netlify.app',
                 changeOrigin: true,
                 secure: false,
                 configure: (proxy, options) => {

@@ -17,12 +17,12 @@ Esta guía te ayudará a realizar pruebas exhaustivas de la API de OcuppyManager
 
 ### 2. Configurar el Entorno
 1. Selecciona el entorno "OcuppyManager Environment"
-2. Verifica que `base_url` esté configurada como `http://localhost:5000/api`
+2. Verifica que `base_url` esté configurada como `https://ocuppymanagger-api.netlify.app/api`
 3. Asegúrate de que el servidor backend esté ejecutándose
 
 ### 3. Verificar el Servidor
 Antes de ejecutar las pruebas, confirma que:
-- El servidor backend esté corriendo en `http://localhost:5000`
+- El servidor backend esté corriendo en `https://ocuppymanagger-api.netlify.app`
 - La base de datos esté conectada
 - No hay errores en la consola del servidor
 

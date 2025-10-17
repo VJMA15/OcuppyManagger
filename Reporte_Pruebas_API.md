@@ -9,7 +9,7 @@ Se realizó un análisis exhaustivo de las APIs del sistema OcuppyManager para c
 ### Backend
 - **Estado**: ✅ Ejecutándose correctamente
 - **Puerto**: 5000
-- **URL Base**: http://localhost:5000/api
+- **URL Base**: https://ocuppymanagger-api.netlify.app/api
 - **Framework**: Express.js con TypeScript
 - **Base de Datos**: MongoDB
 

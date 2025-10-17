@@ -17,7 +17,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:5000/api",
+      "value": "https://ocuppymanagger-api.netlify.app/api",
       "type": "string"
     },
     {

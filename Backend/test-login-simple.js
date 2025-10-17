@@ -3,7 +3,7 @@ async function testLogin() {
   try {
     console.log('🔐 Probando login con credenciales de prueba...');
     
-    const response = await fetch('http://localhost:5000/api/v1/auth/verify', {
+    const response = await fetch('https://ocuppymanagger-api.netlify.app/api/v1/auth/verify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

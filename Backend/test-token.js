@@ -16,7 +16,7 @@ try {
   console.log('- Expira:', new Date(decoded.exp * 1000).toLocaleString());
   
   console.log('\n🌐 Para probar manualmente con curl:');
-  console.log(`curl -H "Authorization: Bearer ${testToken}" -H "Content-Type: application/json" http://localhost:5000/api/v1/users`);
+  console.log(`curl -H "Authorization: Bearer ${testToken}" -H "Content-Type: application/json" https://ocuppymanagger-api.netlify.app/api/v1/users`);
   
   console.log('\n🔧 Para usar en el navegador:');
   console.log('1. Ir a http://localhost:3003/debug-auth.html');
