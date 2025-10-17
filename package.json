@@ -22,7 +22,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "vite": "^7.1.10"
   },
   "dependencies": {
     "node-fetch": "^3.3.2"
