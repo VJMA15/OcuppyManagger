@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import solicitudesService from '@/services/solicitudesService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Send, User, Mail, FileText, Building, AlertCircle, X } from 'lucide-react';
 
@@ -13,7 +14,6 @@ const AccessRequestForm = ({ onCancel }) => {
     documentNumber: '',
     email: '',
     requestedRole: '',
-    trainingCenter: '',
     justification: ''
   });
   const [errors, setErrors] = useState({});
@@ -39,7 +39,7 @@ const AccessRequestForm = ({ onCancel }) => {
 
     try {
       // Validar campos requeridos
-      const requiredFields = ['fullName', 'documentNumber', 'email', 'requestedRole', 'trainingCenter', 'justification'];
+      const requiredFields = ['fullName', 'documentNumber', 'email', 'requestedRole', 'justification'];
       const missingFields = requiredFields.filter(field => !formData[field].trim());
       
       if (missingFields.length > 0) {
@@ -56,24 +56,50 @@ const AccessRequestForm = ({ onCancel }) => {
         return;
       }
 
-      // Simular envío de solicitud (aquí conectarías con tu API)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Aquí harías la llamada real a tu API
-      // const response = await fetch('/api/access-requests', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(formData),
-      // });
-      
-      setIsSubmitted(true);
-      showNotification('Solicitud enviada exitosamente', 'success');
+      // Validar número de documento (6 a 15 dígitos)
+      const docRegex = /^\d{6,15}$/;
+      if (!docRegex.test(formData.documentNumber)) {
+        showNotification('El número de documento debe tener entre 6 y 15 dígitos', 'error');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validar rol solicitado permitido por backend
+      const allowedRoles = ['instructor', 'admin'];
+      if (!allowedRoles.includes(formData.requestedRole)) {
+        showNotification('Rol solicitado inválido. Selecciona Instructor o Admin.', 'error');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validar longitud de justificación (máximo 1000)
+      if (formData.justification.length > 1000) {
+        showNotification('La justificación no puede exceder 1000 caracteres', 'error');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Enviar solicitud al backend
+      const resp = await solicitudesService.createSolicitud({
+        fullName: formData.fullName.trim(),
+        documentNumber: formData.documentNumber.trim(),
+        email: formData.email.trim(),
+        requestedRole: formData.requestedRole,
+        justification: formData.justification.trim()
+      });
+
+      // Manejo de respuesta
+      if (resp?.success || resp?.data || resp) {
+        setIsSubmitted(true);
+        showNotification('Solicitud enviada exitosamente', 'success');
+      } else {
+        throw new Error('Respuesta inválida del servidor');
+      }
       
     } catch (error) {
       console.error('Error al enviar solicitud:', error);
-      showNotification('Error al enviar la solicitud. Inténtalo nuevamente.', 'error');
+      const message = error?.message || 'Error al enviar la solicitud. Inténtalo nuevamente.';
+      showNotification(message, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -104,14 +130,13 @@ const AccessRequestForm = ({ onCancel }) => {
             <Button 
               onClick={() => {
                 setIsSubmitted(false);
-                setFormData({
-                  fullName: '',
-                  documentNumber: '',
-                  email: '',
-                  requestedRole: '',
-                  trainingCenter: '',
-                  justification: ''
-                });
+              setFormData({
+                fullName: '',
+                documentNumber: '',
+                email: '',
+                requestedRole: '',
+                justification: ''
+              });
               }}
               variant="outline"
             >
@@ -207,9 +232,16 @@ const AccessRequestForm = ({ onCancel }) => {
                     <Input
                       id="documentNumber"
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]{6,15}"
+                      maxLength={15}
+                      title="Ingrese entre 6 y 15 dígitos"
                       placeholder="Número de identificación"
                       value={formData.documentNumber}
-                      onChange={(e) => handleInputChange('documentNumber', e.target.value)}
+                      onChange={(e) => {
+                        const onlyDigits = e.target.value.replace(/\D/g, '');
+                        handleInputChange('documentNumber', onlyDigits);
+                      }}
                       className="h-10 border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-100 rounded-md transition-colors text-sm bg-white"
                       required
                     />
@@ -220,7 +252,7 @@ const AccessRequestForm = ({ onCancel }) => {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="ejemplo@sena.edu.co"
+                      placeholder="ejemplo@gmail.com"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       className="h-10 border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-100 rounded-md transition-colors text-sm bg-white"
@@ -246,30 +278,17 @@ const AccessRequestForm = ({ onCancel }) => {
                   <div className="space-y-2">
                     <Label htmlFor="requestedRole" className="text-sm font-medium text-gray-700">Rol Solicitado <span className="text-red-500">*</span></Label>
                     <Select 
-                      id="requestedRole"
-                      value={formData.requestedRole} 
-                      onChange={(e) => handleInputChange('requestedRole', e.target.value)}
-                      className="h-12 border-2 border-gray-200 focus:border-green-600 focus:ring-green-600/20 rounded-lg transition-all"
-                      required
+                      value={formData.requestedRole}
+                      onValueChange={(value) => handleInputChange('requestedRole', value)}
                     >
-                      <option value="">Seleccione un rol</option>
-                      <option value="instructor">Instructor</option>
-                      <option value="guardia">Guardia</option>
-                      <option value="estudiante">Aprendiz (con cuenta)</option>
+                      <SelectTrigger id="requestedRole" className="h-12 border-2 border-gray-200 focus:border-green-600 focus:ring-green-600/20 rounded-lg transition-all" aria-label="Rol Solicitado">
+                        <SelectValue placeholder="Seleccione un rol" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="instructor">Instructor</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
                     </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="trainingCenter" className="text-sm font-medium text-gray-700">Centro de Formación <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="trainingCenter"
-                      type="text"
-                      placeholder="Nombre del centro de formación"
-                      value={formData.trainingCenter}
-                      onChange={(e) => handleInputChange('trainingCenter', e.target.value)}
-                      className="h-12 border-2 border-gray-200 focus:border-green-600 focus:ring-green-600/20 rounded-lg transition-all"
-                      required
-                    />
                   </div>
                 </div>
               </div>
@@ -294,8 +313,10 @@ const AccessRequestForm = ({ onCancel }) => {
                     value={formData.justification}
                     onChange={(e) => handleInputChange('justification', e.target.value)}
                     className="min-h-[120px] border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-100 rounded-md transition-colors resize-none text-sm p-3"
+                    maxLength={1000}
                     required
                   />
+                  <div className="text-xs text-gray-500 mt-1">{formData.justification.length}/1000</div>
                 </div>
               </div>
 
@@ -342,7 +363,6 @@ const AccessRequestForm = ({ onCancel }) => {
                         documentNumber: '',
                         email: '',
                         requestedRole: '',
-                        trainingCenter: '',
                         justification: ''
                       });
                       setErrors({});

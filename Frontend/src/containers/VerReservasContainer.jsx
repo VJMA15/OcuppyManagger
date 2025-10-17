@@ -106,6 +106,9 @@ const VerReservasContainer = ({
               <option value="pendiente">Pendientes</option>
               <option value="aprobada">Aprobadas</option>
               <option value="rechazada">Rechazadas</option>
+              <option value="cancelada">Canceladas</option>
+              <option value="completada">Completadas</option>
+              <option value="expirada">Expiradas</option>
             </select>
             <div className="ml-auto flex items-center gap-2">
               <button
@@ -165,7 +168,7 @@ const VerReservasContainer = ({
                           {(() => {
                             const st = normalizeStatus(reserva.status || reserva.estado);
                             const idStr = String(reserva._id || reserva.id);
-                            const isDeletable = ['APPROVED','REJECTED','CANCELLED'].includes(st);
+                            const isDeletable = ['APPROVED','REJECTED','CANCELLED','COMPLETED','EXPIRED'].includes(st);
                             return (
                               <input
                                 type="checkbox"
@@ -173,7 +176,7 @@ const VerReservasContainer = ({
                                 onChange={() => onToggleSelect(idStr)}
                                 disabled={!isDeletable}
                                 className="h-4 w-4 rounded border-slate-300 dark:border-slate-600"
-                                title={isDeletable ? 'Seleccionar' : 'Solo se seleccionan aprobadas/rechazadas/canceladas'}
+                                title={isDeletable ? 'Seleccionar' : 'Solo se seleccionan aprobadas/rechazadas/canceladas/completadas'}
                               />
                             );
                           })()}
@@ -224,7 +227,7 @@ const VerReservasContainer = ({
                             return (
                               <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(st)}`}>
                                 {getStatusIcon(st)}
-                                {translateStatus(st)}
+                                {st === 'EXPIRED' ? 'Expirada' : translateStatus(st)}
                               </span>
                             );
                           })()}
@@ -255,7 +258,7 @@ const VerReservasContainer = ({
                                 </div>
                               );
                             }
-                            if (['APPROVED','REJECTED','CANCELLED'].includes(st)) {
+                            if (['APPROVED','REJECTED','CANCELLED','COMPLETED','EXPIRED'].includes(st)) {
                               return (
                                 <button
                                   onClick={() => onEliminar(idVal)}
@@ -288,13 +291,6 @@ const VerReservasContainer = ({
                 <FileText className="w-4 h-4" />
                 <span>Mostrando {filteredReservas.length} de {reservas.length} reservas</span>
               </div>
-              <button
-                onClick={onCreateReserva}
-                className="px-4 py-2 bg-gradient-to-r from-sena to-sena-dark hover:from-sena-dark hover:to-sena text-white rounded-lg transition-all duration-200 flex items-center gap-2 text-sm"
-              >
-                <Plus className="w-4 h-4" />
-                Nueva Reserva
-              </button>
             </div>
           </div>
         )}

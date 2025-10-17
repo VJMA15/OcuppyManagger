@@ -23,7 +23,10 @@ import reservaRoutes from './routes/reserva.routes';
 import entregaRoutes from './routes/entrega.routes';
 import registrosRoutes from './routes/registros.routes';
 import bitacoraRoutes from './routes/bitacora.routes';
+import solicitudRoutes from './routes/solicitud.routes';
 import reportsRoutes from './routes/reports.routes';
+import historialRoutes from './routes/historial.routes';
+import eventsRoutes from './routes/events.routes';
 import startReservationScheduler from './services/reservation.scheduler';
 
 // Importar manejadores de errores
@@ -35,22 +38,27 @@ const app = express();
 
 // 1) MIDDLEWARES GLOBALES
 
-// Configuración detallada de CORS
+// Configuración detallada de CORS (parametrizable por entorno)
+const devOrigins = [
+  'http://localhost:3000', 
+  'http://127.0.0.1:3000', 
+  'http://localhost:5173', 
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+  'http://localhost:3003',
+  'http://127.0.0.1:3003',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080'
+];
+
+const prodOrigins = (process.env.CORS_ALLOWED_ORIGINS || 'https://tu-dominio.com')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://tu-dominio.com']
-    : [
-        'http://localhost:3000', 
-        'http://127.0.0.1:3000', 
-        'http://localhost:5173', 
-        'http://127.0.0.1:5173',
-        'http://localhost:4173',
-        'http://127.0.0.1:4173',
-        'http://localhost:3003',
-        'http://127.0.0.1:3003',
-        'http://localhost:8080',
-        'http://127.0.0.1:8080'
-      ],
+  origin: process.env.NODE_ENV === 'production' ? prodOrigins : devOrigins,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true,
@@ -61,18 +69,26 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 // Configurar helmet para seguridad
-app.use(helmet());
+// Ajuste de Helmet para evitar bloqueo CORP en streams SSE cruzados en desarrollo
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
 // Logging de desarrollo
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Limitador de velocidad
+// Limitador de velocidad (excluir SSE de eventos para evitar abortos)
 const limiter = rateLimit({
   max: 1000, // 1000 solicitudes
   windowMs: 60 * 60 * 1000, // por hora
   message: 'Demasiadas solicitudes desde esta IP. Por favor, inténtalo de nuevo en una hora.',
+  skip: (req) => {
+    // Dentro del prefijo '/api', el path es '/v1/events/stream' para SSE
+    const p = req.path || '';
+    return p.startsWith('/v1/events');
+  }
 });
 app.use('/api', limiter);
 
@@ -122,7 +138,10 @@ app.use('/api/v1/reservas', reservaRoutes);
 app.use('/api/v1/entregas', entregaRoutes);
 app.use('/api/v1/registros', registrosRoutes);
 app.use('/api/v1/bitacora', bitacoraRoutes);
+app.use('/api/v1/solicitudes', solicitudRoutes);
 app.use('/api/v1/reportes', reportsRoutes);
+app.use('/api/v1/historial', historialRoutes);
+app.use('/api/v1/events', eventsRoutes);
 
 // Ruta de información de la API
 app.get('/api/v1', (req, res) => {

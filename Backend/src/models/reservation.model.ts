@@ -56,6 +56,11 @@ const reservationSchema = new Schema<ReservationDocument>({
     maxlength: 500
   },
   equipment: [equipmentSchema],
+  // Usuario que creó la reserva (p. ej., admin/guardia creando a nombre de un instructor)
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
   approvedBy: {
     type: Schema.Types.ObjectId,
     ref: 'User'

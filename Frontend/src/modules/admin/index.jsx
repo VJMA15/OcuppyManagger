@@ -10,12 +10,14 @@ import ReservaPage from "@/pages/ReservaPage";
 import VerReservasPage from "@/pages/VerReservasPage";
 import AmbientesPage from "@/pages/AmbientesPage";
 import ReportesPage from "@/pages/admin/ReportesPage";
+import HistorialReservasPage from "@/pages/admin/HistorialReservasPage";
 import SettingsPage from "@/pages/SettingsPage";
 import RegistrarUsuarioPage from "@/pages/RegistrarUsuarioPage";
 import GestionUsuariosPage from "@/pages/GestionUsuariosPage";
+import EditarUsuarioPage from "@/pages/EditarUsuarioPage";
 import MisReservasPage from "@/pages/MisReservasPage";
-import RegistrosPage from "@/pages/RegistrosPage";
-import BitacoraPage from "@/pages/BitacoraPage";
+import SolicitudesPage from "@/pages/admin/SolicitudesPage";
+import RegistrosUsuariosPage from "@/pages/RegistrosUsuariosPage";
 
 // Hooks específicos del admin
 import { useAutoCompleteReservations } from "@/hooks/useAutoCompleteReservations";
@@ -38,11 +40,13 @@ const AdminContent = () => {
             <Route path="mis-reservas" element={<MisReservasPage />} />
             <Route path="ambientes" element={<AmbientesPage />} />
             <Route path="reportes" element={<ReportesPage />} />
+            <Route path="historial" element={<HistorialReservasPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="registrar-usuario" element={<RegistrarUsuarioPage />} />
             <Route path="gestion-usuarios" element={<GestionUsuariosPage />} />
-            <Route path="registros" element={<RegistrosPage />} />
-            <Route path="bitacora" element={<BitacoraPage />} />
+            <Route path="usuarios/:id/editar" element={<EditarUsuarioPage />} />
+            <Route path="registros-usuarios" element={<RegistrosUsuariosPage />} />
+            <Route path="solicitudes" element={<SolicitudesPage />} />
             <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
           </Routes>
         </AdminLayout>

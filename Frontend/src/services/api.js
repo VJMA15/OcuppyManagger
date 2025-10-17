@@ -1,7 +1,8 @@
 import authService from './auth';
+import { API_CONFIG } from '../config/api';
 
-// Configuración para usar proxy de Vite
-const API_BASE_URL = '';
+// Base URL parametrizada por entorno (VITE_API_BASE_URL)
+const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || '';
 
 class ApiService {
   constructor() {
@@ -76,11 +77,12 @@ class ApiService {
       const fetchPromise = fetch(url, config);
       this.registry.inFlight.set(key, fetchPromise.then(async (response) => {
         
-        // Si el token ha expirado (401), redirigir a página de autenticación
+        // Si el token ha expirado (401), cerrar sesión sin redirección imperativa
         if (response.status === 401) {
           authService.logout();
-          window.location.href = '/auth-required';
-          throw new Error('Sesión expirada o no autorizado');
+          const err = new Error('Sesión expirada o no autorizado');
+          err.status = 401;
+          throw err;
         }
 
         const contentType = response.headers.get('content-type') || '';
@@ -152,12 +154,17 @@ class ApiService {
   // Login (no requiere JWT)
   async login(credentials) {
     try {
-      const response = await fetch(`${this.baseURL}/auth/verify`, {
+      // Normalizar credenciales
+      const normalized = {
+        cc: typeof credentials?.cc === 'string' ? credentials.cc.trim() : String(credentials?.cc || '').trim(),
+        password: typeof credentials?.password === 'string' ? credentials.password.trim() : String(credentials?.password || '').trim(),
+      };
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.VERIFY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify(normalized),
       });
 
       const data = await response.json();
@@ -170,7 +177,11 @@ class ApiService {
         if (status === 429) {
           return { success: false, error: 'En pausa por límite de tasa. Reintentar automáticamente.' };
         }
-        throw new Error(data.message || 'Error en login');
+        // Para otros códigos, devolver mensaje del servidor si existe
+        const validationMsg = Array.isArray(data?.errors) ? data.errors.map((e) => e.msg).join('. ') : null;
+        const serverMsg = data?.message || data?.error;
+        const msg = validationMsg || serverMsg || `Error en login (HTTP ${status})`;
+        return { success: false, error: msg };
       }
 
       return data;
@@ -186,7 +197,7 @@ class ApiService {
   // Registro de usuarios
   async signup(userData) {
     try {
-      const response = await fetch(`${this.baseURL}/auth/signup`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.REGISTER}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +208,9 @@ class ApiService {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || 'Error en registro');
+        const validationMsg = Array.isArray(data?.errors) ? data.errors.map((e) => e.msg).join('. ') : null;
+        const serverMsg = data?.message || data?.error;
+        throw new Error(validationMsg || serverMsg || 'Error en registro');
       }
 
       return data;

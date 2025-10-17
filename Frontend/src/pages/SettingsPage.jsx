@@ -38,6 +38,13 @@ const SettingsPage = () => {
     };
     setNotifications(newNotifications);
     localStorage.setItem("notifications", JSON.stringify(newNotifications));
+    try {
+      // Notificar a la app que cambió la preferencia
+      const evtName = type === 'recordatorios' ? 'remindersPrefChanged' : 'notificationsPrefChanged';
+      window.dispatchEvent(new Event(evtName));
+      // También generar un evento genérico por compatibilidad
+      window.dispatchEvent(new Event('appPrefsChanged'));
+    } catch (_) {}
   };
 
   const handleLogout = () => {

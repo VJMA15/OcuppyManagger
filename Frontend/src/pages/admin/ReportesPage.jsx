@@ -276,7 +276,7 @@ const ReportesPage = () => {
                   <select
                     value={filtros.estado}
                     onChange={(e) => actualizarFiltros({ estado: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="select-input"
                   >
                     {estadosReservas.map((estado) => (
                       <option key={estado.value} value={estado.value}>
@@ -297,7 +297,7 @@ const ReportesPage = () => {
                   <select
                     value={filtros.estado}
                     onChange={(e) => actualizarFiltros({ estado: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="select-input"
                   >
                     {estadosEntregas.map((estado) => (
                       <option key={estado.value} value={estado.value}>
@@ -313,7 +313,7 @@ const ReportesPage = () => {
                   <select
                     value={filtros.jornada}
                     onChange={(e) => actualizarFiltros({ jornada: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="select-input"
                   >
                     {jornadas.map((jornada) => (
                       <option key={jornada.value} value={jornada.value}>

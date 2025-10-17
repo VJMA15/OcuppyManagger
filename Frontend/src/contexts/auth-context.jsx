@@ -52,6 +52,31 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  // Suscripción a eventos globales de autenticación
+  useEffect(() => {
+    const handleLogout = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+    };
+    const handleLogin = (e) => {
+      const detailUser = e?.detail?.user || authService.getUser();
+      setUser(detailUser);
+      setIsAuthenticated(true);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('auth:logout', handleLogout);
+      window.addEventListener('auth:login', handleLogin);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('auth:logout', handleLogout);
+        window.removeEventListener('auth:login', handleLogin);
+      }
+    };
+  }, []);
+
   // Login con backend real
   const login = async (credentials) => {
     try {

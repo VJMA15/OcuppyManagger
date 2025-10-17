@@ -1,5 +1,6 @@
 import { ReservationModel } from '../models/reservation.model';
 import { ReservationStatus } from '../types/reservation.types';
+import { emitEvent, Events } from './eventBus';
 
 // Intervalo en milisegundos para verificar reservas vencidas
 const DEFAULT_INTERVAL_MS = 60 * 1000; // 1 minuto
@@ -41,6 +42,9 @@ export const startReservationScheduler = (intervalMs: number = DEFAULT_INTERVAL_
       const expired = (expireResult as any)?.modifiedCount ?? (expireResult as any)?.nModified ?? 0;
       if (completed || expired) {
         console.log(`⏱️ [ReservationScheduler] Actualizadas ${completed} completadas y ${expired} expiradas`);
+        try {
+          emitEvent('reservas', Events.RESERVAS_UPDATED, { completed, expired });
+        } catch (_) {}
       }
     } catch (err) {
       console.error('❌ [ReservationScheduler] Error al actualizar estados de reservas:', err);

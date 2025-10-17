@@ -6,7 +6,6 @@ import {
   Shield,
   LogOut,
   Settings as SettingsIcon,
-  Eye,
   Clock
 } from 'lucide-react';
 import { Modal } from '@/components/ui';
@@ -209,24 +208,11 @@ const SettingsContainer = ({
             <div className="space-y-4">
               <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                 <div className="flex items-center gap-3 mb-2">
-                  <Eye className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                  <p className="font-medium text-slate-900 dark:text-white">Historial de actividad</p>
-                </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                  Puedes ver tu historial de reservas y actividad en el sistema
-                </p>
-                <button className="text-sm text-sena hover:text-sena-dark font-medium">
-                  Ver historial →
-                </button>
-              </div>
-              
-              <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                <div className="flex items-center gap-3 mb-2">
                   <Clock className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                   <p className="font-medium text-slate-900 dark:text-white">Sesión activa</p>
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Tu sesión se cerrará automáticamente después de 2 horas de inactividad
+                  Tu sesión se cerrará automáticamente después de 10 minutos de inactividad
                 </p>
               </div>
             </div>

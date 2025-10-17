@@ -18,9 +18,9 @@ export const navbarLinks = [
                 path: "/admin/ver-reservas",
             },
             {
-                label: "Reportes",
+                label: "Historial",
                 icon: BarChart3,
-                path: "/admin/reportes",
+                path: "/admin/historial",
             },
             {
                 label: "Mis Reservas",
@@ -53,14 +53,14 @@ export const navbarLinks = [
                 path: "/admin/gestion-usuarios",
             },
             {
-                label: "Registros",
+                label: "Registros de Usuarios",
                 icon: FileText,
-                path: "/admin/registros",
+                path: "/admin/registros-usuarios",
             },
             {
-                label: "Bitácora",
+                label: "Solicitudes",
                 icon: Activity,
-                path: "/admin/bitacora",
+                path: "/admin/solicitudes",
             },
         ],
     },
@@ -308,7 +308,7 @@ export const guardiaNavLinks = [
                 path: "/guardia/reservas",
             },
             {
-                label: "Reportes",
+                label: "Historial",
                 icon: BarChart3,
                 path: "/guardia/reportes",
             },

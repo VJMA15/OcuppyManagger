@@ -41,7 +41,8 @@ class UsersService {
   }
 
   // Obtener usuario por ID
-  async getUserById(id) {
+  async getUserById(id, options = {}) {
+    const { silent = false, logOnError = !options.silent } = options;
     try {
       const response = await fetch(`${this.baseURL}${API_CONFIG.ENDPOINTS.USERS.BY_ID(id)}`, {
         method: 'GET',
@@ -61,7 +62,9 @@ class UsersService {
         throw new Error('Respuesta inválida del servidor');
       }
     } catch (error) {
-      console.error('❌ Error al obtener usuario:', error);
+      if (!silent && logOnError) {
+        console.error('❌ Error al obtener usuario:', error);
+      }
       return { success: false, error: error.message };
     }
   }
@@ -102,7 +105,7 @@ class UsersService {
   async updateUser(id, userData) {
     try {
       const response = await fetch(`${this.baseURL}${API_CONFIG.ENDPOINTS.USERS.BY_ID(id)}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(userData)
       });
@@ -121,6 +124,33 @@ class UsersService {
       }
     } catch (error) {
       console.error('❌ Error al actualizar usuario:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Actualizar contraseña de usuario (solo admin)
+  async updateUserPassword(id, passwordData) {
+    try {
+      const response = await fetch(`${this.baseURL}${API_CONFIG.ENDPOINTS.USERS.PASSWORD(id)}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(passwordData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al actualizar contraseña');
+      }
+
+      if (data.success) {
+        console.log('✅ Contraseña actualizada exitosamente');
+        return { success: true, user: data.data.user, message: 'Contraseña actualizada exitosamente' };
+      } else {
+        throw new Error('Respuesta inválida del servidor');
+      }
+    } catch (error) {
+      console.error('❌ Error al actualizar contraseña:', error);
       return { success: false, error: error.message };
     }
   }

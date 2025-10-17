@@ -89,6 +89,12 @@ class ReservationsService extends ApiService {
     return this.get(`/api/v1/reservas/check-availability?${params}`);
   }
 
+  // Disponibilidad diaria por jornada (mañana/tarde/noche)
+  async getDailyAvailability(environmentId, date) {
+    const params = new URLSearchParams({ environmentId, date });
+    return this.get(`/api/v1/reservas/availability?${params.toString()}`);
+  }
+
   // Obtener reserva por ID
   async getReservationById(id) {
     return this.get(`/api/v1/reservas/${id}`);

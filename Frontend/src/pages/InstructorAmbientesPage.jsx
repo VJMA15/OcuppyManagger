@@ -183,7 +183,7 @@ const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit })
   return (
     <div
       key={ambiente._id}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-slate-100 dark:border-gray-700 hover:border-slate-200 dark:hover:border-gray-600"
+      className="bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-slate-100 dark:border-gray-700 hover:border-slate-200 dark:hover:border-gray-600"
       onClick={() => onAmbienteClick(ambiente)}
     >
       
@@ -212,7 +212,7 @@ const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit })
         <div className="mt-4 pt-4 border-t border-slate-100 dark:border-gray-700">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center">
-              <div className="p-2 bg-slate-50 dark:bg-gray-700 rounded-lg mr-3">
+              <div className="p-2 bg-slate-50 dark:bg-gray-700 rounded-xl shadow-sm mr-3">
                 <Users className="h-4 w-4 text-slate-500 dark:text-gray-400" />
               </div>
               <div>
@@ -221,7 +221,7 @@ const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit })
               </div>
             </div>
             <div className="flex items-center">
-              <div className="p-2 bg-slate-50 dark:bg-gray-700 rounded-lg mr-3">
+              <div className="p-2 bg-slate-50 dark:bg-gray-700 rounded-xl shadow-sm mr-3">
                 <BookOpen className="h-4 w-4 text-slate-500 dark:text-gray-400" />
               </div>
               <div>
@@ -234,10 +234,10 @@ const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit })
         <div className="mt-6 flex justify-center">
           <button
             onClick={handleToggleExpanded}
-            className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors ${
+            className={`px-4 py-2 rounded-xl text-sm font-medium flex items-center transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
               isExpanded
-                ? 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200'
-                : 'bg-green-700 text-white hover:bg-green-800 shadow-sm hover:shadow-md'
+                ? 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200 focus:ring-red-500'
+                : 'bg-green-700 text-white hover:bg-green-800 shadow-sm hover:shadow-md focus:ring-green-500'
             }`}
           >
             {isExpanded ? (
@@ -995,9 +995,7 @@ const InstructorAmbientesPage = () => {
               Jornada *
             </label>
             <select
-              className={`block w-full px-3 py-2 border rounded-md ${
-                modalErrors.jornada ? 'border-red-300' : 'border-gray-300'
-              }`}
+              className={`select-input ${modalErrors.jornada ? 'border-red-300' : ''}`}
               value={reservaForm.jornada}
               onChange={(e) => setReservaForm(prev => ({ ...prev, jornada: e.target.value }))}
             >
@@ -1091,7 +1089,7 @@ const InstructorAmbientesPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700 overflow-hidden">
+        <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white">
             <div className="flex flex-col md:flex-row md:items-center justify-between">
               <div>
@@ -1111,7 +1109,7 @@ const InstructorAmbientesPage = () => {
                 <input
                   type="text"
                   placeholder="Buscar por nombre o ubicación..."
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-slate-700 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-150"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 dark:border-gray-600 rounded-2xl shadow-sm bg-white dark:bg-gray-700 text-slate-700 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:border-transparent transition duration-150"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -1123,7 +1121,7 @@ const InstructorAmbientesPage = () => {
                     <Filter className="h-4 w-4 text-slate-400 dark:text-gray-500" />
                   </div>
                   <select
-                    className="appearance-none bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 pl-10 pr-8 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
+                    className="appearance-none bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 pl-10 pr-8 py-2.5 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:border-transparent cursor-pointer transition-all"
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
                   >
@@ -1141,7 +1139,7 @@ const InstructorAmbientesPage = () => {
                     <Clock className="h-4 w-4 text-slate-400 dark:text-gray-500" />
                   </div>
                   <select
-                    className="appearance-none bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 pl-10 pr-8 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
+                    className="appearance-none bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 pl-10 pr-8 py-2.5 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:border-transparent cursor-pointer transition-all"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                   >
@@ -1186,7 +1184,7 @@ const InstructorAmbientesPage = () => {
             ))}
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-slate-200 dark:border-gray-700 overflow-hidden">
             <div className="text-center p-12">
               <div className="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-slate-50 dark:bg-gray-700 mb-4">
                 <Search className="h-10 w-10 text-slate-300 dark:text-gray-500" />

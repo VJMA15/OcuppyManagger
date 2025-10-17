@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Menu, Sun, Moon, Bell, User, LogOut } from 'lucide-react';
+import { BookOpen, Menu, Sun, Moon, Bell, User } from 'lucide-react';
 import { useAuthContext } from '@/contexts/auth-context';
 import { useTheme } from '@/contexts/theme-context';
 import PropTypes from 'prop-types';
@@ -8,16 +8,11 @@ import NotificationPanel from '@/components/notifications/NotificationPanel';
 import NotificationBadge from '@/components/notifications/NotificationBadge';
 
 const InstructorHeader = ({ collapsed, setCollapsed }) => {
-  const { user, logout } = useAuthContext();
+  const { user } = useAuthContext();
   const { theme, setTheme } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const handleLogout = () => {
-    if (window.confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-      logout();
-    }
-  };
-
+  
   return (
     <header className="header-container sticky top-0 z-40 flex h-[60px] items-center justify-between px-6">
       {/* Left side */}
@@ -33,11 +28,7 @@ const InstructorHeader = ({ collapsed, setCollapsed }) => {
           <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
             <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <div className="hidden sm:block">
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Panel de Instructor
-            </h1>
-          </div>
+          {/* Título eliminado a petición: se quita "Panel de Instructor" del header */}
         </div>
       </div>
 
@@ -80,14 +71,7 @@ const InstructorHeader = ({ collapsed, setCollapsed }) => {
           />
         </button>
         
-        {/* Botón de cerrar sesión */}
-        <button 
-          className="btn-ghost size-10 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20" 
-          onClick={handleLogout}
-          title="Cerrar Sesión"
-        >
-          <LogOut size={20} />
-        </button>
+        {/* Botón de cerrar sesión eliminado: disponible desde Configuración */}
       </div>
       
       {/* Notification Panel */}

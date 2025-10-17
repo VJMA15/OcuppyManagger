@@ -3,6 +3,8 @@ import { Types } from 'mongoose';
 export interface CreateReservationDto {
   // ID del usuario autenticado; se inyecta en el controlador
   userId: string | Types.ObjectId;
+  // Usuario que crea la reserva (admin/guardia/instructor)
+  createdBy?: string | Types.ObjectId;
   // ID del ambiente
   environmentId: string;
   // Fecha normalizada al inicio del día (00:00)

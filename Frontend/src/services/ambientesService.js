@@ -3,8 +3,8 @@ import authService from './auth';
 
 class AmbientesService {
   constructor() {
-    // Usar proxy de Vite en lugar de peticiones directas
-    this.baseURL = '';
+    // Base URL parametrizada por entorno (VITE_API_BASE_URL)
+    this.baseURL = import.meta.env?.VITE_API_BASE_URL || '';
   }
 
   async request(endpoint, options = {}) {

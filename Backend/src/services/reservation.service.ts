@@ -1,5 +1,6 @@
 import { ReservationModel } from '../models/reservation.model';
-import { Reservation, ReservationDocument } from '../types/reservation.types';
+import { Reservation, ReservationDocument, ReservationHistoryDocument, ReservationHistory } from '../types/reservation.types';
+import { ReservationHistoryModel } from '../models/reservation-history.model';
 import { CreateReservationDto, UpdateReservationDto } from '../dto';
 
 // Import ReservationStatus from types to ensure consistency
@@ -11,16 +12,17 @@ export class ReservationService {
     const reservationDate = new Date(data.reservationDate || data.startDate);
     reservationDate.setHours(0, 0, 0, 0);
 
-    // Asegurar que exista jornada
-    if (!data.jornada || !['mañana', 'tarde', 'noche'].includes(data.jornada)) {
-      throw new Error('La jornada es requerida y debe ser válida (mañana, tarde o noche)');
-    }
-
-    // Si no vienen startDate/endDate, calcularlos según la jornada
+    // Calcular/usar rango de horas y jornada
     let startDate = data.startDate ? new Date(data.startDate) : null;
     let endDate = data.endDate ? new Date(data.endDate) : null;
 
+    // Si no vienen startDate/endDate, calcularlos según la jornada provista
     if (!startDate || !endDate) {
+      // Validación de jornada cuando no se especifican horas personalizadas
+      if (!data.jornada || !['mañana', 'tarde', 'noche'].includes(data.jornada)) {
+        throw new Error('La jornada es requerida y debe ser válida (mañana, tarde o noche)');
+      }
+
       startDate = new Date(reservationDate);
       endDate = new Date(reservationDate);
       switch (data.jornada) {
@@ -39,6 +41,19 @@ export class ReservationService {
       }
     }
 
+    // Derivar jornada si no se proporcionó explícitamente pero hay horario personalizado
+    let jornada: 'mañana' | 'tarde' | 'noche' = (data.jornada as any);
+    if (!jornada || !['mañana', 'tarde', 'noche'].includes(jornada)) {
+      const hour = startDate.getHours();
+      if (hour >= 6 && hour < 12) {
+        jornada = 'mañana';
+      } else if (hour >= 12 && hour < 18) {
+        jornada = 'tarde';
+      } else {
+        jornada = 'noche';
+      }
+    }
+
     // Validar que el usuario no tenga una reserva pendiente
     const existingPending = await ReservationModel.findOne({
       userId: data.userId as any,
@@ -49,11 +64,12 @@ export class ReservationService {
       throw err;
     }
 
-    // Validar disponibilidad por jornada + fecha
-    await this.validateAvailabilityByShift(data.environmentId, reservationDate, data.jornada);
+    // Validar disponibilidad por jornada + fecha (usando la jornada calculada/derivada)
+    await this.validateAvailabilityByShift(data.environmentId, reservationDate, jornada);
 
     const reservation = new ReservationModel({
       ...data,
+      jornada,
       reservationDate,
       startDate,
       endDate,
@@ -140,18 +156,45 @@ export class ReservationService {
     }
   }
 
-  async deleteReservation(id: string): Promise<ReservationDocument | null> {
+  async deleteReservation(id: string, deletedBy: string): Promise<ReservationDocument | null> {
     console.log('🔍 [ReservationService] deleteReservation called with id:', id);
     
     try {
-      const reservation = await ReservationModel.findByIdAndDelete(id);
+      // Buscar la reserva primero para archivarla
+      const reservation = await ReservationModel.findById(id);
       
       if (!reservation) {
         console.log('❌ [ReservationService] Reservation not found for deletion with id:', id);
         return null;
       }
-      
-      console.log('✅ [ReservationService] Reservation deleted successfully:', reservation._id);
+
+      // Crear registro en historial antes de eliminar
+      const historyPayload: Omit<ReservationHistory, 'createdAt' | 'updatedAt'> = {
+        originalId: reservation._id as any,
+        userId: reservation.userId as any,
+        environmentId: reservation.environmentId as any,
+        reservationDate: reservation.reservationDate as any,
+        jornada: reservation.jornada as any,
+        startDate: reservation.startDate as any,
+        endDate: reservation.endDate as any,
+        status: reservation.status as any,
+        purpose: reservation.purpose as any,
+        equipment: (reservation.equipment as any[]) || [],
+        approvedBy: reservation.approvedBy as any,
+        approvedAt: reservation.approvedAt as any,
+        rejectionReason: reservation.rejectionReason as any,
+        completedAt: reservation.completedAt as any,
+        expiredAt: reservation.expiredAt as any,
+        deletedAt: new Date(),
+        deletedBy: deletedBy as any
+      };
+
+      await ReservationHistoryModel.create(historyPayload as any);
+
+      // Eliminar la reserva después de archivar
+      await ReservationModel.findByIdAndDelete(id);
+
+      console.log('✅ [ReservationService] Reservation archived and deleted successfully:', reservation._id);
       return reservation as ReservationDocument | null;
     } catch (error) {
       console.error('❌ [ReservationService] Error in deleteReservation:', error);
@@ -159,9 +202,39 @@ export class ReservationService {
     }
   }
 
-  async deleteRejectedReservations(): Promise<{ deletedCount: number }> {
-    const result = await ReservationModel.deleteMany({ status: ReservationStatus.REJECTED });
-    return { deletedCount: (result as any)?.deletedCount || 0 };
+  async deleteRejectedReservations(deletedBy: string): Promise<{ deletedCount: number }> {
+    // Obtener todas las reservas rechazadas para archivarlas
+    const rejected = await ReservationModel.find({ status: ReservationStatus.REJECTED });
+
+    if (!rejected || rejected.length === 0) {
+      return { deletedCount: 0 };
+    }
+
+    const now = new Date();
+    const historyDocs: Omit<ReservationHistory, 'createdAt' | 'updatedAt'>[] = rejected.map((r) => ({
+      originalId: r._id as any,
+      userId: r.userId as any,
+      environmentId: r.environmentId as any,
+      reservationDate: r.reservationDate as any,
+      jornada: r.jornada as any,
+      startDate: r.startDate as any,
+      endDate: r.endDate as any,
+      status: r.status as any,
+      purpose: r.purpose as any,
+      equipment: (r.equipment as any[]) || [],
+      approvedBy: r.approvedBy as any,
+      approvedAt: r.approvedAt as any,
+      rejectionReason: r.rejectionReason as any,
+      completedAt: r.completedAt as any,
+      expiredAt: r.expiredAt as any,
+      deletedAt: now,
+      deletedBy: deletedBy as any
+    }));
+
+    await ReservationHistoryModel.insertMany(historyDocs as any[]);
+
+    const result = await ReservationModel.deleteMany({ _id: { $in: rejected.map(r => r._id) } });
+    return { deletedCount: (result as any)?.deletedCount || rejected.length };
   }
 
   async approveReservation(id: string, approvedBy: string): Promise<ReservationDocument | null> {

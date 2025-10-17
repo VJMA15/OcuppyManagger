@@ -3,9 +3,12 @@ import { ReservationService } from '../services/reservation.service';
 import { CreateReservationDto } from '../dto/create-reservation.dto';
 import User from '../models/user.model';
 import Bitacora from '../models/bitacora.model';
+import { emitEvent, Events } from '../services/eventBus';
+import NotificationService from '../services/notification.service';
 
 export class ReservationController {
   private reservationService = new ReservationService();
+  private notificationService = new NotificationService();
 
   async createReservation(req: Request, res: Response) {
     try {
@@ -44,7 +47,8 @@ export class ReservationController {
       const reservationData: CreateReservationDto = {
         ...req.body,
         reservationDate: normalizedDate,
-        userId: user._id // Usar el ObjectId del usuario autenticado
+        userId: user._id, // Usar el ObjectId del usuario solicitado por CC
+        createdBy: (req as any).user?._id || (req as any).user?.id // Autor de la creación (admin/guardia/instructor)
       };
 
       const reservation = await this.reservationService.createReservation(reservationData);
@@ -54,6 +58,20 @@ export class ReservationController {
         data: reservation,
         message: 'Reserva creada exitosamente'
       });
+      // Notificar por correo a administradores sobre la nueva reserva
+      try {
+        await this.notificationService.notifyReservationCreatedForAdmins(reservation as any, { nombre: user?.nombre, email: user?.email });
+      } catch (err) {
+        console.error('❌ [ReservationController] Error notificando por correo:', err instanceof Error ? err.message : err);
+      }
+      try {
+        emitEvent('reservas', Events.RESERVAS_UPDATED, {
+          action: 'created',
+          id: String((reservation as any)?._id),
+          environmentId: String((reservation as any)?.environmentId),
+          createdBy: String((req as any).user?._id || (req as any).user?.id || '')
+        });
+      } catch (_) {}
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       const isDuplicate = (error as any)?.code === 11000;
@@ -160,6 +178,15 @@ export class ReservationController {
         data: reservation,
         message: 'Reserva aprobada exitosamente'
       });
+      // Notificar por correo al usuario sobre la aprobación
+      try {
+        await this.notificationService.notifyReservationApprovedToUser(reservation as any);
+      } catch (err) {
+        console.error('❌ [ReservationController] Error notificando aprobación de reserva al usuario:', err instanceof Error ? err.message : err);
+      }
+      try {
+        emitEvent('reservas', Events.RESERVAS_UPDATED, { action: 'approved', id: String((reservation as any)?._id) });
+      } catch (_) {}
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       res.status(500).json({
@@ -215,6 +242,15 @@ export class ReservationController {
         data: reservation,
         message: 'Reserva rechazada exitosamente'
       });
+      // Notificar por correo al usuario sobre el rechazo
+      try {
+        await this.notificationService.notifyReservationRejectedToUser(reservation as any);
+      } catch (err) {
+        console.error('❌ [ReservationController] Error notificando rechazo de reserva al usuario:', err instanceof Error ? err.message : err);
+      }
+      try {
+        emitEvent('reservas', Events.RESERVAS_UPDATED, { action: 'rejected', id: String((reservation as any)?._id) });
+      } catch (_) {}
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       res.status(500).json({
@@ -281,6 +317,14 @@ export class ReservationController {
       }
 
       res.json({ success: true, data: cancelled, message: 'Reserva cancelada exitosamente' });
+      try {
+        emitEvent('reservas', Events.RESERVAS_UPDATED, {
+          action: 'cancelled',
+          id: String(id),
+          environmentId: String((reservation as any)?.environmentId || ''),
+          cancelledBy: String(currentUser._id || currentUser.id || '')
+        });
+      } catch (_) {}
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       res.status(500).json({ success: false, message: errorMessage });
@@ -308,18 +352,27 @@ export class ReservationController {
         return res.status(403).json({ success: false, message: 'No tienes permisos para eliminar esta reserva' });
       }
 
-      // Estados permitidos para eliminar desde la UI: REJECTED, CANCELLED, APPROVED
+      // Estados permitidos para eliminar desde la UI: REJECTED, CANCELLED, APPROVED, COMPLETED, EXPIRED
       const normalizedStatus = String(reservation.status).toUpperCase();
-      if (!['REJECTED','CANCELLED','APPROVED'].includes(normalizedStatus)) {
-        return res.status(400).json({ success: false, message: 'Solo se pueden eliminar reservas aprobadas, rechazadas o canceladas' });
+      if (!['REJECTED','CANCELLED','APPROVED','COMPLETED','EXPIRED'].includes(normalizedStatus)) {
+        return res.status(400).json({ success: false, message: 'Solo se pueden eliminar reservas aprobadas, rechazadas, canceladas, completadas o expiradas' });
       }
 
-      const deleted = await this.reservationService.deleteReservation(id);
+      const deleted = await this.reservationService.deleteReservation(
+        id,
+        String(currentUser._id || currentUser.id)
+      );
       if (!deleted) {
         return res.status(404).json({ success: false, message: 'Reserva no encontrada para eliminar' });
       }
 
-      return res.json({ success: true, data: deleted, message: 'Reserva eliminada exitosamente' });
+      const responsePayload = { success: true, data: deleted, message: 'Reserva eliminada exitosamente' };
+      res.json(responsePayload);
+      try {
+        emitEvent('reservas', Events.RESERVAS_UPDATED, { action: 'deleted', id: String(id) });
+        emitEvent('historial', Events.HISTORIAL_CHANGED, { action: 'archived', id: String(id) });
+      } catch (_) {}
+      return;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       return res.status(500).json({ success: false, message: errorMessage });
@@ -338,8 +391,16 @@ export class ReservationController {
         return res.status(403).json({ success: false, message: 'No tienes permisos para eliminar reservas rechazadas' });
       }
 
-      const result = await this.reservationService.deleteRejectedReservations();
-      return res.json({ success: true, deletedCount: result.deletedCount, message: `Eliminadas ${result.deletedCount} reservas rechazadas` });
+      const result = await this.reservationService.deleteRejectedReservations(
+        String(currentUser._id || currentUser.id)
+      );
+      const payload = { success: true, deletedCount: result.deletedCount, message: `Eliminadas ${result.deletedCount} reservas rechazadas` };
+      res.json(payload);
+      try {
+        emitEvent('reservas', Events.RESERVAS_UPDATED, { action: 'bulkDeleteRejected', count: result.deletedCount });
+        emitEvent('historial', Events.HISTORIAL_CHANGED, { action: 'bulkArchived', count: result.deletedCount });
+      } catch (_) {}
+      return;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       return res.status(500).json({ success: false, message: errorMessage });

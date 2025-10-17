@@ -167,6 +167,55 @@ export const updateUser = catchAsync(async (req: Request, res: Response, next: N
   });
 });
 
+// Actualizar contraseña de usuario (solo admin)
+export const updateUserPasswordAdmin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const { password, passwordConfirm } = req.body as { password?: string; passwordConfirm?: string };
+
+  if (!password || typeof password !== 'string') {
+    return next(new AppError('La contraseña es requerida', 400));
+  }
+  if (password.length < 6) {
+    return next(new AppError('La contraseña debe tener al menos 6 caracteres', 400));
+  }
+  if (typeof passwordConfirm !== 'undefined' && password !== passwordConfirm) {
+    return next(new AppError('Las contraseñas no coinciden', 400));
+  }
+
+  // Verificar si el usuario existe
+  const user = await User.findById(id).select('+password');
+  if (!user) {
+    return next(new AppError('Usuario no encontrado', 404));
+  }
+
+  // Actualizar contraseña y guardar para disparar hooks de Mongoose
+  user.password = password;
+  await user.save();
+
+  const sanitizedUser = await User.findById(id).select('-password -passwordResetToken -passwordResetExpires');
+
+  // Registrar en bitácora el cambio de contraseña por admin
+  try {
+    await Bitacora.registrarAccion(
+      (req as any).user?.id || (req as any).user?._id || 'sistema',
+      'usuario_password_actualizada_admin',
+      'usuario',
+      id,
+      JSON.stringify({ email: (sanitizedUser as any)?.email, cc: (sanitizedUser as any)?.cc }),
+      req.ip,
+      req.get('User-Agent') || ''
+    );
+  } catch (e) {
+    console.error('Error registrando acción de actualización de contraseña en bitácora:', e);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Contraseña actualizada exitosamente',
+    data: { user: sanitizedUser }
+  });
+});
+
 // Eliminar usuario
 export const deleteUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;

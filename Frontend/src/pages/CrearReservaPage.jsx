@@ -50,19 +50,35 @@ const CrearReservaPage = () => {
     }
   };
 
+  const deriveJornadaFromStart = (startIso) => {
+    try {
+      const d = new Date(startIso);
+      const h = d.getHours();
+      if (h >= 6 && h < 12) return 'mañana';
+      if (h >= 12 && h < 18) return 'tarde';
+      return 'noche';
+    } catch (_) {
+      return null;
+    }
+  };
+
   const checkDisponibilidad = async () => {
-    if (!formData.environmentId || !formData.startDate || !formData.endDate) {
+    if (!formData.environmentId || !formData.startDate) {
       return;
     }
 
     try {
       setCheckingDisponibilidad(true);
-      const response = await reservationsService.checkAvailability(
-        formData.environmentId,
-        formData.startDate,
-        formData.endDate
-      );
-      setDisponibilidad({ disponible: response.success, mensaje: response.message });
+      const dateStr = new Date(formData.startDate).toISOString().split('T')[0];
+      const jornada = deriveJornadaFromStart(formData.startDate);
+      const resp = await reservationsService.getDailyAvailability(formData.environmentId, dateStr);
+      const data = resp?.data || resp;
+      const ocupado = data && jornada ? Boolean(data[jornada]) : false;
+      const disponible = !ocupado;
+      setDisponibilidad({
+        disponible,
+        mensaje: disponible ? 'Disponible en la jornada seleccionada' : 'No disponible en esta jornada'
+      });
     } catch (err) {
       console.error('Error checking disponibilidad:', err);
       setDisponibilidad({ disponible: false, mensaje: 'Error al verificar disponibilidad' });

@@ -101,6 +101,13 @@ class AuthService {
     Cookies.remove(this.USER_KEY);
     
     console.log('🔓 Sesión cerrada correctamente');
+
+    // Emitir evento global para notificar al contexto
+    try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:logout'));
+      }
+    } catch { /* noop */ }
   }
 
   // Login con token
@@ -112,6 +119,13 @@ class AuthService {
       sessionManager.startSession();
       
       console.log('🔐 Sesión iniciada con gestión automática de timeout');
+
+      // Emitir evento global de login
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:login', { detail: { user: userData } }));
+        }
+      } catch { /* noop */ }
       return true;
     }
     return false;
@@ -126,12 +140,17 @@ class AuthService {
   // Login con backend real
   async loginWithBackend(cc, password) {
     try {
+      // Normalizar credenciales
+      const normalized = {
+        cc: typeof cc === 'string' ? cc.trim() : String(cc).trim(),
+        password: typeof password === 'string' ? password.trim() : String(password || '').trim(),
+      };
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.VERIFY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ cc, password }),
+        body: JSON.stringify(normalized),
       });
 
       const contentType = response.headers.get('content-type') || '';
@@ -153,7 +172,11 @@ class AuthService {
           // Evitar ruido de consola y devolver mensaje de pausa
           return { success: false, error: 'En pausa por límite de tasa. Reintentar automáticamente.' };
         }
-        throw new Error(data?.error || 'Error en el login');
+        // Para otros códigos (400, 500, etc.), devolver mensaje del servidor si existe
+        const validationMsg = Array.isArray(data?.errors) ? data.errors.map((e) => e.msg).join('. ') : null;
+        const serverMsg = data?.message || data?.error;
+        const msg = validationMsg || serverMsg || `Error en el login (HTTP ${status})`;
+        return { success: false, error: msg };
       }
 
       if (data.success && data.user) {
@@ -170,6 +193,13 @@ class AuthService {
         sessionManager.startSession();
         
         console.log('🔐 Login exitoso con backend');
+
+        // Emitir evento global de login
+        try {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:login', { detail: { user: userData } }));
+          }
+        } catch { /* noop */ }
         return { success: true, user: userData };
       } else {
         throw new Error('Respuesta inválida del servidor');

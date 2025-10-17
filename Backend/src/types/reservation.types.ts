@@ -10,6 +10,8 @@ export interface Reservation {
   status: ReservationStatus;
   purpose: string;
   equipment?: Equipment[];
+  // Usuario que creó la reserva (p. ej., admin/guardia creando a nombre de un instructor)
+  createdBy?: Schema.Types.ObjectId;
   approvedBy?: Schema.Types.ObjectId;
   approvedAt?: Date;
   rejectionReason?: string;
@@ -44,4 +46,17 @@ export enum EquipmentType {
   MICROPHONE = 'MICROPHONE',
   VIDEO_BEAM = 'VIDEO_BEAM',
   DIGITAL_BOARD = 'DIGITAL_BOARD'
+}
+
+// ==================== HISTORIAL DE RESERVAS ====================
+
+export interface ReservationHistory extends Reservation {
+  originalId: Schema.Types.ObjectId; // ID de la reserva original
+  deletedAt: Date; // fecha de eliminación
+  deletedBy: Schema.Types.ObjectId; // usuario que ejecutó la eliminación
+}
+
+export interface ReservationHistoryDocument extends ReservationHistory, Document {
+  createdAt: Date; // timestamp de creación del registro en historial
+  updatedAt: Date;
 }

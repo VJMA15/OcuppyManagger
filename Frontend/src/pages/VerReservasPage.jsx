@@ -10,6 +10,7 @@ import { useAuthContext } from '../contexts/auth-context';
 import { useReservasContext } from '@/contexts/ReservasContext';
 import reservationsService from '../services/reservationsService';
 import { enrichReservasWithDetails, normalizeStatus } from '../utils/reservasUtils';
+import realtime from '@/services/realtime';
 import VerReservasContainer from "@/containers/VerReservasContainer";
 import useHotkeys from "@/hooks/useHotkeys";
 
@@ -34,7 +35,7 @@ const VerReservasPage = () => {
   // Inicializar filtro desde la URL si existe (?filter=pendiente|aprobada|rechazada|all)
   useEffect(() => {
     const initialFilter = (searchParams.get('filter') || '').toLowerCase();
-    if (['pendiente','aprobada','rechazada','all'].includes(initialFilter)) {
+    if (['pendiente','aprobada','rechazada','cancelada','completada','all'].includes(initialFilter)) {
       setFilter(initialFilter);
     }
   }, [searchParams]);
@@ -49,6 +50,26 @@ const VerReservasPage = () => {
     }
   }, [searchParams, didRefresh, refreshReservas]);
 
+  // Suscripción a eventos SSE para refrescar automáticamente
+  useEffect(() => {
+    // Conectar a canales relevantes para esta página
+    realtime.connect({ channels: ['reservas','historial'] });
+    const onReservasUpdated = () => {
+      // Refresco suave para evitar parpadeos
+      refreshReservas({ force: true, soft: true });
+    };
+    const onHistorialChanged = () => {
+      refreshReservas({ force: true, soft: true });
+    };
+    realtime.on('reservas.updated', onReservasUpdated);
+    realtime.on('historial.changed', onHistorialChanged);
+    return () => {
+      realtime.off('reservas.updated', onReservasUpdated);
+      realtime.off('historial.changed', onHistorialChanged);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshReservas]);
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'APPROVED':
@@ -57,6 +78,12 @@ const VerReservasPage = () => {
         return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       case 'PENDING':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+      case 'CANCELLED':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+      case 'COMPLETED':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+      case 'EXPIRED':
+        return 'bg-gray-200 text-gray-700 dark:bg-gray-800/30 dark:text-gray-300';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
     }
@@ -164,7 +191,9 @@ const VerReservasPage = () => {
       'pendiente': 'PENDING',
       'aprobada': 'APPROVED', 
       'rechazada': 'REJECTED',
-      'cancelada': 'CANCELLED'
+      'cancelada': 'CANCELLED',
+      'completada': 'COMPLETED',
+      'expirada': 'EXPIRED'
     };
     const normalized = normalizeStatus(reserva.status || reserva.estado);
     return normalized === statusMap[filter];
@@ -221,24 +250,24 @@ const VerReservasPage = () => {
   const handleEliminarSeleccionadas = async () => {
     try {
       setError(null);
-      // Limitar a estados eliminables: REJECTED, APPROVED y CANCELLED (case-insensitive)
+      // Limitar a estados eliminables: REJECTED, APPROVED, CANCELLED, COMPLETED y EXPIRED (case-insensitive)
       const selectedSet = new Set(selectedIds.map(String));
       let deletableSelectedIds = reservas
         .filter(r => selectedSet.has(String(r._id || r.id)))
-        .filter(r => ['REJECTED','APPROVED','CANCELLED'].includes(normalizeStatus(r.status || r.estado)))
+        .filter(r => ['REJECTED','APPROVED','CANCELLED','COMPLETED','EXPIRED'].includes(normalizeStatus(r.status || r.estado)))
         .map(r => String(r._id || r.id));
 
       if (deletableSelectedIds.length === 0) {
         // Fallback defensivo: intentar con las visibles por si hay desajuste de datos
         deletableSelectedIds = filteredReservas
           .filter(r => selectedSet.has(String(r._id || r.id)))
-          .filter(r => ['REJECTED','APPROVED','CANCELLED'].includes(normalizeStatus(r.status || r.estado)))
+          .filter(r => ['REJECTED','APPROVED','CANCELLED','COMPLETED','EXPIRED'].includes(normalizeStatus(r.status || r.estado)))
           .map(r => String(r._id || r.id));
 
-        if (deletableSelectedIds.length === 0) {
-          setError('Selecciona reservas aprobadas, rechazadas o canceladas para eliminar');
-          return;
-        }
+      if (deletableSelectedIds.length === 0) {
+        setError('Selecciona reservas aprobadas, rechazadas, canceladas, completadas o expiradas para eliminar');
+        return;
+      }
       }
 
       // Marcar como pendientes y eliminar localmente de inmediato

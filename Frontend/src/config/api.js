@@ -1,11 +1,13 @@
-// Configuración de la API - CONECTADO AL BACKEND REAL
+// Configuración de la API (parametrizada por variables de entorno VITE_*)
+const BASE_URL = import.meta.env?.VITE_API_BASE_URL || '';
+const SSE_BASE_URL = import.meta.env?.VITE_SSE_BASE_URL || BASE_URL;
+
 export const API_CONFIG = {
-  // URL para desarrollo con proxy de Vite
-  BASE_URL: '',
-  
-  // URL anterior del backend (puerto 5000 estaba ocupado)
-  // BASE_URL: 'http://localhost:5000/api/v1',
-  
+  // Base URL de la API (por ejemplo: http://51.143.132.191:5000)
+  BASE_URL: BASE_URL,
+  // Base URL para SSE (por defecto igual a BASE_URL)
+  SSE_BASE_URL: SSE_BASE_URL,
+
   ENDPOINTS: {
     AUTH: {
       LOGIN: '/api/v1/auth/login',
@@ -17,6 +19,7 @@ export const API_CONFIG = {
       PROFILE: '/api/v1/users/profile',
       ALL: '/api/v1/users',
       BY_ID: (id) => `/api/v1/users/${id}`,
+      PASSWORD: (id) => `/api/v1/users/${id}/password`,
     },
     AMBIENTES: {
       ALL: '/api/v1/ambientes',
@@ -54,6 +57,14 @@ export const API_CONFIG = {
       BY_AMBIENTE: (ambienteId) => `/api/v1/registros/ambiente/${ambienteId}`,
       ENTRADA: '/api/v1/registros/entrada',
       SALIDA: '/api/v1/registros/salida',
+    },
+    SOLICITUDES: {
+      ALL: '/api/v1/solicitudes',
+      BY_ID: (id) => `/api/v1/solicitudes/${id}`,
+      CREATE: '/api/v1/solicitudes',
+      APPROVE: (id) => `/api/v1/solicitudes/${id}/approve`,
+      REJECT: (id) => `/api/v1/solicitudes/${id}/reject`,
+      STATS: '/api/v1/solicitudes/estadisticas',
     },
     BITACORA: {
       ALL: '/api/v1/bitacora',

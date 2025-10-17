@@ -48,7 +48,6 @@ export const useSessionTimeout = () => {
   // Cerrar sesión manualmente
   const logout = useCallback(() => {
     authService.logout();
-    window.location.href = '/login';
   }, []);
 
   // Ocultar advertencia

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/auth-context';
 import reservationsService from '../services/reservationsService';
 import { enrichReservasWithDetails } from '../utils/reservasUtils';
+import realtime from '@/services/realtime';
 
 const MisReservasPage = () => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const MisReservasPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterEstado, setFilterEstado] = useState('pendiente');
+  const [filterEstado, setFilterEstado] = useState('todas');
   const [filterFecha, setFilterFecha] = useState('todas');
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -35,9 +36,9 @@ const MisReservasPage = () => {
       }
       setError('');
       
-      const response = await reservationsService.getMyReservations(user.id);
+      const response = await reservationsService.getMyReservations(user._id || user.id);
       if (response.success) {
-        const enriched = await enrichReservasWithDetails(response.data || []);
+        const enriched = await enrichReservasWithDetails(response.data || [], user);
         setReservas(enriched);
       } else {
         setError(response.message || 'Error al cargar las reservas');
@@ -51,6 +52,22 @@ const MisReservasPage = () => {
       setLoading(false);
     }
   };
+
+  // Suscripción SSE para refrescar automáticamente cuando cambian reservas
+  useEffect(() => {
+    // Conectar a canal de reservas
+    realtime.connect({ channels: ['reservas'] });
+    const onReservasUpdated = () => {
+      if (user?.id || user?._id) {
+        fetchMisReservas();
+      }
+    };
+    realtime.on('reservas.updated', onReservasUpdated);
+    return () => {
+      realtime.off('reservas.updated', onReservasUpdated);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, user?._id]);
 
   const handleCancelarReserva = async (reservaId) => {
     if (!window.confirm('¿Estás seguro de que deseas cancelar esta reserva?')) {
@@ -179,13 +196,58 @@ const MisReservasPage = () => {
     }
   };
 
+  // Parse seguro de fechas calendario para evitar desfase por zona horaria
+  const parseCalendarDate = (raw) => {
+    if (!raw) return null;
+    try {
+      if (typeof raw === 'string') {
+        const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/);
+        if (m) {
+          const y = Number(m[1]);
+          const mo = Number(m[2]);
+          const d = Number(m[3]);
+          // Construir fecha en zona local para preservar el día
+          return new Date(y, mo - 1, d);
+        }
+      }
+      return new Date(raw);
+    } catch (_) {
+      return null;
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'Fecha no especificada';
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    try {
+      // Si viene como YYYY-MM-DD o ISO a medianoche, evitar desfase
+      if (typeof dateString === 'string' && /^(\d{4})-(\d{2})-(\d{2})(?:$|T)/.test(dateString)) {
+        const parsed = parseCalendarDate(dateString);
+        if (parsed) {
+          return parsed.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+        }
+      }
+      const date = new Date(dateString);
+      const isMidnightUTC = typeof dateString === 'string' && /T00:00/.test(dateString) && /Z$/.test(dateString);
+      if (isMidnightUTC) {
+        return new Intl.DateTimeFormat('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          timeZone: 'UTC'
+        }).format(date);
+      }
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return 'Fecha inválida';
+    }
   };
 
   const formatTime = (dateString) => {
@@ -219,7 +281,7 @@ const MisReservasPage = () => {
   // (Se mantiene la función normalizeEstado definida más arriba)
 
   const getFechaReserva = (reserva) => {
-    return reserva?.fecha || reserva?.startDate || null;
+    return reserva?.fecha || reserva?.reservationDate || reserva?.startDate || null;
   };
 
   const getHoraRango = (reserva) => {
@@ -251,21 +313,27 @@ const MisReservasPage = () => {
       (reserva.proposito || reserva.purpose || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const estadoNorm = normalizeEstado(reserva.estado || reserva.status);
-    // Por defecto ("todas"), ocultar rechazadas a menos que el usuario seleccione explícitamente "rechazada"
+    // En "todas" mostrar todos los estados sin ocultar rechazadas
     const matchesEstado = filterEstado === 'todas'
-      ? estadoNorm !== 'rechazada'
+      ? true
       : estadoNorm === filterEstado;
     
     let matchesFecha = true;
     if (filterFecha !== 'todas') {
       const today = new Date();
       const reservaDateRaw = getFechaReserva(reserva);
-      const reservaDate = reservaDateRaw ? new Date(reservaDateRaw) : null;
+      const reservaDate = parseCalendarDate(reservaDateRaw);
       if (!reservaDate) return false;
+
+      const sameYmd = (a, b) => (
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate()
+      );
       
       switch (filterFecha) {
         case 'hoy':
-          matchesFecha = reservaDate.toDateString() === today.toDateString();
+          matchesFecha = sameYmd(reservaDate, today);
           break;
         case 'semana':
           const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -300,7 +368,7 @@ const MisReservasPage = () => {
               <p className="text-gray-600 dark:text-gray-400">Gestiona tus reservas de ambientes</p>
             </div>
             <button
-              onClick={() => navigate('/dashboard/reserva')}
+              onClick={() => navigate('/instructor/nueva-reserva')}
               className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
             >
               <Plus className="h-5 w-5 mr-2" />
@@ -464,7 +532,7 @@ const MisReservasPage = () => {
                   : 'Aún no has creado ninguna reserva. ¡Crea tu primera reserva!'}
               </p>
               <button
-                onClick={() => navigate('/dashboard/reserva')}
+                onClick={() => navigate('/instructor/nueva-reserva')}
                 className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
               >
                 <Plus className="h-5 w-5 mr-2" />

@@ -1,7 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from './contexts/theme-context';
-import { AuthProvider } from './contexts/auth-context';
-import { useAuthContext } from './contexts/auth-context';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { ThemeProvider } from '@/contexts/theme-context';
+import { AuthProvider, useAuthContext } from '@/contexts/auth-context';
+import realtime from '@/services/realtime';
+import sessionManager from '@/services/sessionManager';
+import { Toaster } from 'react-hot-toast';
 
 // Layouts
 import Layout from './routes/layout';
@@ -34,11 +37,13 @@ import EntregasPage from './pages/EntregasPage';
 // Instructor Pages
 import InstructorReservaPage from './pages/InstructorReservaPage';
 import InstructorAmbientesPage from './pages/InstructorAmbientesPage';
+import SettingsPage from './pages/SettingsPage';
 
 // Guardia Pages
 import MonitoreoPage from './pages/guardia/MonitoreoPage';
 import ReservasGuardiaPage from './pages/guardia/ReservasPage';
 import IncidentesPage from './pages/guardia/IncidentesPage';
+import SessionTimeoutWarning from './components/SessionTimeoutWarning';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
@@ -66,11 +71,38 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 // Main App Routes Component
 const AppRoutes = () => {
   const { isAuthenticated, user } = useAuthContext();
+  const location = useLocation();
+  const [isSessionActive, setIsSessionActive] = useState(() => sessionManager.isSessionActive());
+
+  // Conexión SSE global temprana para evitar reconexiones por páginas específicas
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Conectamos con el superset de canales usados en la app
+      realtime.connect({ channels: ['reservas','solicitudes','historial'] });
+    } else {
+      // Al cerrar sesión, desconectamos SSE limpio
+      realtime.disconnect();
+    }
+  }, [isAuthenticated]);
+
+  // Vigilar el estado de la sesión para mostrar advertencia solo si está activa
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsSessionActive(sessionManager.isSessionActive());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const hideOnPaths = ['/', '/login'];
+  const showSessionWarning = isAuthenticated && isSessionActive && !hideOnPaths.includes(location?.pathname);
+  const showToaster = !hideOnPaths.includes(location?.pathname);
 
   return (
+    <>
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
+      <Route path="/consulta/ambientes" element={<AmbientesMainPage />} />
       <Route path="/login" element={
         isAuthenticated ? (
           <Navigate to={
@@ -101,6 +133,7 @@ const AppRoutes = () => {
         <Route path="ambientes" element={<InstructorAmbientesPage />} />
         <Route path="nueva-reserva" element={<InstructorReservaPage />} />
         <Route path="mis-reservas" element={<MisReservasPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         {/* Reportes removidos para instructores */}
         <Route path="*" element={<Navigate to="/instructor" replace />} />
       </Route>
@@ -152,6 +185,13 @@ const AppRoutes = () => {
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    {showSessionWarning && <SessionTimeoutWarning />}
+    {showToaster && (
+      <Toaster position="top-right" toastOptions={{
+        duration: 3500,
+      }} />
+    )}
+    </>
   );
 };
 

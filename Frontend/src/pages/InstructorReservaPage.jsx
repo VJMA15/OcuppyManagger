@@ -16,7 +16,9 @@ import {
 } from "lucide-react";
 import apiService from "../services/api";
 import { Button, Input, Card, CardContent } from "../components/ui";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/Select.jsx";
+// Eliminamos uso del componente Select con Portal para evitar conflictos de reconcilio DOM
+// y usamos un <select> nativo que ya se emplea en otras páginas sin problemas.
+import CompactCalendarWidget from "../components/dashboard/CompactCalendarWidget.jsx";
 
 export default function InstructorReservaPage() {
   const { user } = useAuthContext();
@@ -428,21 +430,18 @@ export default function InstructorReservaPage() {
                       </label>
                       {!form.useHorarioPersonalizado ? (
                         <>
-                          <Select 
+                          <select
                             name="jornada"
                             value={form.jornada}
-                            onValueChange={(value) => setForm(prev => ({ ...prev, jornada: value }))}
+                            onChange={(e) => setForm(prev => ({ ...prev, jornada: e.target.value }))}
                             required
+                            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                           >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecciona una jornada" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {jornadas.map(j => (
-                                <SelectItem key={j.value} value={j.value}>{j.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            <option value="" disabled>Selecciona una jornada</option>
+                            {jornadas.map(j => (
+                              <option key={j.value} value={j.value}>{j.label}</option>
+                            ))}
+                          </select>
                           {dailyAvailability && (
                             <div className="mt-2 text-sm">
                               <div className="flex flex-wrap gap-2">
@@ -576,6 +575,13 @@ export default function InstructorReservaPage() {
                   <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   Días ocupados (próximas 2 semanas)
                 </h3>
+                <div className="mb-4">
+                  <CompactCalendarWidget
+                    environmentId={selectedAmbiente?._id || selectedAmbiente?.id}
+                    jornada={form.jornada}
+                    rangeDays={14}
+                  />
+                </div>
                 {occupiedDays.length === 0 ? (
                   <p className="text-sm text-slate-600 dark:text-slate-400">No hay días totalmente ocupados en este periodo.</p>
                 ) : (

@@ -6,21 +6,23 @@ import ambientesService from '../services/ambientesService';
  * @param {Array} reservas - Array de reservas del backend
  * @returns {Promise<Array>} - Array de reservas con datos completos
  */
-export const enrichReservasWithDetails = async (reservas) => {
+export const enrichReservasWithDetails = async (reservas, currentUser = null) => {
   if (!Array.isArray(reservas) || reservas.length === 0) {
     return [];
   }
 
   try {
     // Obtener IDs únicos de usuarios y ambientes
+    const currentUserId = currentUser ? (currentUser._id || currentUser.id) : null;
     const userIds = [...new Set(reservas.map(r => r.userId).filter(Boolean))];
+    const fetchUserIds = currentUserId ? userIds.filter(id => id !== currentUserId) : userIds;
     const environmentIds = [...new Set(reservas.map(r => r.environmentId).filter(Boolean))];
 
     // Obtener datos de usuarios y ambientes en paralelo
     const [usersData, ambientesData] = await Promise.all([
-      Promise.all(userIds.map(async (id) => {
+      Promise.all(fetchUserIds.map(async (id) => {
         try {
-          const response = await usersService.getUserById(id);
+          const response = await usersService.getUserById(id, { silent: true });
           return response.success ? { id, data: response.user } : { id, data: null };
         } catch (error) {
           console.warn(`Error obteniendo usuario ${id}:`, error);
@@ -40,6 +42,9 @@ export const enrichReservasWithDetails = async (reservas) => {
 
     // Crear mapas para acceso rápido
     const usersMap = new Map(usersData.map(u => [u.id, u.data]));
+    if (currentUserId) {
+      usersMap.set(currentUserId, currentUser);
+    }
     const ambientesMap = new Map(ambientesData.map(a => [a.id, a.data]));
 
     // Enriquecer reservas con datos completos
@@ -54,7 +59,7 @@ export const enrichReservasWithDetails = async (reservas) => {
           id: userData._id || userData.id,
           nombre: userData.nombre || userData.name || 'Usuario desconocido',
           email: userData.email || '',
-          documento: userData.documento || userData.cedula || 'N/A'
+          documento: userData.documento || userData.cedula || userData.cc || 'N/A'
         } : {
           id: reserva.userId,
           nombre: 'Usuario desconocido',
@@ -74,7 +79,7 @@ export const enrichReservasWithDetails = async (reservas) => {
         },
         // Campos adicionales para compatibilidad con el frontend
         nombre: userData?.nombre || userData?.name || 'Usuario desconocido',
-        documento: userData?.documento || userData?.cedula || 'N/A',
+        documento: userData?.documento || userData?.cedula || userData?.cc || 'N/A',
         ambienteNombre: ambienteData?.nombre || ambienteData?.name || 'Ambiente desconocido'
       };
     });

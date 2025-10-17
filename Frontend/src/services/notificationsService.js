@@ -26,9 +26,10 @@ class NotificationsService {
   }
 
   // Obtener notificaciones de reservas filtradas por rol
-  async getReservationNotifications(currentUserId, userRole) {
+  async getReservationNotifications(currentUserId, userRole, opts = {}) {
     try {
       const now = Date.now();
+      const force = !!(opts && opts.force);
       // Respetar cooldown si hubo 429 previamente
       const globalRemaining = this._getGlobalCooldownRemaining();
       if ((this.cooldownUntil && now < this.cooldownUntil) || globalRemaining > 0) {
@@ -42,7 +43,7 @@ class NotificationsService {
       }
 
       // Evitar sobre-solicitudes si se llama demasiado seguido
-      if (now - this.lastFetchAt < this.minIntervalMs) {
+      if (!force && (now - this.lastFetchAt < this.minIntervalMs)) {
         return this.notifications;
       }
 
@@ -73,6 +74,15 @@ class NotificationsService {
           case 'administrador':
           case 'admin':
             filteredReservations = response.data;
+            // No notificar al admin sobre reservas que él mismo creó (ruido)
+            filteredReservations = filteredReservations.filter(r => {
+              const normalized = normalizeStatus(r.status || r.estado);
+              const createdBy = r.createdBy || r.creadoPor; // compat
+              // Suprimir notificaciones de creación propias principalmente en estado pendiente
+              const isSelfCreation = createdBy && String(createdBy) === String(currentUserId);
+              const isPending = normalized === 'PENDING';
+              return !(isSelfCreation && isPending);
+            });
             break;
           case 'instructor':
             // Instructores: mostrar solo reservas aprobadas o rechazadas
@@ -92,7 +102,7 @@ class NotificationsService {
         }
         
         // Enriquecer con datos de usuario y ambiente para evitar 'desconocido'
-        const enrichedReservations = await enrichReservasWithDetails(filteredReservations);
+        const enrichedReservations = await enrichReservasWithDetails(filteredReservations, { id: currentUserId });
 
         // Ordenar por fecha de creación (más recientes primero)
         const sortedReservations = enrichedReservations.sort((a, b) => 
@@ -119,11 +129,17 @@ class NotificationsService {
           let message = `${userName} ha realizado una reserva en ${ambienteName}`;
           
           // Personalizar mensaje según el rol
+          const normalized = normalizeStatus(reserva.status || reserva.estado);
           switch (userRole?.toLowerCase()) {
             case 'administrador':
             case 'admin':
               title = 'Gestión de Reserva';
-              message = `Reserva de ${userName} en ${ambienteName} - Estado: ${reserva.estado || reserva.status || 'Pendiente'}`;
+              if (normalized === 'CANCELLED' && !!reserva.approvedBy) {
+                title = 'Reserva cancelada tras aprobación';
+                message = `El instructor ${userName} canceló su reserva aprobada en ${ambienteName}`;
+              } else {
+                message = `Reserva de ${userName} en ${ambienteName} - Estado: ${reserva.estado || reserva.status || 'Pendiente'}`;
+              }
               break;
               
             case 'instructor':
@@ -142,13 +158,17 @@ class NotificationsService {
           const wasRead = existing ? !!existing.read : false;
           const wasReadPersisted = readSet.has(reserva._id);
 
+          // Usar updatedAt para eventos de cambio de estado
+          const ts = (normalized === 'CANCELLED' || normalized === 'APPROVED' || normalized === 'REJECTED')
+            ? new Date(reserva.updatedAt || reserva.fechaActualizacion || reserva.createdAt || reserva.fechaCreacion)
+            : new Date(reserva.createdAt || reserva.fechaCreacion);
           return {
             id: reserva._id,
             type: 'reservation',
             title,
             message,
             data: reserva,
-            timestamp: new Date(reserva.createdAt || reserva.fechaCreacion),
+            timestamp: ts,
             read: wasRead || wasReadPersisted,
             userRole: userRole // Agregar rol para referencia
           };

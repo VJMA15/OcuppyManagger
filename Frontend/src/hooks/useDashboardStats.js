@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useReservasContext } from '@/contexts/ReservasContext';
 import { useAmbientes } from './useAmbientes';
 import { obtenerAmbientesOcupados } from '@/utils/ambienteUtils';
+import { normalizeStatus } from '@/utils/reservasUtils';
  
 export const useDashboardStats = () => {
     const { reservas, loading: loadingReservas, stats: contextStats } = useReservasContext();
@@ -36,8 +37,13 @@ export const useDashboardStats = () => {
 
         console.log('📊 Calculando estadísticas con:', { reservas, ambientes });
 
-        // Usar las estadísticas calculadas del contexto
-        const totalReservas = contextStats.total;
+        // Calcular total de reservas excluyendo COMPLETED y REJECTED
+        const totalReservas = Array.isArray(reservas)
+            ? reservas.filter(r => {
+                const st = normalizeStatus(r.status ?? r.estado);
+                return st !== 'COMPLETED' && st !== 'REJECTED';
+              }).length
+            : 0;
         const reservasPendientes = contextStats.pendientes;
         const reservasAprobadas = contextStats.aprobadas;
         const reservasRechazadas = contextStats.rechazadas;
