@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 // Función helper para convertir hora a jornada
 const getJornadaFromHora = (hora) => {
@@ -13,7 +13,7 @@ export const useReportGeneration = () => {
   const [reports, setReports] = useState([]);
 
   // Generar informe automático cuando una reserva se completa
-  const generateReport = (reserva) => {
+  const generateReport = useCallback((reserva) => {
     const report = {
       id: Date.now() + Math.random(),
       fecha: new Date().toISOString(),
@@ -42,10 +42,10 @@ export const useReportGeneration = () => {
     setReports(nuevosReports);
     
     return report;
-  };
+  }, []);
 
   // Generar informe de reserva cancelada
-  const generateCancellationReport = (reserva) => {
+  const generateCancellationReport = useCallback((reserva) => {
     const report = {
       id: Date.now() + Math.random(),
       fecha: new Date().toISOString(),
@@ -72,10 +72,10 @@ export const useReportGeneration = () => {
     
     setReports(nuevosReports);
     return report;
-  };
+  }, []);
 
   // Generar informe de reserva rechazada
-  const generateRejectionReport = (reserva) => {
+  const generateRejectionReport = useCallback((reserva) => {
     const report = {
       id: Date.now() + Math.random(),
       fecha: new Date().toISOString(),
@@ -89,18 +89,18 @@ export const useReportGeneration = () => {
       duracion: reserva.duracion || 6,
       estado: 'rechazada',
       motivo: reserva.motivo,
-      motivoRechazo: reserva.motivoRechazo,
       fechaRechazo: new Date().toISOString(),
       tipo: 'rechazada'
     };
 
+    // Guardar en localStorage
     const reportsGuardados = JSON.parse(localStorage.getItem('reports') || '[]');
     const nuevosReports = [...reportsGuardados, report];
     localStorage.setItem('reports', JSON.stringify(nuevosReports));
     
     setReports(nuevosReports);
     return report;
-  };
+  }, []);
 
   // Cargar informes existentes
   useEffect(() => {
@@ -143,7 +143,7 @@ export const useReportGeneration = () => {
       window.removeEventListener('reserva-cancelled', handleReservaCancelled);
       window.removeEventListener('reserva-rejected', handleReservaRejected);
     };
-  }, []);
+  }, [generateReport, generateCancellationReport, generateRejectionReport]);
 
   // Función para eliminar un informe individual
   const deleteReport = (reportId) => {
@@ -169,4 +169,4 @@ export const useReportGeneration = () => {
     deleteReport,
     deleteMultipleReports
   };
-}; 
+};

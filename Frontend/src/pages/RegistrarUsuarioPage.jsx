@@ -114,10 +114,10 @@ export default function RegistrarUsuarioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-4 sm:p-6 lg:p-8">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 mb-6">
           <button
             onClick={() => navigate(-1)}
             className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -136,10 +136,10 @@ export default function RegistrarUsuarioPage() {
 
         {/* Formulario */}
         <Card className="shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-sena-soft-500 to-sena-soft-600 text-white">
+          <CardHeader className="bg-gradient-to-r from-primary to-primary-dark text-white">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                <UserPlus className="w-6 h-6" />
+              <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
+                <UserPlus className="w-5 h-5" />
               </div>
               <div>
                 <CardTitle className="text-xl">Información del Usuario</CardTitle>
@@ -150,7 +150,7 @@ export default function RegistrarUsuarioPage() {
             </div>
           </CardHeader>
           
-          <CardContent className="p-8">
+          <CardContent className="p-6 md:p-8">
             {/* Mensajes de estado */}
             {error && (
               <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-3">
@@ -166,9 +166,9 @@ export default function RegistrarUsuarioPage() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {/* Información Personal */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Nombre Completo
@@ -181,7 +181,7 @@ export default function RegistrarUsuarioPage() {
                       name="nombre"
                       value={form.nombre}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena-soft-500 focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
+                      className="w-full pl-10 pr-4 py-2.5 bg-white text-slate-900 placeholder-slate-400 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
                       placeholder="Ingresa el nombre completo"
                       required
                     />
@@ -200,7 +200,7 @@ export default function RegistrarUsuarioPage() {
                       name="cc"
                       value={form.cc}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena-soft-500 focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
+                      className="w-full pl-10 pr-4 py-2.5 bg-white text-slate-900 placeholder-slate-400 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
                       placeholder="Ingresa la C.C"
                       required
                       pattern="[0-9]{8,12}"
@@ -211,7 +211,7 @@ export default function RegistrarUsuarioPage() {
               </div>
 
               {/* Email y Rol */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Correo Electrónico
@@ -225,7 +225,7 @@ export default function RegistrarUsuarioPage() {
                       type="email"
                       value={form.email}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena-soft-500 focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
+                      className="w-full pl-10 pr-4 py-2.5 bg-white text-slate-900 placeholder-slate-400 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
                       placeholder="Ingresa el correo electrónico"
                       required
                     />
@@ -240,7 +240,7 @@ export default function RegistrarUsuarioPage() {
                     name="role"
                     value={form.role}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena-soft-500 focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
+                    className="w-full px-4 py-2.5 bg-white text-slate-900 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
                     required
                   >
                     <option value="instructor">Instructor</option>
@@ -251,7 +251,7 @@ export default function RegistrarUsuarioPage() {
               </div>
 
               {/* Contraseñas */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Contraseña
@@ -265,7 +265,7 @@ export default function RegistrarUsuarioPage() {
                       type={showPassword ? "text" : "password"}
                       value={form.password}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-12 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena-soft-500 focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
+                      className="w-full pl-10 pr-12 py-2.5 bg-white text-slate-900 placeholder-slate-400 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
                       placeholder="Ingresa la contraseña"
                       required
                       minLength="6"
@@ -297,7 +297,7 @@ export default function RegistrarUsuarioPage() {
                       type={showPasswordConfirm ? "text" : "password"}
                       value={form.passwordConfirm}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-12 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena-soft-500 focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
+                      className="w-full pl-10 pr-12 py-2.5 bg-white text-slate-900 placeholder-slate-400 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
                       placeholder="Confirma la contraseña"
                       required
                     />
@@ -317,7 +317,7 @@ export default function RegistrarUsuarioPage() {
               </div>
 
               {/* Botones */}
-              <div className="flex gap-4 pt-6">
+              <div className="flex gap-4 pt-4">
                 <Button
                   type="button"
                   variant="outline"
@@ -329,7 +329,7 @@ export default function RegistrarUsuarioPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-gradient-to-r from-sena-soft-500 to-sena-soft-600 hover:from-sena-soft-600 hover:to-sena-soft-700"
+                  className="flex-1 bg-primary hover:bg-primary-dark focus:ring-2 focus:ring-primary/50 text-white"
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center">

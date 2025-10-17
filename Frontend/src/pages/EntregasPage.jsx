@@ -311,7 +311,7 @@ const EntregasPage = () => {
             <select
               value={filtros.estado}
               onChange={(e) => handleFiltroChange('estado', e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="select-input"
             >
               <option value="">Todos los estados</option>
               <option value="pendiente">Pendiente</option>
@@ -323,7 +323,7 @@ const EntregasPage = () => {
             <select
               value={filtros.jornada}
               onChange={(e) => handleFiltroChange('jornada', e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="select-input"
             >
               <option value="">Todas las jornadas</option>
               <option value="mañana">Mañana</option>
@@ -583,7 +583,7 @@ const EntregasPage = () => {
                         value={formData.ambiente}
                         onChange={(e) => setFormData(prev => ({ ...prev, ambiente: e.target.value }))}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="select-input"
                       >
                         <option value="">Seleccionar ambiente</option>
                         {ambientesDisponibles.map(ambiente => (
@@ -602,7 +602,7 @@ const EntregasPage = () => {
                         value={formData.instructor}
                         onChange={(e) => setFormData(prev => ({ ...prev, instructor: e.target.value }))}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="select-input"
                       >
                         <option value="">Seleccionar instructor</option>
                         {instructoresDisponibles.map(instructor => (
@@ -621,7 +621,7 @@ const EntregasPage = () => {
                         value={formData.jornada}
                         onChange={(e) => setFormData(prev => ({ ...prev, jornada: e.target.value }))}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="select-input"
                       >
                         <option value="mañana">Mañana</option>
                         <option value="tarde">Tarde</option>

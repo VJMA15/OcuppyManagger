@@ -3,6 +3,7 @@ import User from '../models/user.model';
 import AppError from '../utils/appError';
 import catchAsync from '../utils/catchAsync';
 import bcrypt from 'bcryptjs';
+import Bitacora from '../models/bitacora.model';
 
 // Obtener todos los usuarios
 export const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -101,6 +102,21 @@ export const createUser = catchAsync(async (req: Request, res: Response, next: N
   // Remover la contraseña de la respuesta
   const userResponse = newUser.toObject();
   const { password: _, ...userWithoutPassword } = userResponse;
+
+  // Registrar en bitácora la creación del usuario
+  try {
+    await Bitacora.registrarAccion(
+      (req as any).user?.id || (req as any).user?._id || 'sistema',
+      'usuario_creado',
+      'usuario',
+      newUser._id?.toString(),
+      JSON.stringify({ nombre: newUser.nombre, email: newUser.email, cc: newUser.cc, role: newUser.role }),
+      req.ip,
+      req.get('User-Agent') || ''
+    );
+  } catch (e) {
+    console.error('Error registrando acción de creación de usuario en bitácora:', e);
+  }
   
   res.status(201).json({
     success: true,
@@ -112,7 +128,7 @@ export const createUser = catchAsync(async (req: Request, res: Response, next: N
 // Actualizar usuario
 export const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
-  const { nombre, email, rol, telefono, documento, activo } = req.body;
+  const { nombre, email, role, rol, telefono, documento, activo } = req.body;
   
   // Verificar si el usuario existe
   const user = await User.findById(id);
@@ -132,7 +148,8 @@ export const updateUser = catchAsync(async (req: Request, res: Response, next: N
   const updateData: any = {};
   if (nombre) updateData.nombre = nombre;
   if (email) updateData.email = email;
-  if (rol) updateData.rol = rol;
+  if (role) updateData.role = role;
+  else if (rol) updateData.role = rol;
   if (telefono !== undefined) updateData.telefono = telefono;
   if (documento !== undefined) updateData.documento = documento;
   if (activo !== undefined) updateData.activo = activo;
@@ -147,6 +164,55 @@ export const updateUser = catchAsync(async (req: Request, res: Response, next: N
     success: true,
     message: 'Usuario actualizado exitosamente',
     data: { user: updatedUser }
+  });
+});
+
+// Actualizar contraseña de usuario (solo admin)
+export const updateUserPasswordAdmin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const { password, passwordConfirm } = req.body as { password?: string; passwordConfirm?: string };
+
+  if (!password || typeof password !== 'string') {
+    return next(new AppError('La contraseña es requerida', 400));
+  }
+  if (password.length < 6) {
+    return next(new AppError('La contraseña debe tener al menos 6 caracteres', 400));
+  }
+  if (typeof passwordConfirm !== 'undefined' && password !== passwordConfirm) {
+    return next(new AppError('Las contraseñas no coinciden', 400));
+  }
+
+  // Verificar si el usuario existe
+  const user = await User.findById(id).select('+password');
+  if (!user) {
+    return next(new AppError('Usuario no encontrado', 404));
+  }
+
+  // Actualizar contraseña y guardar para disparar hooks de Mongoose
+  user.password = password;
+  await user.save();
+
+  const sanitizedUser = await User.findById(id).select('-password -passwordResetToken -passwordResetExpires');
+
+  // Registrar en bitácora el cambio de contraseña por admin
+  try {
+    await Bitacora.registrarAccion(
+      (req as any).user?.id || (req as any).user?._id || 'sistema',
+      'usuario_password_actualizada_admin',
+      'usuario',
+      id,
+      JSON.stringify({ email: (sanitizedUser as any)?.email, cc: (sanitizedUser as any)?.cc }),
+      req.ip,
+      req.get('User-Agent') || ''
+    );
+  } catch (e) {
+    console.error('Error registrando acción de actualización de contraseña en bitácora:', e);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Contraseña actualizada exitosamente',
+    data: { user: sanitizedUser }
   });
 });
 
@@ -177,7 +243,12 @@ export const deleteUser = catchAsync(async (req: Request, res: Response, next: N
 // Actualizar rol de usuario
 export const updateUserRole = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
-  const { rol } = req.body;
+  const { role, rol } = req.body;
+  const newRole = role || rol;
+  
+  if (!newRole) {
+    return next(new AppError('Rol es requerido', 400));
+  }
   
   // Verificar si el usuario existe
   const user = await User.findById(id);
@@ -193,7 +264,7 @@ export const updateUserRole = catchAsync(async (req: Request, res: Response, nex
   // Actualizar el rol
   const updatedUser = await User.findByIdAndUpdate(
     id,
-    { rol },
+    { role: newRole },
     { new: true, runValidators: true }
   ).select('-password -passwordResetToken -passwordResetExpires');
   

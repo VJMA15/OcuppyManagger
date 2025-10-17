@@ -91,11 +91,11 @@ export default function GestionUsuariosPage() {
 
   const getRoleColor = (role) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'instructor': return 'bg-blue-100 text-blue-800';
-      case 'guardia': return 'bg-green-100 text-green-800';
-      case 'estudiante': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'admin': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800';
+      case 'instructor': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+      case 'guardia': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800';
+      case 'estudiante': return 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+      default: return 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300 border-slate-200 dark:border-slate-700';
     }
   };
 
@@ -143,7 +143,7 @@ export default function GestionUsuariosPage() {
             </div>
           </div>
           <Button
-            onClick={() => navigate('/registrar-usuario')}
+            onClick={() => navigate('/admin/registrar-usuario')}
             className="bg-sena-soft-600 hover:bg-sena-soft-700"
           >
             <UserPlus className="w-4 h-4 mr-2" />
@@ -178,7 +178,7 @@ export default function GestionUsuariosPage() {
                 <select
                   value={filterRole}
                   onChange={(e) => setFilterRole(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sena-soft-500 focus:border-transparent"
+                  className="select-input"
                 >
                   <option value="all">Todos los roles</option>
                   <option value="admin">Administrador</option>
@@ -196,16 +196,16 @@ export default function GestionUsuariosPage() {
           {filteredUsers.map((user) => (
             <Card key={user._id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-sena-soft-100 rounded-full flex items-center justify-center">
+                <div className="flex items-start justify-between mb-4 gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 bg-sena-soft-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <User className="w-6 h-6 text-sena-soft-600" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900 dark:text-white">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-slate-900 dark:text-white truncate">
                         {user.nombre}
                       </h3>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <p className="text-sm text-slate-600 dark:text-slate-400 truncate">
                         CC: {user.cc}
                       </p>
                     </div>
@@ -220,7 +220,7 @@ export default function GestionUsuariosPage() {
                     {selectedUser === user._id && (
                       <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 z-10">
                         <button
-                          onClick={() => navigate(`/dashboard/usuarios/${user._id}/editar`)}
+                          onClick={() => navigate(`/admin/usuarios/${user._id}/editar`)}
                           className="w-full px-4 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2"
                         >
                           <Edit className="w-4 h-4" />
@@ -242,15 +242,15 @@ export default function GestionUsuariosPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                  <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 min-w-0">
                     <Mail className="w-4 h-4" />
-                    <span>{user.email}</span>
+                    <span className="truncate">{user.email}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className={`px-2 py-1 rounded-md border text-xs font-medium ${getRoleColor(user.role)}`}>
                       {getRoleLabel(user.role)}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs px-2 py-1 rounded-md border bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                       {user.estado || 'Activo'}
                     </span>
                   </div>

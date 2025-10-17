@@ -48,29 +48,10 @@ const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit })
     aceptaTerminos: false
   });
 
+  const navigate = useNavigate();
   const handleToggleExpanded = (e) => {
     e.stopPropagation();
-    setIsExpanded(!isExpanded);
-    if (!isExpanded) {
-      // Reset form when opening
-      setLocalReservaForm({
-        nombre: '',
-        documento: '',
-        telefono: '',
-        email: '',
-        fecha: '',
-        horaInicio: '',
-        horaFin: '',
-        jornada: '',
-        numeroPersonas: '',
-        proposito: '',
-        motivo: '',
-        equipoRequerido: '',
-        observaciones: '',
-        aceptaTerminos: false
-      });
-      setErrors({});
-    }
+    navigate('/instructor/nueva-reserva', { state: { ambienteId: ambiente._id } });
   };
 
   const validateForm = () => {
@@ -202,21 +183,10 @@ const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit })
   return (
     <div
       key={ambiente._id}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-slate-100 dark:border-gray-700 hover:border-slate-200 dark:hover:border-gray-600"
+      className="bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-slate-100 dark:border-gray-700 hover:border-slate-200 dark:hover:border-gray-600"
       onClick={() => onAmbienteClick(ambiente)}
     >
-        <div className="relative">
-          <div className="h-36 bg-gradient-to-r from-slate-100 to-slate-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
-            <Building2 className="h-12 w-12 text-slate-400 dark:text-gray-500" />
-          </div>
-          <div className="absolute top-4 right-4">
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
-            statusStyles[ambiente.estado] || statusStyles.inactivo
-          }`}>
-            {ambiente.estado.charAt(0).toUpperCase() + ambiente.estado.slice(1)}
-          </span>
-        </div>
-      </div>
+      
       <div className="p-5">
         <div className="flex justify-between items-start">
           <div>
@@ -226,16 +196,23 @@ const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit })
               {ambiente.ubicacion}
             </p>
           </div>
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            typeStyles[(ambiente.tipo && ambiente.tipo.toLowerCase()) || 'otro'] || typeStyles.otro
-          }`}>
-            {ambiente.tipo}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+              statusStyles[ambiente.estado] || statusStyles.inactivo
+            }`}>
+              {ambiente.estado.charAt(0).toUpperCase() + ambiente.estado.slice(1)}
+            </span>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              typeStyles[(ambiente.tipo && ambiente.tipo.toLowerCase()) || 'otro'] || typeStyles.otro
+            }`}>
+              {ambiente.tipo}
+            </span>
+          </div>
         </div>
         <div className="mt-4 pt-4 border-t border-slate-100 dark:border-gray-700">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center">
-              <div className="p-2 bg-slate-50 dark:bg-gray-700 rounded-lg mr-3">
+              <div className="p-2 bg-slate-50 dark:bg-gray-700 rounded-xl shadow-sm mr-3">
                 <Users className="h-4 w-4 text-slate-500 dark:text-gray-400" />
               </div>
               <div>
@@ -244,7 +221,7 @@ const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit })
               </div>
             </div>
             <div className="flex items-center">
-              <div className="p-2 bg-slate-50 dark:bg-gray-700 rounded-lg mr-3">
+              <div className="p-2 bg-slate-50 dark:bg-gray-700 rounded-xl shadow-sm mr-3">
                 <BookOpen className="h-4 w-4 text-slate-500 dark:text-gray-400" />
               </div>
               <div>
@@ -257,13 +234,10 @@ const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit })
         <div className="mt-6 flex justify-center">
           <button
             onClick={handleToggleExpanded}
-            disabled={ambiente.estado !== 'disponible'}
-            className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors ${
-              ambiente.estado === 'disponible'
-                ? isExpanded
-                  ? 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200'
-                  : 'bg-green-700 text-white hover:bg-green-800 shadow-sm hover:shadow-md'
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+            className={`px-4 py-2 rounded-xl text-sm font-medium flex items-center transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+              isExpanded
+                ? 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-200 focus:ring-red-500'
+                : 'bg-green-700 text-white hover:bg-green-800 shadow-sm hover:shadow-md focus:ring-green-500'
             }`}
           >
             {isExpanded ? (
@@ -744,7 +718,7 @@ const AmbienteCard = React.memo(({ ambiente, onAmbienteClick, onReservaSubmit })
                          <Button
                            type="button"
                            variant="outline"
-                           onClick={() => navigate('/instructor/dashboard')}
+                           onClick={() => navigate('/instructor')}
                            className="flex-1 px-6 py-3 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 font-medium"
                          >
                            Cancelar
@@ -903,22 +877,24 @@ const InstructorAmbientesPage = () => {
     setModalErrors({});
     
     try {
-      // Mapear jornada a horarios específicos
+      // Mapear jornada a horarios específicos (alineado con ReservaPage/InstructorReservaPage)
       const horarios = {
         'mañana': { inicio: '06:00', fin: '12:00' },
-        'tarde': { inicio: '12:00', fin: '18:00' },
-        'noche': { inicio: '18:00', fin: '22:00' }
+        'tarde': { inicio: '12:30', fin: '18:00' },
+        'noche': { inicio: '18:30', fin: '22:00' }
       };
       
       const horario = horarios[reservaForm.jornada];
       
       const reservaData = {
         environmentId: selectedAmbiente._id,
-        startDate: `${reservaForm.fecha}T${horario.inicio}:00.000Z`,
-        endDate: `${reservaForm.fecha}T${horario.fin}:00.000Z`,
+        reservationDate: reservaForm.fecha,
+        jornada: reservaForm.jornada,
+        startDate: `${reservaForm.fecha}T${horario.inicio}:00`,
+        endDate: `${reservaForm.fecha}T${horario.fin}:00`,
         purpose: reservaForm.proposito,
-        equipment: [], // Por ahora vacío, se puede agregar después
-        userCC: user.cc // Usar el CC del usuario autenticado
+        equipment: [],
+        userCC: user.cc
       };
       
       console.log('Enviando datos de reserva:', reservaData);
@@ -942,7 +918,12 @@ const InstructorAmbientesPage = () => {
       
     } catch (error) {
       console.error('Error al crear reserva:', error);
-      setModalErrors({ general: 'Error al crear la reserva. Intente nuevamente.' });
+      const msg = String(error?.message || '').toLowerCase();
+      if (msg.includes('ya está reservada') || (msg.includes('jornada') && msg.includes('reservada'))) {
+        setModalErrors({ general: 'La jornada seleccionada ya está reservada para esa fecha.' });
+      } else {
+        setModalErrors({ general: 'Error al crear la reserva. Intente nuevamente.' });
+      }
     } finally {
       setIsModalSubmitting(false);
     }
@@ -1014,9 +995,7 @@ const InstructorAmbientesPage = () => {
               Jornada *
             </label>
             <select
-              className={`block w-full px-3 py-2 border rounded-md ${
-                modalErrors.jornada ? 'border-red-300' : 'border-gray-300'
-              }`}
+              className={`select-input ${modalErrors.jornada ? 'border-red-300' : ''}`}
               value={reservaForm.jornada}
               onChange={(e) => setReservaForm(prev => ({ ...prev, jornada: e.target.value }))}
             >
@@ -1110,7 +1089,7 @@ const InstructorAmbientesPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700 overflow-hidden">
+        <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 text-white">
             <div className="flex flex-col md:flex-row md:items-center justify-between">
               <div>
@@ -1130,7 +1109,7 @@ const InstructorAmbientesPage = () => {
                 <input
                   type="text"
                   placeholder="Buscar por nombre o ubicación..."
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-slate-700 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-150"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 dark:border-gray-600 rounded-2xl shadow-sm bg-white dark:bg-gray-700 text-slate-700 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:border-transparent transition duration-150"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -1142,7 +1121,7 @@ const InstructorAmbientesPage = () => {
                     <Filter className="h-4 w-4 text-slate-400 dark:text-gray-500" />
                   </div>
                   <select
-                    className="appearance-none bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 pl-10 pr-8 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
+                    className="appearance-none bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 pl-10 pr-8 py-2.5 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:border-transparent cursor-pointer transition-all"
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
                   >
@@ -1160,7 +1139,7 @@ const InstructorAmbientesPage = () => {
                     <Clock className="h-4 w-4 text-slate-400 dark:text-gray-500" />
                   </div>
                   <select
-                    className="appearance-none bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 pl-10 pr-8 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
+                    className="appearance-none bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 text-slate-700 dark:text-gray-200 pl-10 pr-8 py-2.5 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:border-transparent cursor-pointer transition-all"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                   >
@@ -1196,13 +1175,16 @@ const InstructorAmbientesPage = () => {
               <AmbienteCard
                 key={ambiente._id}
                 ambiente={ambiente}
-                onAmbienteClick={() => {}}
+                onAmbienteClick={(amb) => {
+                  setSelectedAmbiente(amb);
+                  setShowModal(true);
+                }}
                 onReservaSubmit={() => {}}
               />
             ))}
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-slate-200 dark:border-gray-700 overflow-hidden">
             <div className="text-center p-12">
               <div className="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-slate-50 dark:bg-gray-700 mb-4">
                 <Search className="h-10 w-10 text-slate-300 dark:text-gray-500" />
@@ -1227,7 +1209,110 @@ const InstructorAmbientesPage = () => {
         )}
       </div>
 
-      {/* Modales */}
+      {/* Modal de detalles de ambiente */}
+      {showModal && selectedAmbiente && (
+        <Modal
+          isOpen={showModal}
+          onClose={() => {
+            setShowModal(false);
+            setSelectedAmbiente(null);
+          }}
+          title={selectedAmbiente.nombre}
+        >
+          <div className="space-y-6">
+            {/* Etiquetas de estado y tipo */}
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                statusStyles[selectedAmbiente.estado] || statusStyles.inactivo
+              }`}>
+                {selectedAmbiente.estado}
+              </span>
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                typeStyles[(selectedAmbiente.tipo && selectedAmbiente.tipo.toLowerCase()) || 'otro'] || typeStyles.otro
+              }`}>
+                {selectedAmbiente.tipo}
+              </span>
+            </div>
+
+            {/* Información principal */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-slate-500" />
+                <div>
+                  <div className="text-xs text-slate-500">Ubicación</div>
+                  <div className="font-medium text-slate-800 dark:text-gray-200">{selectedAmbiente.ubicacion}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-slate-500" />
+                <div>
+                  <div className="text-xs text-slate-500">Capacidad</div>
+                  <div className="font-medium text-slate-800 dark:text-gray-200">{selectedAmbiente.capacidad} personas</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Descripción */}
+            {selectedAmbiente.descripcion && (
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Descripción</div>
+                <p className="text-slate-700 dark:text-gray-300">{selectedAmbiente.descripcion}</p>
+              </div>
+            )}
+
+            {/* Recursos / Servicios / Equipos si existen */}
+            {Array.isArray(selectedAmbiente.recursos) && selectedAmbiente.recursos.length > 0 && (
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Recursos</div>
+                <ul className="list-disc list-inside text-slate-700 dark:text-gray-300">
+                  {selectedAmbiente.recursos.map((r, idx) => (
+                    <li key={idx}>{r}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {Array.isArray(selectedAmbiente.servicios) && selectedAmbiente.servicios.length > 0 && (
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Servicios</div>
+                <ul className="list-disc list-inside text-slate-700 dark:text-gray-300">
+                  {selectedAmbiente.servicios.map((s, idx) => (
+                    <li key={idx}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {Array.isArray(selectedAmbiente.equipos) && selectedAmbiente.equipos.length > 0 && (
+              <div>
+                <div className="text-xs text-slate-500 mb-1">Equipos</div>
+                <ul className="list-disc list-inside text-slate-700 dark:text-gray-300">
+                  {selectedAmbiente.equipos.map((e, idx) => (
+                    <li key={idx}>{e}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Acciones */}
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={() => { setShowModal(false); setSelectedAmbiente(null); }}>
+                Cerrar
+              </Button>
+              <Button
+                onClick={() => {
+                  navigate('/instructor/nueva-reserva', { state: { ambienteId: selectedAmbiente._id } });
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                Reservar
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modales de reserva */}
       {renderReservaModal()}
 
       {/* Modal de éxito */}

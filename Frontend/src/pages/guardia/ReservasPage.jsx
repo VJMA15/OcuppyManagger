@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Calendar, Clock, Search, Filter, User, CheckCircle, XCircle, MoreVertical, AlertCircle, MapPin, Users as UsersIcon, Plus, Edit, Trash2, Eye, FileText, Edit3, Building2, Sun } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Calendar, Clock, Search, Filter, User, CheckCircle, XCircle, MoreVertical, AlertCircle, MapPin, Users as UsersIcon, Plus, Edit, Trash2, Eye, FileText, Edit3, Building2, Sun, Settings } from 'lucide-react';
 import { useGuardia } from '@/contexts/GuardiaContext';
 
 const EntregaAmbientesPage = () => {
@@ -125,13 +125,17 @@ const EntregaAmbientesPage = () => {
     }
   };
 
-  // useEffect para actualizar el contexto con entregas y filtros
-  useEffect(() => {
+  // useEffect para actualizar el contexto con entregas y filtros - CORREGIDO
+  const updateReservasDataMemoized = useCallback(() => {
     updateReservasData({
       data: entregas,
       filtros: { searchTerm, filterEstado, filterJornada }
     });
   }, [entregas, searchTerm, filterEstado, filterJornada, updateReservasData]);
+
+  useEffect(() => {
+    updateReservasDataMemoized();
+  }, [updateReservasDataMemoized]);
 
   // useEffect para restaurar filtros desde el contexto al montar el componente
   useEffect(() => {
@@ -140,7 +144,7 @@ const EntregaAmbientesPage = () => {
       setFilterEstado(reservasData.filtros.filterEstado || 'disponibles');
       setFilterJornada(reservasData.filtros.filterJornada || 'todas');
     }
-  }, []);
+  }, []); // Solo al montar
 
   // Filtrar entregas
   const entregasFiltradas = entregas.filter(entrega => {

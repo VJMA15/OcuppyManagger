@@ -113,27 +113,82 @@ exports.logout = logout;
 // Refrescar token
 exports.refreshToken = (0, catchAsync_1.default)(async (req, res, next) => {
     let token;
+    console.log('🔄 [RefreshToken] Iniciando renovación de token');
+    console.log('🔄 [RefreshToken] Headers:', req.headers.authorization);
+    console.log('🔄 [RefreshToken] Cookies:', req.cookies);
+    // Buscar token en múltiples ubicaciones
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
+        console.log('🔄 [RefreshToken] Token encontrado en Authorization header');
     }
     else if (req.cookies.jwt) {
         token = req.cookies.jwt;
+        console.log('🔄 [RefreshToken] Token encontrado en cookie jwt');
+    }
+    else if (req.cookies.token) {
+        token = req.cookies.token;
+        console.log('🔄 [RefreshToken] Token encontrado en cookie token');
+    }
+    else if (req.cookies.auth_token) {
+        token = req.cookies.auth_token;
+        console.log('🔄 [RefreshToken] Token encontrado en cookie auth_token');
     }
     if (!token) {
-        return next(new appError_1.default('No estás logueado', 401));
+        console.log('❌ [RefreshToken] No se encontró token en ninguna ubicación');
+        return next(new appError_1.default('Token de acceso requerido para renovación', 401));
     }
-    // Verificar token
-    const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
-    // Verificar si el usuario existe
-    const currentUser = await user_model_1.default.findById(decoded.id);
-    if (!currentUser) {
-        return next(new appError_1.default('El usuario ya no existe', 401));
+    try {
+        // Verificar token
+        console.log('🔄 [RefreshToken] Verificando token...');
+        const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+        console.log('🔄 [RefreshToken] Token decodificado:', { id: decoded.id, role: decoded.role });
+        // Verificar si el usuario existe
+        const currentUser = await user_model_1.default.findById(decoded.id).select('+activo');
+        if (!currentUser) {
+            console.log('❌ [RefreshToken] Usuario no encontrado en BD');
+            return next(new appError_1.default('El usuario ya no existe', 401));
+        }
+        console.log('🔄 [RefreshToken] Usuario encontrado:', {
+            id: currentUser._id,
+            nombre: currentUser.nombre,
+            role: currentUser.role,
+            activo: currentUser.activo
+        });
+        // Verificar si el usuario está activo
+        if (!currentUser.activo) {
+            console.log('❌ [RefreshToken] Usuario inactivo');
+            return next(new appError_1.default('Tu cuenta ha sido desactivada', 401));
+        }
+        console.log('✅ [RefreshToken] Generando nuevo token...');
+        // Generar nuevo token
+        const newToken = signToken(currentUser._id.toString());
+        const cookieOptions = {
+            expires: new Date(Date.now() + (parseInt(process.env.JWT_COOKIE_EXPIRES_IN) || 7) * 24 * 60 * 60 * 1000),
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production'
+        };
+        res.cookie('jwt', newToken, cookieOptions);
+        // Crear respuesta sin password
+        const userResponse = {
+            id: currentUser._id,
+            nombre: currentUser.nombre,
+            cc: currentUser.cc,
+            email: currentUser.email,
+            role: currentUser.role,
+            activo: currentUser.activo,
+            createdAt: currentUser.createdAt,
+            updatedAt: currentUser.updatedAt
+        };
+        res.status(200).json({
+            success: true,
+            token: newToken,
+            user: userResponse
+        });
     }
-    // Verificar si el usuario está activo
-    if (!currentUser.activo) {
-        return next(new appError_1.default('Tu cuenta ha sido desactivada', 401));
+    catch (error) {
+        console.log('❌ [RefreshToken] Error al verificar token:', error instanceof Error ? error.message : 'Unknown error');
+        return next(new appError_1.default('Token inválido o expirado', 401));
     }
-    createSendToken(currentUser, 200, res);
 });
 // Recuperar contraseña
 exports.forgotPassword = (0, catchAsync_1.default)(async (req, res, next) => {

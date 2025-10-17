@@ -14,9 +14,8 @@ export default function EditarUsuarioPage() {
     cc: "",
     email: "",
     role: "instructor",
-    telefono: "",
-    documento: "",
-    activo: true
+    password: "",
+    passwordConfirm: ""
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -36,9 +35,8 @@ export default function EditarUsuarioPage() {
             cc: user.cc || "",
             email: user.email || "",
             role: user.role || "instructor",
-            telefono: user.telefono || "",
-            documento: user.documento || "",
-            activo: user.activo !== undefined ? user.activo : true
+            password: "",
+            passwordConfirm: ""
           });
         } else {
           setError(response.error || "Error al cargar el usuario");
@@ -74,22 +72,53 @@ export default function EditarUsuarioPage() {
     setSuccess("");
 
     try {
-      // Mapear 'role' a 'rol' para que coincida con el backend
+      // Validación de contraseña (opcional)
+      if (form.password || form.passwordConfirm) {
+        if (!form.password) {
+          setError("La contraseña es obligatoria");
+          setIsLoading(false);
+          return;
+        }
+        if (form.password.length < 6) {
+          setError("La contraseña debe tener al menos 6 caracteres");
+          setIsLoading(false);
+          return;
+        }
+        if (form.password !== form.passwordConfirm) {
+          setError("Las contraseñas no coinciden");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Si se incluyó nueva contraseña, actualizar por ruta dedicada
+      if (form.password) {
+        const pwdResp = await usersService.updateUserPassword(id, {
+          password: form.password,
+          passwordConfirm: form.passwordConfirm
+        });
+        if (!pwdResp.success) {
+          setError(pwdResp.error || 'Error al actualizar la contraseña');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Mapear 'role' a 'rol' y actualizar datos generales
       const userData = {
-        ...form,
+        nombre: form.nombre,
+        email: form.email,
         rol: form.role
       };
-      delete userData.role;
-      
       const response = await usersService.updateUser(id, userData);
-      
+
       if (response.success) {
-        setSuccess("Usuario actualizado exitosamente");
+        setSuccess(form.password ? 'Usuario y contraseña actualizados exitosamente' : 'Usuario actualizado exitosamente');
         setTimeout(() => {
-          navigate('/dashboard/gestion-usuarios');
-        }, 2000);
+          navigate('/admin/gestion-usuarios');
+        }, 1500);
       } else {
-        setError(response.error || "Error al actualizar el usuario");
+        setError(response.error || 'Error al actualizar el usuario');
       }
     } catch (err) {
       console.error('Error updating user:', err);
@@ -129,7 +158,7 @@ export default function EditarUsuarioPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/dashboard/gestion-usuarios')}
+            onClick={() => navigate('/admin/gestion-usuarios')}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -265,39 +294,43 @@ export default function EditarUsuarioPage() {
                   </div>
                 </div>
 
-                {/* Teléfono y Estado */}
+                {/* Contraseña (opcional) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Teléfono (Opcional)
+                      Nueva Contraseña (opcional)
                     </label>
-                    <input
-                      name="telefono"
-                      type="tel"
-                      value={form.telefono}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena-soft-500 focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
-                      placeholder="Ingresa el teléfono"
-                    />
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-slate-400" />
+                      </div>
+                      <input
+                        name="password"
+                        type="password"
+                        value={form.password}
+                        onChange={handleChange}
+                        className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena-soft-500 focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
+                        placeholder="Ingresa la nueva contraseña"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Estado del Usuario
+                      Confirmar Contraseña
                     </label>
-                    <div className="flex items-center space-x-3 pt-2">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          name="activo"
-                          checked={form.activo}
-                          onChange={handleChange}
-                          className="rounded border-slate-300 text-sena-soft-500 focus:ring-sena-soft-500"
-                        />
-                        <span className="ml-2 text-sm text-slate-700 dark:text-slate-300">
-                          Usuario activo
-                        </span>
-                      </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-slate-400" />
+                      </div>
+                      <input
+                        name="passwordConfirm"
+                        type="password"
+                        value={form.passwordConfirm}
+                        onChange={handleChange}
+                        className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sena-soft-500 focus:border-transparent dark:bg-slate-800 dark:border-slate-600 dark:text-white transition-all duration-200"
+                        placeholder="Confirma la nueva contraseña"
+                      />
                     </div>
                   </div>
                 </div>

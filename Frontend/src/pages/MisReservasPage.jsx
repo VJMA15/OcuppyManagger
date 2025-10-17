@@ -1,36 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, User, Filter, Search, Plus, Eye, Edit, Trash2, ArrowLeft, Building2, FileText, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Filter, Search, Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/auth-context';
 import reservationsService from '../services/reservationsService';
-import { Button, Card, CardContent } from '../components/ui';
+import { enrichReservasWithDetails } from '../utils/reservasUtils';
+import realtime from '@/services/realtime';
 
 const MisReservasPage = () => {
   const navigate = useNavigate();
   const { user } = useAuthContext();
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState('todas');
   const [filterFecha, setFilterFecha] = useState('todas');
-  
-  // Estados para el modal de confirmación
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [reservaToCancel, setReservaToCancel] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
-    fetchMisReservas();
-  }, []);
+    // Esperar a que el usuario esté disponible para cargar
+    if (user?.id) {
+      fetchMisReservas();
+    } else {
+      // Si aún no hay usuario, no marcar error ni bloquear la UI
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   const fetchMisReservas = async () => {
     try {
       setLoading(true);
+      // No establecer error si el usuario aún no está listo
+      if (!user?.id) {
+        return;
+      }
       setError('');
       
-      const response = await reservationsService.getMyReservations();
+      const response = await reservationsService.getMyReservations(user._id || user.id);
       if (response.success) {
-        setReservas(response.data || []);
+        const enriched = await enrichReservasWithDetails(response.data || [], user);
+        setReservas(enriched);
       } else {
         setError(response.message || 'Error al cargar las reservas');
         setReservas([]);
@@ -44,28 +53,35 @@ const MisReservasPage = () => {
     }
   };
 
-  const handleCancelarReserva = (reservaId, event) => {
-    // Prevenir la propagación del evento
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
+  // Suscripción SSE para refrescar automáticamente cuando cambian reservas
+  useEffect(() => {
+    // Conectar a canal de reservas
+    realtime.connect({ channels: ['reservas'] });
+    const onReservasUpdated = () => {
+      if (user?.id || user?._id) {
+        fetchMisReservas();
+      }
+    };
+    realtime.on('reservas.updated', onReservasUpdated);
+    return () => {
+      realtime.off('reservas.updated', onReservasUpdated);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, user?._id]);
+
+  const handleCancelarReserva = async (reservaId) => {
+    if (!window.confirm('¿Estás seguro de que deseas cancelar esta reserva?')) {
+      return;
     }
 
-    // Mostrar modal de confirmación personalizado
-    setReservaToCancel(reservaId);
-    setShowConfirmModal(true);
-  };
-
-  const confirmCancelReserva = async () => {
-    if (!reservaToCancel) return;
-
     try {
-      const response = await reservationsService.cancelReservation(reservaToCancel);
+      const response = await reservationsService.cancelReservation(reservaId);
       if (response.success) {
-        // Refrescar las reservas para obtener datos actualizados
-        await fetchMisReservas();
-        setShowConfirmModal(false);
-        setReservaToCancel(null);
+        setReservas(prev => 
+          prev.map(reserva => 
+            reserva._id === reservaId ? { ...reserva, status: 'CANCELLED' } : reserva
+          )
+        );
       } else {
         setError(response.message || 'Error al cancelar la reserva');
       }
@@ -75,83 +91,249 @@ const MisReservasPage = () => {
     }
   };
 
-  const cancelCancelReserva = () => {
-    setShowConfirmModal(false);
-    setReservaToCancel(null);
+  const canDelete = (reserva) => {
+    const estado = normalizeEstado(reserva.estado || reserva.status);
+    return ['rechazada', 'cancelada', 'aprobada'].includes(estado);
   };
 
-  const getEstadoColor = (estado) => {
-    const estadoLower = estado?.toLowerCase();
-    switch (estadoLower) {
-      case 'pending':
-      case 'pendiente':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800';
-      case 'approved':
-      case 'aprobada':
-        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800';
-      case 'active':
-      case 'activa':
-        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800';
-      case 'rejected':
-      case 'rechazada':
-        return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800';
-      case 'cancelled':
-      case 'cancelada':
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800';
-      case 'completed':
-      case 'completada':
-        return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800';
+  const handleEliminarReserva = async (reservaId) => {
+    if (!window.confirm('¿Eliminar esta reserva? Esta acción no se puede deshacer.')) return;
+    try {
+      const response = await reservationsService.deleteReservation(reservaId);
+      if (response?.success !== false) {
+        setReservas(prev => prev.filter(r => String(r._id || r.id) !== String(reservaId)));
+        setSelectedIds(prev => prev.filter(id => String(id) !== String(reservaId)));
+      } else {
+        setError(response.message || 'No se pudo eliminar la reserva');
+      }
+    } catch (err) {
+      console.error('Error al eliminar reserva:', err);
+      setError('Error al eliminar la reserva');
     }
   };
 
-  const getEstadoLabel = (estado) => {
-    const estadoLower = estado?.toLowerCase();
-    switch (estadoLower) {
-      case 'pending': return 'Pendiente';
-      case 'approved': return 'Aprobada';
-      case 'active': return 'Activa';
-      case 'rejected': return 'Rechazada';
-      case 'cancelled': return 'Cancelada';
-      case 'completed': return 'Completada';
-      default: return estado?.charAt(0).toUpperCase() + estado?.slice(1) || 'Sin estado';
+  const toggleSelect = (reservaId) => {
+    setSelectedIds(prev => {
+      const idStr = String(reservaId);
+      return prev.includes(idStr) ? prev.filter(id => id !== idStr) : [...prev, idStr];
+    });
+  };
+
+  const handleEliminarSeleccionadas = async () => {
+    try {
+      setError('');
+      if (selectedIds.length === 0) return;
+
+      const selectedSet = new Set(selectedIds.map(String));
+      let deletableSelectedIds = reservas
+        .filter(r => selectedSet.has(String(r._id || r.id)))
+        .filter(r => canDelete(r))
+        .map(r => String(r._id || r.id));
+
+      if (deletableSelectedIds.length === 0) {
+        setError('Selecciona reservas aprobadas, rechazadas o canceladas para eliminar');
+        return;
+      }
+
+      const response = await reservationsService.deleteReservationsBulk(deletableSelectedIds);
+      if (response?.successCount > 0) {
+        const removed = new Set((response.deletedIds || []).map(String));
+        setReservas(prev => prev.filter(r => !removed.has(String(r._id || r.id))));
+        setSelectedIds(prev => prev.filter(id => !removed.has(String(id))));
+      }
+      if (response?.failureCount > 0) {
+        setError(response.message || 'Algunas reservas no pudieron eliminarse');
+      }
+    } catch (err) {
+      console.error('Error al eliminar seleccionadas:', err);
+      setError('Error al eliminar seleccionadas');
+    }
+  };
+
+  const normalizeEstado = (estadoRaw) => {
+    const e = String(estadoRaw || '').toLowerCase();
+    switch (e) {
+      case 'pending':
+      case 'pendiente':
+        return 'pendiente';
+      case 'approved':
+      case 'aprobada':
+        return 'aprobada';
+      case 'active':
+      case 'activa':
+        return 'activa';
+      case 'rejected':
+      case 'rechazada':
+        return 'rechazada';
+      case 'cancelled':
+      case 'cancelada':
+        return 'cancelada';
+      case 'completed':
+      case 'completada':
+        return 'completada';
+      default:
+        return e || 'pendiente';
+    }
+  };
+
+  const getEstadoColor = (estadoRaw) => {
+    const estado = normalizeEstado(estadoRaw);
+    switch (estado) {
+      case 'pendiente':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'aprobada':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'activa':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'rechazada':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'cancelada':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'completada':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  // Parse seguro de fechas calendario para evitar desfase por zona horaria
+  const parseCalendarDate = (raw) => {
+    if (!raw) return null;
+    try {
+      if (typeof raw === 'string') {
+        const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/);
+        if (m) {
+          const y = Number(m[1]);
+          const mo = Number(m[2]);
+          const d = Number(m[3]);
+          // Construir fecha en zona local para preservar el día
+          return new Date(y, mo - 1, d);
+        }
+      }
+      return new Date(raw);
+    } catch (_) {
+      return null;
     }
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'Fecha no disponible';
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    if (!dateString) return 'Fecha no especificada';
+    try {
+      // Si viene como YYYY-MM-DD o ISO a medianoche, evitar desfase
+      if (typeof dateString === 'string' && /^(\d{4})-(\d{2})-(\d{2})(?:$|T)/.test(dateString)) {
+        const parsed = parseCalendarDate(dateString);
+        if (parsed) {
+          return parsed.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+        }
+      }
+      const date = new Date(dateString);
+      const isMidnightUTC = typeof dateString === 'string' && /T00:00/.test(dateString) && /Z$/.test(dateString);
+      if (isMidnightUTC) {
+        return new Intl.DateTimeFormat('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          timeZone: 'UTC'
+        }).format(date);
+      }
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return 'Fecha inválida';
+    }
   };
 
   const formatTime = (dateString) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!dateString) return 'Hora no especificada';
+    try {
+      const d = new Date(dateString);
+      const hours = d.getHours();
+      const minutes = d.getMinutes();
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const hours12 = hours % 12 || 12;
+      const hh = String(hours12).padStart(2, '0');
+      const mm = String(minutes).padStart(2, '0');
+      return `${hh}:${mm} ${period}`;
+    } catch (e) {
+      return 'Hora inválida';
+    }
+  };
+
+  const getAmbienteNombre = (reserva) => {
+    return (
+      reserva?.ambiente?.nombre ||
+      reserva?.ambiente ||
+      reserva?.ambienteNombre ||
+      reserva?.ambienteId?.nombre ||
+      reserva?.environment?.nombre ||
+      reserva?.environmentName ||
+      'Ambiente no especificado'
+    );
+  };
+
+  // (Se mantiene la función normalizeEstado definida más arriba)
+
+  const getFechaReserva = (reserva) => {
+    return reserva?.fecha || reserva?.reservationDate || reserva?.startDate || null;
+  };
+
+  const getHoraRango = (reserva) => {
+    // Si se definió la jornada, mostrar rango estándar por jornada
+    const jornadasMap = {
+      'mañana': { inicio: '06:00', fin: '12:00' },
+      'tarde': { inicio: '12:30', fin: '18:00' },
+      'noche': { inicio: '18:30', fin: '22:00' }
+    };
+    if (reserva?.jornada && jornadasMap[reserva.jornada]) {
+      const j = jornadasMap[reserva.jornada];
+      return `${j.inicio} - ${j.fin}`;
+    }
+
+    if (reserva?.horaInicio && reserva?.horaFin) {
+      return `${reserva.horaInicio} - ${reserva.horaFin}`;
+    }
+    const start = reserva?.startDate ? new Date(reserva.startDate) : null;
+    const end = reserva?.endDate ? new Date(reserva.endDate) : null;
+    const fmt = (d) => (d ? d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '');
+    if (start && end) return `${fmt(start)} - ${fmt(end)}`;
+    if (start) return fmt(start);
+    return 'Horario no especificado';
   };
 
   const filteredReservas = reservas.filter(reserva => {
     const matchesSearch = 
-      reserva.environmentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reserva.purpose?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reserva.userName?.toLowerCase().includes(searchTerm.toLowerCase());
+      getAmbienteNombre(reserva)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (reserva.proposito || reserva.purpose || '').toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesEstado = filterEstado === 'todas' || reserva.status?.toLowerCase() === filterEstado.toLowerCase();
+    const estadoNorm = normalizeEstado(reserva.estado || reserva.status);
+    // En "todas" mostrar todos los estados sin ocultar rechazadas
+    const matchesEstado = filterEstado === 'todas'
+      ? true
+      : estadoNorm === filterEstado;
     
     let matchesFecha = true;
     if (filterFecha !== 'todas') {
       const today = new Date();
-      const reservaDate = new Date(reserva.startDate || reserva.fecha);
+      const reservaDateRaw = getFechaReserva(reserva);
+      const reservaDate = parseCalendarDate(reservaDateRaw);
+      if (!reservaDate) return false;
+
+      const sameYmd = (a, b) => (
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate()
+      );
       
       switch (filterFecha) {
         case 'hoy':
-          matchesFecha = reservaDate.toDateString() === today.toDateString();
+          matchesFecha = sameYmd(reservaDate, today);
           break;
         case 'semana':
           const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -169,236 +351,197 @@ const MisReservasPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm dark:bg-slate-900/80 shadow-sm border-b border-slate-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/instructor')}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Volver
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  Mis Reservas
-                </h1>
-                <p className="text-slate-600 dark:text-slate-400">Gestiona tus reservas de ambientes</p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mis Reservas</h1>
+              <p className="text-gray-600 dark:text-gray-400">Gestiona tus reservas de ambientes</p>
             </div>
-            <Button
+            <button
               onClick={() => navigate('/instructor/nueva-reserva')}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
             >
               <Plus className="h-5 w-5 mr-2" />
               Nueva Reserva
-            </Button>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Filters */}
-        <Card className="bg-white/80 backdrop-blur-sm border-slate-200 dark:bg-slate-900/80 dark:border-slate-700 mb-6">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar por ambiente, propósito o usuario..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              {/* Filter by Estado */}
-              <div>
-                <select
-                  value={filterEstado}
-                  onChange={(e) => setFilterEstado(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                >
-                  <option value="todas">Todos los estados</option>
-                  <option value="pending">Pendientes</option>
-                  <option value="approved">Aprobadas</option>
-                  <option value="active">Activas</option>
-                  <option value="completed">Completadas</option>
-                  <option value="cancelled">Canceladas</option>
-                  <option value="rejected">Rechazadas</option>
-                </select>
-              </div>
-
-              {/* Filter by Fecha */}
-              <div>
-                <select
-                  value={filterFecha}
-                  onChange={(e) => setFilterFecha(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                >
-                  <option value="todas">Todas las fechas</option>
-                  <option value="hoy">Hoy</option>
-                  <option value="semana">Esta semana</option>
-                  <option value="mes">Este mes</option>
-                </select>
-              </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por ambiente o propósito..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Filter by Estado */}
+            <div>
+              <select
+                value={filterEstado}
+                onChange={(e) => setFilterEstado(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="todas">Todos los estados</option>
+                <option value="pendiente">Pendientes</option>
+                <option value="aprobada">Aprobadas</option>
+                <option value="activa">Activas</option>
+                <option value="completada">Completadas</option>
+                <option value="cancelada">Canceladas</option>
+                <option value="rechazada">Rechazadas</option>
+              </select>
+            </div>
+
+            {/* Filter by Fecha */}
+            <div>
+              <select
+                value={filterFecha}
+                onChange={(e) => setFilterFecha(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="todas">Todas las fechas</option>
+                <option value="hoy">Hoy</option>
+                <option value="semana">Esta semana</option>
+                <option value="mes">Este mes</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Bulk actions (arriba del listado) */}
+        <div className="mb-6 flex items-center justify-between">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Seleccionadas: {selectedIds.length}
+          </div>
+          <button
+            onClick={handleEliminarSeleccionadas}
+            disabled={selectedIds.length === 0}
+            className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:bg-gray-500 disabled:text-gray-200 disabled:cursor-not-allowed"
+          >
+            <Trash2 className="h-5 w-5 mr-2" />
+            Eliminar seleccionadas
+          </button>
+        </div>
 
         {/* Error Message */}
         {error && (
-          <Card className="bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800 mb-6">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-red-800 dark:text-red-400">
-                <AlertCircle className="h-5 w-5" />
-                <p>{error}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-800">{error}</p>
+          </div>
         )}
 
         {/* Reservas List */}
         <div className="space-y-4">
           {filteredReservas.length > 0 ? (
             filteredReservas.map((reserva) => (
-              <Card key={reserva._id} className="bg-white/80 backdrop-blur-sm border-slate-200 dark:bg-slate-900/80 dark:border-slate-700">
-                <CardContent className="p-6">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                          <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                          {reserva.environmentName || 'Ambiente no especificado'}
-                        </h3>
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getEstadoColor(reserva.status)}`}>
-                          {getEstadoLabel(reserva.status)}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-slate-600 dark:text-slate-400">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          <span>{formatDate(reserva.startDate || reserva.fecha)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          <span>
-                            {formatTime(reserva.startDate)} - {formatTime(reserva.endDate)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          <span>{reserva.userName || user?.name || 'Usuario'}</span>
-                        </div>
-                      </div>
-
-                      {reserva.purpose && (
-                        <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                          <p className="text-sm text-slate-700 dark:text-slate-300 flex items-start gap-2">
-                            <FileText className="h-4 w-4 mt-0.5 text-slate-500" />
-                            <span><strong>Propósito:</strong> {reserva.purpose}</span>
-                          </p>
-                        </div>
-                      )}
+              <div key={reserva._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        checked={selectedIds.includes(String(reserva._id || reserva.id))}
+                        onChange={() => toggleSelect(reserva._id || reserva.id)}
+                        aria-label="Seleccionar reserva"
+                      />
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {getAmbienteNombre(reserva)}
+                      </h3>
+                      <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getEstadoColor(reserva.estado || reserva.status)}`}>
+                        {normalizeEstado(reserva.estado || reserva.status).charAt(0).toUpperCase() + normalizeEstado(reserva.estado || reserva.status).slice(1)}
+                      </span>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 mt-4 lg:mt-0 lg:ml-6">
-                      {(reserva.status?.toLowerCase() === 'pending' || reserva.status?.toLowerCase() === 'approved') && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(event) => handleCancelarReserva(reserva._id, event)}
-                          className="text-red-700 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Cancelar
-                        </Button>
-                      )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>{formatDate(getFechaReserva(reserva))}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>{formatTime(reserva.createdAt || reserva.fechaCreacion || reserva.timestamp)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        <span>{reserva.proposito || reserva.purpose || 'Sin propósito especificado'}</span>
+                      </div>
                     </div>
+
+                    {reserva.observaciones && (
+                      <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          <strong>Observaciones:</strong> {reserva.observaciones}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 mt-4 lg:mt-0 lg:ml-6">
+                    {['pendiente','aprobada'].includes(normalizeEstado(reserva.estado || reserva.status)) && (
+                      <button
+                        onClick={() => handleCancelarReserva(reserva._id)}
+                        className="inline-flex items-center px-3 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Cancelar
+                      </button>
+                    )}
+                    {canDelete(reserva) && (
+                      <button
+                        onClick={() => handleEliminarReserva(reserva._id)}
+                        className="inline-flex items-center px-3 py-2 text-sm font-medium bg-gray-700 hover:bg-gray-800 text-white rounded-lg transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Eliminar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             ))
           ) : (
-            <Card className="bg-white/80 backdrop-blur-sm border-slate-200 dark:bg-slate-900/80 dark:border-slate-700">
-              <CardContent className="p-12 text-center">
-                <Calendar className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-                  No tienes reservas
-                </h3>
-                <p className="text-slate-600 dark:text-slate-400 mb-6">
-                  {searchTerm || filterEstado !== 'todas' || filterFecha !== 'todas'
-                    ? 'No se encontraron reservas con los filtros aplicados.'
-                    : 'Aún no has creado ninguna reserva. ¡Crea tu primera reserva!'}
-                </p>
-                <Button
-                  onClick={() => navigate('/instructor/nueva-reserva')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Crear Primera Reserva
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No tienes reservas
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                {searchTerm || filterEstado !== 'todas' || filterFecha !== 'todas'
+                  ? 'No se encontraron reservas con los filtros aplicados.'
+                  : 'Aún no has creado ninguna reserva. ¡Crea tu primera reserva!'}
+              </p>
+              <button
+                onClick={() => navigate('/instructor/nueva-reserva')}
+                className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Crear Primera Reserva
+              </button>
+            </div>
           )}
         </div>
       </div>
-
-      {/* Modal de confirmación personalizado */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full">
-              <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-            </div>
-            
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-2">
-              Cancelar Reserva
-            </h3>
-            
-            <p className="text-slate-600 dark:text-slate-400 text-center mb-6">
-              ¿Estás seguro de que deseas cancelar esta reserva? Esta acción no se puede deshacer.
-            </p>
-            
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={cancelCancelReserva}
-                className="flex-1"
-              >
-                <XCircle className="w-4 h-4 mr-2" />
-                No, mantener
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={confirmCancelReserva}
-                className="flex-1"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Sí, cancelar
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

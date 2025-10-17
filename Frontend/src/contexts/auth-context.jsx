@@ -1,9 +1,8 @@
 import PropTypes from 'prop-types';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/auth';
 import apiService from '../services/api';
 import sessionManager from '../services/sessionManager';
-import { API_CONFIG } from '../config/api';
 
 const AuthContext = createContext();
 
@@ -53,6 +52,31 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  // Suscripción a eventos globales de autenticación
+  useEffect(() => {
+    const handleLogout = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+    };
+    const handleLogin = (e) => {
+      const detailUser = e?.detail?.user || authService.getUser();
+      setUser(detailUser);
+      setIsAuthenticated(true);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('auth:logout', handleLogout);
+      window.addEventListener('auth:login', handleLogin);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('auth:logout', handleLogout);
+        window.removeEventListener('auth:login', handleLogin);
+      }
+    };
+  }, []);
+
   // Login con backend real
   const login = async (credentials) => {
     try {
@@ -67,10 +91,16 @@ export const AuthProvider = ({ children }) => {
         console.log('🔐 Login exitoso desde contexto');
         return { success: true, user: response.user };
       } else {
-        throw new Error(response.error || 'Credenciales inválidas');
+        // No lanzar: devolver mensaje amigable
+        const message = response.error || 'C.C o contraseña incorrecta';
+        return { success: false, message };
       }
     } catch (error) {
-      console.error('❌ Error en login desde contexto:', error);
+      // Evitar ruido si es 429
+      const is429 = (error && error.status === 429) || (typeof error?.message === 'string' && error.message.includes('429'));
+      if (!is429) {
+        console.error('❌ Error en login desde contexto:', error);
+      }
       return { 
         success: false, 
         message: error.message || 'Error de conexión con el servidor' 
@@ -93,55 +123,13 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
-  // Renovar token automáticamente
-  const refreshToken = async () => {
-    try {
-      console.log('🔄 Intentando renovar token...');
-      
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.REFRESH_TOKEN}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authService.getToken()}`
-        }
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success && data.token) {
-        // Actualizar token en el servicio de auth
-        authService.setToken(data.token);
-        
-        // Si hay datos de usuario actualizados, actualizarlos también
-        if (data.user) {
-          const updatedUser = { ...user, ...data.user };
-          setUser(updatedUser);
-          authService.setUser(updatedUser);
-        }
-        
-        console.log('✅ Token renovado exitosamente');
-        return { success: true, token: data.token };
-      } else {
-        throw new Error(data.error || 'Error al renovar token');
-      }
-    } catch (error) {
-      console.error('❌ Error al renovar token:', error);
-      
-      // Si falla la renovación, cerrar sesión
-      logout();
-      
-      return { success: false, error: error.message };
-    }
-  };
-
   const value = {
     user,
     isAuthenticated,
     loading,
     login,
     logout,
-    updateUser,
-    refreshToken
+    updateUser
   };
 
   return (

@@ -101,6 +101,13 @@ class AuthService {
     Cookies.remove(this.USER_KEY);
     
     console.log('🔓 Sesión cerrada correctamente');
+
+    // Emitir evento global para notificar al contexto
+    try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:logout'));
+      }
+    } catch { /* noop */ }
   }
 
   // Login con token
@@ -112,6 +119,13 @@ class AuthService {
       sessionManager.startSession();
       
       console.log('🔐 Sesión iniciada con gestión automática de timeout');
+
+      // Emitir evento global de login
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:login', { detail: { user: userData } }));
+        }
+      } catch { /* noop */ }
       return true;
     }
     return false;
@@ -126,18 +140,43 @@ class AuthService {
   // Login con backend real
   async loginWithBackend(cc, password) {
     try {
+      // Normalizar credenciales
+      const normalized = {
+        cc: typeof cc === 'string' ? cc.trim() : String(cc).trim(),
+        password: typeof password === 'string' ? password.trim() : String(password || '').trim(),
+      };
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.VERIFY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ cc, password }),
+        body: JSON.stringify(normalized),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      let data = null;
+      if (contentType.includes('application/json')) {
+        data = await response.json().catch(() => null);
+      } else {
+        const text = await response.text().catch(() => '');
+        try { data = JSON.parse(text); } catch { data = { raw: text }; }
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error en el login');
+        const status = response.status;
+        // Mensajes amigables sin lanzar para casos comunes
+        if (status === 401 || status === 404) {
+          return { success: false, error: 'C.C o contraseña incorrecta' };
+        }
+        if (status === 429) {
+          // Evitar ruido de consola y devolver mensaje de pausa
+          return { success: false, error: 'En pausa por límite de tasa. Reintentar automáticamente.' };
+        }
+        // Para otros códigos (400, 500, etc.), devolver mensaje del servidor si existe
+        const validationMsg = Array.isArray(data?.errors) ? data.errors.map((e) => e.msg).join('. ') : null;
+        const serverMsg = data?.message || data?.error;
+        const msg = validationMsg || serverMsg || `Error en el login (HTTP ${status})`;
+        return { success: false, error: msg };
       }
 
       if (data.success && data.user) {
@@ -154,12 +193,23 @@ class AuthService {
         sessionManager.startSession();
         
         console.log('🔐 Login exitoso con backend');
+
+        // Emitir evento global de login
+        try {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:login', { detail: { user: userData } }));
+          }
+        } catch { /* noop */ }
         return { success: true, user: userData };
       } else {
         throw new Error('Respuesta inválida del servidor');
       }
     } catch (error) {
-      console.error('❌ Error en login:', error);
+      // Suprimir logs para 429
+      const is429 = (error && error.status === 429) || (typeof error?.message === 'string' && error.message.includes('429'));
+      if (!is429) {
+        console.error('❌ Error en login:', error);
+      }
       return { success: false, error: error.message };
     }
   }
@@ -175,15 +225,21 @@ class AuthService {
         body: JSON.stringify(userData),
       });
 
-      const data = await response.json();
-
+      const contentType2 = response.headers.get('content-type') || '';
+      let data2 = null;
+      if (contentType2.includes('application/json')) {
+        data2 = await response.json().catch(() => null);
+      } else {
+        const text = await response.text().catch(() => '');
+        try { data2 = JSON.parse(text); } catch { data2 = { raw: text }; }
+      }
       if (!response.ok) {
-        throw new Error(data.message || 'Error en el registro');
+        throw new Error((data2 && (data2.message || data2.error)) || 'Error en el registro');
       }
 
-      if (data.status === 'success') {
+      if (data2 && data2.status === 'success') {
         console.log('✅ Registro exitoso');
-        return { success: true, message: data.message };
+        return { success: true, message: data2.message };
       } else {
         throw new Error('Respuesta inválida del servidor');
       }

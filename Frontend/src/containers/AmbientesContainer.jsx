@@ -1,4 +1,4 @@
-import React from 'react';
+// JSX runtime moderno no requiere importar React por defecto
 import { 
   Search, 
   Plus, 

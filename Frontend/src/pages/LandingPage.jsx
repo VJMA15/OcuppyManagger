@@ -24,7 +24,7 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [showAccessForm, setShowAccessForm] = React.useState(false);
-
+  const [termsExpanded, setTermsExpanded] = React.useState(false);
   const features = [
     {
       icon: Building2,
@@ -33,28 +33,28 @@ const LandingPage = () => {
     },
     {
       icon: Calendar,
-      title: "Reservas Inteligentes",
-      description: "Sistema de reservas en tiempo real con validación automática"
+      title: "Reservas de Instructores",
+      description: "Crear, consultar y cancelar reservas de ambientes"
     },
     {
       icon: Users,
-      title: "Control de Acceso",
-      description: "Gestión de usuarios por roles: Admin, Instructor, Guardia y Aprendiz"
+      title: "Acceso por Roles",
+      description: "Roles actualmente soportados: Admin e Instructor"
     },
     {
       icon: Shield,
-      title: "Seguridad Avanzada",
-      description: "Autenticación segura y control de permisos por nivel"
+      title: "Disponibilidad y Horarios",
+      description: "Consulta de horarios y disponibilidad por ambiente"
     },
     {
       icon: Clock,
-      title: "Tiempo Real",
-      description: "Monitoreo en vivo del estado de todos los ambientes"
+      title: "Actualización en Tiempo Real",
+      description: "Notificaciones básicas de cambios de reserva (SSE)"
     },
     {
       icon: CheckCircle,
-      title: "Reportes Completos",
-      description: "Informes detallados de uso y ocupación de espacios"
+      title: "Historial de Reservas",
+      description: "Consulta de reservas realizadas por el usuario"
     }
   ];
 
@@ -63,7 +63,7 @@ const LandingPage = () => {
   };
 
   const handleGuestAccess = () => {
-    navigate('/ambientes?mode=guest');
+    navigate('/consulta/ambientes?mode=guest');
   };
 
   const handleContactAdmin = () => {
@@ -99,24 +99,22 @@ const LandingPage = () => {
             {/* Botones Desktop */}
             <div className="hidden lg:flex space-x-3">
               <Button 
-                variant="outline" 
                 onClick={handleGuestAccess}
-                className="text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-green-500 hover:text-green-600 transition-colors"
+                className="bg-sena hover:bg-sena-dark text-white border border-sena transition-colors shadow-sm"
               >
                 <Eye className="mr-2 h-4 w-4" />
                 Ver Ambientes
               </Button>
               <Button 
-                variant="outline" 
                 onClick={handleContactAdmin}
-                className="text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-green-500 hover:text-green-600 transition-colors"
+                className="bg-primary hover:bg-primary-dark text-white border border-primary transition-colors shadow-sm"
               >
                 <UserCheck className="mr-2 h-4 w-4" />
                 Solicitar Acceso
               </Button>
               <Button 
                 onClick={handleLogin}
-                className="bg-green-600 hover:bg-green-700 text-white font-medium shadow-sm transition-colors"
+                className="bg-sena hover:bg-sena-dark text-white font-medium shadow-sm transition-colors"
               >
                 Iniciar Sesión
               </Button>
@@ -137,24 +135,22 @@ const LandingPage = () => {
           {mobileMenuOpen && (
             <div className="lg:hidden border-t border-neutral-soft-200 py-4 space-y-3">
               <Button 
-                variant="outline" 
                 onClick={handleGuestAccess}
-                className="w-full text-blue-600 border-blue-300 hover:bg-blue-50 hover:text-blue-700 justify-start"
+                className="w-full bg-sena hover:bg-sena-dark text-white border border-sena justify-start"
               >
                 <Eye className="mr-2 h-4 w-4" />
                 Ver Ambientes
               </Button>
               <Button 
-                variant="outline" 
                 onClick={handleContactAdmin}
-                className="w-full text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-gray-800 justify-start"
+                className="w-full bg-primary hover:bg-primary-dark text-white border border-primary justify-start"
               >
                 <UserCheck className="mr-2 h-4 w-4" />
                 Solicitar Acceso
               </Button>
               <Button 
                 onClick={handleLogin}
-                className="w-full bg-sena-soft-500 text-white hover:bg-sena-soft-600 shadow-md transition-all duration-200 justify-start"
+                className="w-full bg-sena text-white hover:bg-sena-dark shadow-md transition-all duration-200 justify-start"
               >
                 Iniciar Sesión
               </Button>
@@ -166,12 +162,12 @@ const LandingPage = () => {
       {/* Hero Section */}
       <section className="py-16 sm:py-20 lg:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-block bg-green-50 text-green-700 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
-            SENA - Centro de Teleinformática y Producción Industrial
+          <div className="inline-block bg-sena/10 text-sena text-sm font-medium px-4 py-1.5 rounded-full mb-6">
+            SENA - Centro tecnologico para la gestion agroempresarial
           </div>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
             Gestión Inteligente de
-            <span className="block text-green-600 mt-2">Ambientes Educativos</span>
+            <span className="block text-sena mt-2">Ambientes Educativos</span>
           </h2>
           <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
             Optimiza el uso de los espacios educativos del SENA con nuestra plataforma de gestión integral.
@@ -183,8 +179,8 @@ const LandingPage = () => {
             {/* Guest Access for Students */}
             <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-center mb-4">
-                <div className="bg-green-100 p-3 rounded-full">
-                  <Eye className="h-6 w-6 text-green-600" />
+                <div className="bg-sena/10 p-3 rounded-full">
+                  <Eye className="h-6 w-6 text-sena" />
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-center text-gray-900 mb-3">Acceso para Aprendices</h3>
@@ -193,8 +189,8 @@ const LandingPage = () => {
                 sin necesidad de cuenta de usuario.
               </p>
               <Button 
+                className="w-full bg-sena hover:bg-sena-dark text-white font-medium"
                 onClick={handleGuestAccess}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
               >
                 <Eye className="mr-2 h-4 w-4" />
                 Ver Ambientes Disponibles
@@ -204,8 +200,8 @@ const LandingPage = () => {
             {/* Account Access */}
             <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-center mb-4">
-                <div className="bg-blue-50 p-3 rounded-full">
-                  <Shield className="h-6 w-6 text-blue-600" />
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <Shield className="h-6 w-6 text-primary" />
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-center text-gray-900 mb-3">Acceso Personal</h3>
@@ -215,7 +211,7 @@ const LandingPage = () => {
               </p>
               <Button 
                 onClick={handleLogin}
-                className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-green-500 hover:text-green-600 font-medium"
+                className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-sena hover:text-sena font-medium"
               >
                 Iniciar Sesión
               </Button>
@@ -223,7 +219,7 @@ const LandingPage = () => {
                 ¿No tienes una cuenta?{' '}
                 <button 
                   onClick={handleContactAdmin}
-                  className="text-green-600 hover:underline font-medium"
+                  className="text-primary hover:underline font-medium"
                 >
                   Solicita acceso
                 </button>
@@ -231,24 +227,15 @@ const LandingPage = () => {
             </div>
           </div>
 
-          {/* Botones principales responsivos */}
-          <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 px-4">
+          {/* CTA principal simplificado */}
+          <div className="flex justify-center px-4">
             <Button 
               size="lg" 
               onClick={handleLogin}
-              className="bg-sena-soft-500 text-white hover:bg-sena-soft-600 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-lg transition-all duration-200 w-full sm:w-auto"
+              className="bg-sena text-white hover:bg-sena-dark px-8 py-4 text-lg shadow-lg transition-all duration-200"
             >
               Acceder al Sistema
-              <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              onClick={handleGuestAccess}
-              className="text-blue-600 border-blue-300 hover:bg-blue-50 hover:text-blue-700 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg transition-all duration-200 w-full sm:w-auto"
-            >
-              <Eye className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-              Modo Consulta
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -300,7 +287,7 @@ const LandingPage = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Guest Access */}
             <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-blue-200">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
@@ -319,22 +306,6 @@ const LandingPage = () => {
             </div>
             
             <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-neutral-soft-200">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
-                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
-              </div>
-              <h4 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Guardia</h4>
-               <p className="text-gray-600 text-xs sm:text-sm mb-3">
-                Control total del sistema, gestión de usuarios y configuración.
-              </p>
-              <ul className="text-xs text-neutral-soft-500 space-y-1">
-                <li>• Crear/eliminar usuarios</li>
-                <li>• Gestionar ambientes</li>
-                <li>• Ver todos los reportes</li>
-                <li>• Configurar sistema</li>
-              </ul>
-            </div>
-            
-            <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-neutral-soft-200">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                 <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
               </div>
@@ -346,39 +317,23 @@ const LandingPage = () => {
                 <li>• Reservar ambientes</li>
                 <li>• Ver sus reservas</li>
                 <li>• Cancelar reservas</li>
-                <li>• Reportes básicos</li>
+                <li>• Historial básico</li>
               </ul>
             </div>
             
             <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-neutral-soft-200">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
               </div>
-              <h4 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Coordinador</h4>
-               <p className="text-gray-600 text-xs sm:text-sm mb-3">
-                Monitorea el acceso y estado de los ambientes.
-              </p>
-              <ul className="text-xs text-neutral-soft-500 space-y-1">
-                <li>• Ver estado de ambientes</li>
-                <li>• Controlar accesos</li>
-                <li>• Reportar incidencias</li>
-                <li>• Verificar reservas</li>
-              </ul>
-            </div>
-            
-            <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200 sm:col-span-2 lg:col-span-1">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                <Users className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
-              </div>
-              <h4 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Aprendiz (Cuenta)</h4>
+              <h4 className="text-base sm:text-lg font-semibold text-gray-800 mb-2">Administrador</h4>
               <p className="text-gray-600 text-xs sm:text-sm mb-3">
-                Acceso completo con funciones personalizadas.
+                Gestión de usuarios y administración del sistema.
               </p>
               <ul className="text-xs text-neutral-soft-500 space-y-1">
-                <li>• Todas las funciones Guest</li>
-                <li>• Historial personalizado</li>
-                <li>• Notificaciones</li>
-                <li>• Favoritos</li>
+                <li>• Aprobar solicitudes</li>
+                <li>• Administrar ambientes</li>
+                <li>• Consultas generales</li>
+                <li>• Configuración básica</li>
               </ul>
             </div>
           </div>
@@ -395,7 +350,7 @@ const LandingPage = () => {
               </h3>
               <p className="text-base sm:text-lg lg:text-xl text-gray-700 mb-6 sm:mb-8 px-4">
                 Los aprendices pueden consultar ambientes sin cuenta. Para acceso completo 
-                como instructor, guardia o administrador, solicita una cuenta.
+                como instructor o administrador, solicita una cuenta.
               </p>
               <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 sm:p-6 mb-6 sm:mb-8 border border-sena-soft-300">
                 <h4 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">Información Requerida para Solicitar Cuenta:</h4>
@@ -406,36 +361,20 @@ const LandingPage = () => {
                     <p>• Correo electrónico institucional</p>
                   </div>
                   <div className="text-left">
-                    <p>• Rol solicitado (Instructor/Guardia/Aprendiz)</p>
+                    <p>• Rol solicitado (Instructor/Admin)</p>
                     <p>• Centro de formación</p>
                     <p>• Justificación del acceso</p>
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 px-4">
-                <Button 
-                  size="lg" 
-                  onClick={handleGuestAccess}
-                  className="bg-blue-500 text-white hover:bg-blue-600 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-lg transition-all duration-200 w-full sm:w-auto"
-                >
-                  <Eye className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                  Acceso Guest
-                </Button>
+              <div className="flex justify-center px-4">
                 <Button 
                   size="lg" 
                   onClick={() => setShowAccessForm(true)}
-                  className="bg-sena-soft-500 text-white hover:bg-sena-soft-600 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-lg transition-all duration-200 w-full sm:w-auto"
+                  className="bg-sena-soft-500 text-white hover:bg-sena-soft-600 px-8 py-4 text-lg shadow-lg transition-all duration-200"
                 >
-                  <UserCheck className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                  <UserCheck className="mr-2 h-5 w-5" />
                   Solicitar Acceso
-                </Button>
-                <Button 
-                  size="lg" 
-                  onClick={handleLogin}
-                  variant="outline"
-                  className="border-sena-soft-300 text-sena-soft-600 hover:bg-sena-soft-50 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg transition-all duration-200 w-full sm:w-auto"
-                >
-                  Tengo Cuenta
                 </Button>
               </div>
             </div>
@@ -447,6 +386,121 @@ const LandingPage = () => {
               }} />
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Cómo usar la aplicación */}
+      <section className="py-12 sm:py-16 lg:py-20 bg-white border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-soft-800 mb-3">Cómo usar la aplicación</h3>
+            <p className="text-neutral-soft-600 text-base sm:text-lg max-w-3xl mx-auto">Guía rápida para aprendices e instructores. En minutos estarás consultando disponibilidad y creando reservas.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Aprendices */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <Eye className="h-5 w-5 text-green-600" />
+                <h4 className="text-lg font-semibold text-gray-900">Para Aprendices (Consulta)</h4>
+              </div>
+              <ol className="space-y-3 text-sm text-gray-700 list-decimal list-inside">
+                <li>En el encabezado, haz clic en <span className="font-medium">Ver Ambientes</span>.</li>
+                <li>Filtra por <span className="font-medium">fecha</span> y <span className="font-medium">jornada</span> para ver disponibilidad.</li>
+                <li>Abre un ambiente para detalles de capacidad, ubicación y estado.</li>
+              </ol>
+            </div>
+
+            {/* Instructores */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <h4 className="text-lg font-semibold text-gray-900">Para Instructores (Reservas)</h4>
+              </div>
+              <ol className="space-y-3 text-sm text-gray-700 list-decimal list-inside">
+                <li>Haz clic en <span className="font-medium">Iniciar Sesión</span> y accede con tus credenciales.</li>
+                <li>Desde <span className="font-medium">Ambientes</span>, elige un ambiente y crea tu reserva con fecha y jornada.</li>
+                <li>Revisa tus reservas en <span className="font-medium">Mis Reservas</span> y cancela si es necesario.</li>
+              </ol>
+            </div>
+          </div>
+
+          {/* Tips rápidos */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="font-medium text-green-900 flex items-center gap-2"><CheckCircle className="h-4 w-4"/> Disponibilidad por jornada</p>
+              <p className="text-green-800 mt-1">La disponibilidad se consulta por mañana, tarde o noche.</p>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="font-medium text-blue-900 flex items-center gap-2"><CheckCircle className="h-4 w-4"/> Datos en tiempo real</p>
+              <p className="text-blue-800 mt-1">Cambios de reservas se reflejan automáticamente.</p>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="font-medium text-amber-900 flex items-center gap-2"><CheckCircle className="h-4 w-4"/> Acceso sin cuenta</p>
+              <p className="text-amber-800 mt-1">Cualquiera puede consultar ambientes desde “Ver Ambientes”.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Términos y Condiciones */}
+      <section id="terminos" className="py-12 sm:py-16 lg:py-20 bg-white border-t border-gray-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl sm:text-3xl font-bold text-neutral-soft-800 mb-3">Términos y Condiciones</h3>
+            <p className="text-neutral-soft-600 text-base sm:text-lg max-w-3xl mx-auto">
+              Al utilizar esta plataforma aceptas el tratamiento responsable de los datos personales y el uso de la información únicamente para la gestión de ambientes educativos y fines administrativos institucionales.
+            </p>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-5 sm:p-6">
+            <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
+              Resumen: recopilamos datos de identificación básica, información de acceso y trazabilidad de uso para operar las funcionalidades del sistema, mejorar el servicio y mantener la seguridad de la plataforma.
+            </p>
+            <div className="mt-4">
+              <button
+                onClick={() => setTermsExpanded((v) => !v)}
+                className="text-primary hover:underline font-medium text-sm sm:text-base"
+              >
+                {termsExpanded ? 'Ver menos' : 'Ver más'}
+              </button>
+            </div>
+
+            {termsExpanded && (
+              <div className="mt-6 text-sm sm:text-base text-gray-700 bg-gray-50 border border-gray-200 rounded-md p-5 text-left">
+                <h4 className="font-semibold text-gray-900 mb-3">Contenido Completo</h4>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>
+                    Datos que recopilamos: nombre, documento, correo institucional, rol, registros de uso (fechas, IP, acciones realizadas) y datos operativos de reservas/ambientes.
+                  </li>
+                  <li>
+                    Finalidades: autenticar usuarios, gestionar reservas y accesos, generar reportes e histórico, asegurar la integridad operativa, y contactar por temas relacionados con el servicio.
+                  </li>
+                  <li>
+                    Bases legales: autorización del titular, cumplimiento de funciones y obligaciones institucionales, y protección del interés legítimo en seguridad y operación del servicio.
+                  </li>
+                  <li>
+                    Conservación: los datos se almacenan por el tiempo necesario para cumplir las finalidades y obligaciones aplicables. Se aplican políticas de depuración y minimización.
+                  </li>
+                  <li>
+                    Compartición: no transferimos datos a terceros salvo obligación legal o requerimientos institucionales. El acceso interno está restringido por rol y necesidad operativa.
+                  </li>
+                  <li>
+                    Seguridad: implementamos controles técnicos y organizativos razonables (autenticación, autorización por roles, registro de actividad y medidas de protección de infraestructura).
+                  </li>
+                  <li>
+                    Cookies y tecnologías similares: usamos almacenamiento local/cookies para mantener sesión y preferencias estrictamente necesarias para el funcionamiento.
+                  </li>
+                  <li>
+                    Derechos de los titulares: puedes consultar, actualizar, rectificar y solicitar la eliminación de tus datos cuando aplique, así como revocar la autorización. Canal de contacto más abajo.
+                  </li>
+                </ul>
+                <p className="mt-4">
+                  Para ejercer tus derechos o resolver inquietudes, comunícate con el área administrativa a través de los medios de contacto en el pie de página.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -474,14 +528,7 @@ const LandingPage = () => {
             <div>
               <h4 className="text-base sm:text-lg font-semibold mb-4 text-gray-800">Acceso Rápido</h4>
               <ul className="space-y-2 text-gray-600 text-sm sm:text-base">
-                <li>
-                  <button 
-                    onClick={handleGuestAccess}
-                    className="hover:text-blue-600 transition-colors text-left"
-                  >
-                    Ver Ambientes (Guest)
-                  </button>
-                </li>
+                {/* Enlace de acceso Guest eliminado */}
                 <li>
                   <button 
                     onClick={handleLogin}
@@ -504,11 +551,11 @@ const LandingPage = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Mail className="h-4 w-4 flex-shrink-0" />
-                  <span className="break-all">admin@occupymanager.sena.edu.co</span>
+                  <span className="break-all">vmendez8@gmail.com</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <span>Bogotá, Colombia</span>
+                  <span>cacucacia antioquia, colombia</span>
                 </div>
               </div>
             </div>

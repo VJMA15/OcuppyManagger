@@ -61,12 +61,18 @@ app.use((0, helmet_1.default)());
 if (process.env.NODE_ENV === 'development') {
     app.use((0, morgan_1.default)('dev'));
 }
-// Limitador de velocidad
+// Limitador de velocidad (evitar 429 durante desarrollo y preflight)
 const limiter = (0, express_rate_limit_1.default)({
-    max: 1000, // 1000 solicitudes
-    windowMs: 60 * 60 * 1000, // por hora
-    message: 'Demasiadas solicitudes desde esta IP. Por favor, inténtalo de nuevo en una hora.',
+    // Ventana y límite por defecto para producción
+    windowMs: 60 * 60 * 1000,
+    max: 1000,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Demasiadas solicitudes desde esta IP. Por favor, inténtalo de nuevo más tarde.',
+    // No contar preflight OPTIONS ni deshabilitar en desarrollo
+    skip: (req) => req.method === 'OPTIONS' || process.env.NODE_ENV !== 'production',
 });
+// Aplicar limitador solo en rutas /api
 app.use('/api', limiter);
 // Parseo del cuerpo de la solicitud
 app.use(express_1.default.json({ limit: '10kb' }));

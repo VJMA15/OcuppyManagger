@@ -16,7 +16,8 @@ import {
     User,
     Info,
     AlertCircle,
-    Sliders
+    Sliders,
+    Plus
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 

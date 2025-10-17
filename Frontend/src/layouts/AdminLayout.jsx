@@ -1,4 +1,5 @@
-import { Outlet } from "react-router-dom";
+// Este layout renderiza los hijos directamente para soportar el patrón
+// <AdminLayout><Routes>...</Routes></AdminLayout>
 import { useMediaQuery } from "@uidotdev/usehooks";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { cn } from "@/utils/cn";
@@ -6,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 
-const AdminLayout = () => {
+const AdminLayout = ({ children }) => {
     const isDesktopDevice = useMediaQuery("(min-width: 768px)");
     const [collapsed, setCollapsed] = useState(!isDesktopDevice);
 
@@ -40,7 +41,7 @@ const AdminLayout = () => {
                     setCollapsed={setCollapsed}
                 />
                 <div className="h-[calc(100vh-60px)] overflow-y-auto overflow-x-hidden p-6">
-                    <Outlet />
+                    {children}
                 </div>
             </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/contexts/auth-context';
 import LoginContainer from '@/containers/LoginContainer';
 
@@ -7,7 +7,18 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isAuthenticated, user } = useAuthContext();
+  const { login, isAuthenticated } = useAuthContext();
+
+  // Leer cooldown global si existe (lo setea el cliente al recibir Retry-After)
+  const getGlobalCooldownRemaining = () => {
+    try {
+      const until = typeof window !== 'undefined' && window.__apiGlobalRegistry ? window.__apiGlobalRegistry.cooldownUntil : 0;
+      const now = Date.now();
+      return until && until > now ? (until - now) : 0;
+    } catch {
+      return 0;
+    }
+  };
 
   // Event handlers
   const handleChange = (e) => {
@@ -18,9 +29,22 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setError("");
-    
+
+    // Prevenir submit durante cooldown global y mostrar tiempo amigable
+    const ms = getGlobalCooldownRemaining();
+    if (ms > 0) {
+      const secs = Math.floor(ms / 1000);
+      if (secs <= 120) {
+        setError(`En pausa por límite de tasa. Reintento en ${secs}s`);
+      } else {
+        const mins = Math.ceil(secs / 60);
+        setError(`En pausa por límite de tasa. Reintentar automáticamente (~${mins} min).`);
+      }
+      return; // No iniciar carga ni golpear backend
+    }
+
+    setIsLoading(true);
     try {
       const result = await login({ cc: form.cc, password: form.password });
       if (result.success) {
@@ -36,20 +60,27 @@ const LoginPage = () => {
     }
   };
 
+  // Al montar, si hay cooldown activo, mostrar aviso sin obligar al usuario a enviar
+  useEffect(() => {
+    const ms = getGlobalCooldownRemaining();
+    if (ms > 0 && !error) {
+      const secs = Math.floor(ms / 1000);
+      if (secs <= 120) {
+        setError(`En pausa por límite de tasa. Reintento en ${secs}s`);
+      } else {
+        const mins = Math.ceil(secs / 60);
+        setError(`En pausa por límite de tasa. Reintentar automáticamente (~${mins} min).`);
+      }
+    }
+  }, []);
+
   const handleTogglePassword = () => {
     setShowPassword(!showPassword);
   };
 
-  // If already authenticated, redirect based on role
+  // If already authenticated, redirect
   if (isAuthenticated) {
-    const userRole = user?.role || user?.rol;
-    const redirectPath = 
-      userRole === 'admin' ? '/dashboard' :
-      userRole === 'instructor' ? '/instructor' :
-      userRole === 'guardia' ? '/guardia' :
-      '/ambientes';
-    
-    window.location.href = redirectPath;
+    window.location.href = '/dashboard';
     return null;
   }
 

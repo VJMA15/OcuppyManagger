@@ -22,8 +22,11 @@ class ReservasService extends ApiService {
     return this.delete(API_CONFIG.ENDPOINTS.RESERVAS.DELETE(id));
   }
 
-  async getMyReservas() {
-    return this.get(API_CONFIG.ENDPOINTS.RESERVAS.MY_RESERVAS);
+  async getMyReservas(userId) {
+    const endpoint = userId
+      ? `${API_CONFIG.ENDPOINTS.RESERVAS.MY_RESERVAS}?userId=${encodeURIComponent(userId)}`
+      : API_CONFIG.ENDPOINTS.RESERVAS.MY_RESERVAS;
+    return this.get(endpoint);
   }
 }
 

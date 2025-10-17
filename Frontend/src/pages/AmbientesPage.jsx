@@ -220,7 +220,7 @@ const AmbientesPage = () => {
                   value={filterType} 
                   onValueChange={setFilterType}
                 >
-                  <SelectTrigger className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <SelectTrigger className="w-full">
                     <SelectValue>
                       {filterType === 'all' ? 'Todos los tipos' : filterType}
                     </SelectValue>

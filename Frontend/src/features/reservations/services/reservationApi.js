@@ -3,36 +3,36 @@ import apiClient from '@/services/apiClient';
 class ReservationApi {
   async getReservations(filters = {}) {
     const params = new URLSearchParams(filters).toString();
-    const response = await apiClient.get(`/api/v1/reservas?${params}`);
+    const response = await apiClient.get(`/reservations?${params}`);
     return response.data;
   }
 
   async getMyReservations() {
-    const response = await apiClient.get('/api/v1/reservas/my-reservations');
+    const response = await apiClient.get('/reservations/my');
     return response.data;
   }
 
   async createReservation(data) {
-    const response = await apiClient.post('/api/v1/reservas', data);
+    const response = await apiClient.post('/reservations', data);
     return response.data;
   }
 
   async updateReservation(id, data) {
-    const response = await apiClient.put(`/api/v1/reservas/${id}`, data);
+    const response = await apiClient.put(`/reservations/${id}`, data);
     return response.data;
   }
 
   async deleteReservation(id) {
-    await apiClient.delete(`/api/v1/reservas/${id}`);
+    await apiClient.delete(`/reservations/${id}`);
   }
 
   async approveReservation(id) {
-    const response = await apiClient.patch(`/api/v1/reservas/${id}/approve`);
+    const response = await apiClient.patch(`/reservations/${id}/approve`);
     return response.data;
   }
 
   async rejectReservation(id, reason) {
-    const response = await apiClient.patch(`/api/v1/reservas/${id}/reject`, { reason });
+    const response = await apiClient.patch(`/reservations/${id}/reject`, { reason });
     return response.data;
   }
 }

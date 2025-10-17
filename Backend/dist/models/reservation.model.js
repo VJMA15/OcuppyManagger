@@ -2,26 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReservationModel = void 0;
 const mongoose_1 = require("mongoose");
-// Define enums locally since types file is not found
-var ReservationStatus;
-(function (ReservationStatus) {
-    ReservationStatus["PENDING"] = "PENDING";
-    ReservationStatus["APPROVED"] = "APPROVED";
-    ReservationStatus["REJECTED"] = "REJECTED";
-    ReservationStatus["CANCELLED"] = "CANCELLED";
-})(ReservationStatus || (ReservationStatus = {}));
-var EquipmentType;
-(function (EquipmentType) {
-    EquipmentType["PROJECTOR"] = "PROJECTOR";
-    EquipmentType["MICROPHONE"] = "MICROPHONE";
-    EquipmentType["COMPUTER"] = "COMPUTER";
-    EquipmentType["WHITEBOARD"] = "WHITEBOARD";
-})(EquipmentType || (EquipmentType = {}));
-// ... existing code ...
+const reservation_types_1 = require("../types/reservation.types");
 const equipmentSchema = new mongoose_1.Schema({
     type: {
         type: String,
-        enum: Object.values(EquipmentType),
+        enum: Object.values(reservation_types_1.EquipmentType),
         required: true
     },
     quantity: {
@@ -51,8 +36,8 @@ const reservationSchema = new mongoose_1.Schema({
     },
     status: {
         type: String,
-        enum: Object.values(ReservationStatus),
-        default: ReservationStatus.PENDING
+        enum: Object.values(reservation_types_1.ReservationStatus),
+        default: reservation_types_1.ReservationStatus.PENDING
     },
     purpose: {
         type: String,

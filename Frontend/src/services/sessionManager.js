@@ -3,7 +3,7 @@
 
 class SessionManager {
   constructor() {
-    this.timeout = 5 * 60 * 1000; // 5 minutos en milisegundos
+    this.timeout = 10 * 60 * 1000; // 10 minutos en milisegundos
     this.warningTime = 1 * 60 * 1000; // Advertir 1 minuto antes
     this.timer = null;
     this.warningTimer = null;
@@ -34,7 +34,7 @@ class SessionManager {
     this.isActive = true;
     this.bindEvents();
     this.resetTimer();
-    console.log('🔐 Sesión iniciada - Timeout automático en 5 minutos');
+    console.log('🔐 Sesión iniciada - Timeout automático en 10 minutos');
   }
 
   stopSession() {
@@ -66,12 +66,12 @@ class SessionManager {
   resetTimer() {
     this.clearTimers();
     
-    // Timer de advertencia (4 minutos)
+    // Timer de advertencia (1 minuto antes de expirar)
     this.warningTimer = setTimeout(() => {
       this.showWarning();
     }, this.timeout - this.warningTime);
     
-    // Timer de cierre de sesión (5 minutos)
+    // Timer de cierre de sesión (10 minutos)
     this.timer = setTimeout(() => {
       this.handleTimeout();
     }, this.timeout);
@@ -105,7 +105,7 @@ class SessionManager {
   }
 
   handleTimeout() {
-    console.log('⏰ Sesión cerrada por inactividad (5 minutos)');
+    console.log('⏰ Sesión cerrada por inactividad (10 minutos)');
     
     // Mostrar notificación de cierre
     this.showNotification(
@@ -136,18 +136,9 @@ class SessionManager {
       // Cerrar sesión usando el servicio de auth
       authService.logout();
       
-      // Redirigir al login solo si no estamos ya en una página de auth
-      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth')) {
-        window.location.href = '/login';
-      }
-      
       console.log('🔓 Sesión cerrada por timeout');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      // Redirigir de todas formas si no estamos en login
-      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth')) {
-        window.location.href = '/login';
-      }
     }
   }
 

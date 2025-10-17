@@ -2,7 +2,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import Button from './Button';
 
-export const Modal = ({ show, onClose, title, children, size = 'md' }) => {
+export const Modal = ({ show, onClose, title, children, size = 'md', variant = 'default' }) => {
   if (!show) return null;
 
   const sizes = {
@@ -12,11 +12,25 @@ export const Modal = ({ show, onClose, title, children, size = 'md' }) => {
     xl: 'max-w-4xl'
   };
 
+  const isLight = variant === 'light';
+
+  const containerClass = isLight
+    ? `bg-white rounded-2xl shadow-xl w-full ${sizes[size]} max-h-[90vh] overflow-hidden border border-slate-200`
+    : `bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full ${sizes[size]} max-h-[90vh] overflow-hidden border border-slate-200 dark:border-slate-700`;
+
+  const headerClass = isLight
+    ? 'flex items-center justify-between p-6 border-b border-slate-200'
+    : 'flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700';
+
+  const titleClass = isLight
+    ? 'text-lg font-semibold text-slate-900'
+    : 'text-lg font-semibold text-slate-900 dark:text-white';
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className={`bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full ${sizes[size]} max-h-[90vh] overflow-hidden`}>
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+      <div className={containerClass}>
+        <div className={headerClass}>
+          <h3 className={titleClass}>
             {title}
           </h3>
           <Button variant="ghost" size="sm" onClick={onClose}>

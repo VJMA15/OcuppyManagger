@@ -1,14 +1,20 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from './contexts/theme-context';
-import { AuthProvider } from './contexts/auth-context';
-import { ReservasProvider } from './contexts/ReservasContext';
-import { useAuthContext } from './contexts/auth-context';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { ThemeProvider } from '@/contexts/theme-context';
+import { AuthProvider, useAuthContext } from '@/contexts/auth-context';
+import realtime from '@/services/realtime';
+import sessionManager from '@/services/sessionManager';
+import { Toaster } from 'react-hot-toast';
 
 // Layouts
 import Layout from './routes/layout';
+import AdminLayout from './layouts/AdminLayout';
+import { ReservasProvider } from '@/contexts/ReservasContext';
 import InstructorLayout from './layouts/InstructorLayout';
 import GuardiaLayout from './layouts/GuardiaLayout';
+
+// Modules
+import AdminModule from './modules/admin/index.jsx';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -21,23 +27,23 @@ import CrearReservaPage from './pages/CrearReservaPage';
 import AmbientesPage from './pages/AmbientesPage';
 import AmbientesMainPage from './pages/AmbientesMainPage';
 import AmbienteDetailPage from './pages/AmbienteDetailPage';
-import ReportsPage from './pages/ReportsPage';
 import RegistrarUsuarioPage from './pages/RegistrarUsuarioPage';
 import EditarUsuarioPage from './pages/EditarUsuarioPage';
 import GestionUsuariosPage from './pages/GestionUsuariosPage';
 import RegistrosPage from './pages/RegistrosPage';
 import BitacoraPage from './pages/BitacoraPage';
 import EntregasPage from './pages/EntregasPage';
-import SettingsPage from './pages/SettingsPage';
 
 // Instructor Pages
 import InstructorReservaPage from './pages/InstructorReservaPage';
 import InstructorAmbientesPage from './pages/InstructorAmbientesPage';
+import SettingsPage from './pages/SettingsPage';
 
 // Guardia Pages
 import MonitoreoPage from './pages/guardia/MonitoreoPage';
 import ReservasGuardiaPage from './pages/guardia/ReservasPage';
 import IncidentesPage from './pages/guardia/IncidentesPage';
+import SessionTimeoutWarning from './components/SessionTimeoutWarning';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
@@ -65,71 +71,72 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 // Main App Routes Component
 const AppRoutes = () => {
   const { isAuthenticated, user } = useAuthContext();
+  const location = useLocation();
+  const [isSessionActive, setIsSessionActive] = useState(() => sessionManager.isSessionActive());
+
+  // Conexión SSE global temprana para evitar reconexiones por páginas específicas
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Conectamos con el superset de canales usados en la app
+      realtime.connect({ channels: ['reservas','solicitudes','historial'] });
+    } else {
+      // Al cerrar sesión, desconectamos SSE limpio
+      realtime.disconnect();
+    }
+  }, [isAuthenticated]);
+
+  // Vigilar el estado de la sesión para mostrar advertencia solo si está activa
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsSessionActive(sessionManager.isSessionActive());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const hideOnPaths = ['/', '/login'];
+  const showSessionWarning = isAuthenticated && isSessionActive && !hideOnPaths.includes(location?.pathname);
+  const showToaster = !hideOnPaths.includes(location?.pathname);
 
   return (
+    <>
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      
-      {/* Redirect authenticated users */}
-      {isAuthenticated && (
-        <Route path="/login" element={
+      <Route path="/consulta/ambientes" element={<AmbientesMainPage />} />
+      <Route path="/login" element={
+        isAuthenticated ? (
           <Navigate to={
-            user?.role === 'admin' ? '/dashboard' :
+            user?.role === 'admin' ? '/admin' :
             user?.role === 'instructor' ? '/instructor' :
             user?.role === 'guardia' ? '/guardia' :
             '/ambientes'
           } replace />
-        } />
-      )}
-
-      {/* Admin Routes */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <Layout>
-            <DashboardPage />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/dashboard/*" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <Layout>
-            <Routes>
-              <Route path="reserva" element={<ReservaPage />} />
-              <Route path="ver-reservas" element={<VerReservasPage />} />
-              <Route path="mis-reservas" element={<MisReservasPage />} />
-              <Route path="crear-reserva" element={<CrearReservaPage />} />
-              <Route path="ambientes" element={<AmbientesPage />} />
-              <Route path="reports" element={<ReportsPage />} />
-              <Route path="reportes" element={<ReportsPage />} />
-              <Route path="registrar-usuario" element={<RegistrarUsuarioPage />} />
-              <Route path="editar-usuario/:id" element={<EditarUsuarioPage />} />
-              <Route path="gestion-usuarios" element={<GestionUsuariosPage />} />
-              <Route path="registros" element={<RegistrosPage />} />
-              <Route path="bitacora" element={<BitacoraPage />} />
-              <Route path="entregas" element={<EntregasPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="configuracion" element={<SettingsPage />} />
-            </Routes>
-          </Layout>
-        </ProtectedRoute>
+        ) : (
+          <LoginPage />
+        )
       } />
 
-      {/* Instructor Routes */}
-      <Route path="/instructor/*" element={
+      {/* Admin Routes - Using AdminModule */}
+      <Route path="/admin/*" element={<AdminModule />} />
+
+      {/* Legacy Admin Routes - Remove to prevent conflicts */}
+      {/* <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/dashboard/*" element={<Navigate to="/admin/dashboard" replace />} /> */}
+
+      {/* Instructor Routes (Nested) */}
+      <Route path="/instructor" element={
         <ProtectedRoute allowedRoles={['instructor']}>
-          <InstructorLayout>
-            <Routes>
-              <Route index element={<InstructorAmbientesPage />} />
-              <Route path="ambientes" element={<InstructorAmbientesPage />} />
-              <Route path="nueva-reserva" element={<InstructorReservaPage />} />
-              <Route path="mis-reservas" element={<MisReservasPage />} />
-            </Routes>
-          </InstructorLayout>
+          <InstructorLayout />
         </ProtectedRoute>
-      } />
+      }>
+        <Route index element={<InstructorAmbientesPage />} />
+        <Route path="ambientes" element={<InstructorAmbientesPage />} />
+        <Route path="nueva-reserva" element={<InstructorReservaPage />} />
+        <Route path="mis-reservas" element={<MisReservasPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        {/* Reportes removidos para instructores */}
+        <Route path="*" element={<Navigate to="/instructor" replace />} />
+      </Route>
 
       {/* Guardia Routes */}
       <Route path="/guardia" element={
@@ -178,6 +185,13 @@ const AppRoutes = () => {
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    {showSessionWarning && <SessionTimeoutWarning />}
+    {showToaster && (
+      <Toaster position="top-right" toastOptions={{
+        duration: 3500,
+      }} />
+    )}
+    </>
   );
 };
 
@@ -185,18 +199,11 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <ThemeProvider>
-      <Router 
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true
-        }}
-      >
+      <BrowserRouter>
         <AuthProvider>
-          <ReservasProvider>
-            <AppRoutes />
-          </ReservasProvider>
+          <AppRoutes />
         </AuthProvider>
-      </Router>
+      </BrowserRouter>
     </ThemeProvider>
   );
 };

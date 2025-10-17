@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { obtenerAmbientesOcupados, notificarCambioDisponibilidad } from '@/utils/ambienteUtils';
 
 export const useOcupiedAmbientes = () => {
     const [ambientesOcupados, setAmbientesOcupados] = useState([]);
 
-    const actualizarAmbientesOcupados = () => {
+    const actualizarAmbientesOcupados = useCallback(() => {
         const ocupados = obtenerAmbientesOcupados();
         setAmbientesOcupados(ocupados);
-    };
+    }, []); // Array de dependencias vacío para evitar recreaciones
 
     useEffect(() => {
         // Actualizar inmediatamente al montar
@@ -46,7 +46,7 @@ export const useOcupiedAmbientes = () => {
             window.removeEventListener('disponibilidad-cambiada', handleDisponibilidadChange);
             window.removeEventListener('ambientes-updated', handleDisponibilidadChange);
         };
-    }, []);
+    }, []); // Array de dependencias vacío para evitar recrear el efecto
 
     return ambientesOcupados;
-}; 
+};

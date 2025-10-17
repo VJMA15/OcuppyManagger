@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
+import { body, param } from 'express-validator';
 import {
   getAllUsers,
   getUser,
@@ -7,7 +7,8 @@ import {
   updateUser,
   deleteUser,
   updateUserRole,
-  getUserProfile
+  getUserProfile,
+  updateUserPasswordAdmin
 } from '../controllers/user.controller';
 import { authenticateToken, requireRole } from '../middlewares/auth.middleware';
 import { validationResult } from 'express-validator';
@@ -78,6 +79,23 @@ const validateUpdateRole = [
     .withMessage('El rol debe ser: admin, instructor, guardia o usuario')
 ];
 
+// Validaciones para actualizar contraseña (solo admin)
+const validateUpdatePassword = [
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('La contraseña debe tener al menos 6 caracteres')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('La contraseña debe contener al menos una mayúscula, una minúscula y un número'),
+  body('passwordConfirm')
+    .optional()
+    .custom((value, { req }) => {
+      if (typeof value !== 'undefined' && value !== req.body.password) {
+        throw new Error('Las contraseñas no coinciden');
+      }
+      return true;
+    })
+];
+
 // ==================== RUTAS PROTEGIDAS ====================
 
 // Todas las rutas requieren autenticación
@@ -88,22 +106,25 @@ router.get('/profile', getUserProfile);
 
 // ==================== RUTAS DE ADMINISTRADOR ====================
 
-// Obtener todos los usuarios (admin e instructor)
-router.get('/', requireRole(['admin', 'instructor']), getAllUsers);
+// Obtener todos los usuarios (solo admin)
+router.get('/', requireRole(['admin']), getAllUsers);
 
-// Obtener un usuario específico (admin e instructor)
-router.get('/:id', requireRole(['admin', 'instructor']), getUser);
+// Obtener un usuario específico (solo admin)
+router.get('/:id', requireRole(['admin']), param('id').isMongoId().withMessage('ID inválido'), handleValidationErrors, getUser);
 
 // Crear nuevo usuario (solo admin)
 router.post('/', requireRole(['admin']), validateCreateUser, handleValidationErrors, createUser);
 
 // Actualizar usuario (solo admin)
-router.put('/:id', requireRole(['admin']), validateUpdateUser, handleValidationErrors, updateUser);
+router.put('/:id', requireRole(['admin']), param('id').isMongoId().withMessage('ID inválido'), validateUpdateUser, handleValidationErrors, updateUser);
 
 // Eliminar usuario (solo admin)
-router.delete('/:id', requireRole(['admin']), deleteUser);
+router.delete('/:id', requireRole(['admin']), param('id').isMongoId().withMessage('ID inválido'), handleValidationErrors, deleteUser);
 
 // Actualizar rol de usuario (solo admin)
-router.patch('/:id/role', requireRole(['admin']), validateUpdateRole, handleValidationErrors, updateUserRole);
+router.patch('/:id/role', requireRole(['admin']), param('id').isMongoId().withMessage('ID inválido'), validateUpdateRole, handleValidationErrors, updateUserRole);
+
+// Actualizar contraseña de usuario (solo admin)
+router.patch('/:id/password', requireRole(['admin']), param('id').isMongoId().withMessage('ID inválido'), validateUpdatePassword, handleValidationErrors, updateUserPasswordAdmin);
 
 export default router;

@@ -3,8 +3,8 @@ import authService from './auth';
 
 class AmbientesService {
   constructor() {
-    // Usar proxy de Vite en lugar de peticiones directas
-    this.baseURL = '';
+    // Base URL parametrizada por entorno (VITE_API_BASE_URL)
+    this.baseURL = import.meta.env?.VITE_API_BASE_URL || '';
   }
 
   async request(endpoint, options = {}) {
@@ -36,7 +36,11 @@ class AmbientesService {
         message: data.message
       };
     } catch (error) {
-      console.error('API Error:', error);
+      // No loguear 429 para evitar ruido durante cooldown
+      const is429 = (error && error.status === 429) || (typeof error?.message === 'string' && error.message.includes('429'));
+      if (!is429) {
+        console.error('API Error:', error);
+      }
       return {
         success: false,
         error: error.message,

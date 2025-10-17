@@ -1,128 +1,273 @@
 import { useAuthContext } from '../../contexts/auth-context';
 
 function AccesosPage() {
-  const { user } = useAuthContext();
-
-  if (!user || user.rol !== 'guardia') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <div className="bg-white dark:bg-slate-800 p-8 rounded-xl text-center border border-slate-200 dark:border-slate-700 shadow-lg">
-          <h2 className="text-slate-900 dark:text-white text-2xl font-bold mb-4">
-            Acceso Restringido
-          </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-base mb-6">
-            Solo el personal de guardia puede acceder a esta página
-          </p>
-          <button 
-            onClick={() => window.history.back()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg border-0 text-base font-medium cursor-pointer transition-colors"
-          >
-            Volver
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+  const { user, isAuthenticated } = useAuthContext();
+  
+  console.log('AccesosPage está renderizando');
+  console.log('Usuario:', user);
+  console.log('Autenticado:', isAuthenticated);
+  console.log('Rol del usuario:', user?.role);
+  
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-            Control de Accesos
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-lg">
-            Monitoreo en tiempo real de accesos al centro
+    <div style={{ padding: '24px', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <h1 style={{ 
+          fontSize: '28px', 
+          fontWeight: '600', 
+          color: '#1e293b', 
+          marginBottom: '8px',
+          letterSpacing: '-0.025em'
+        }}>
+          Control de Accesos
+        </h1>
+        
+        <p style={{ 
+          color: '#64748b', 
+          fontSize: '16px', 
+          marginBottom: '32px'
+        }}>
+          Monitoreo y gestión de accesos en tiempo real
+        </p>
+        
+        {/* Panel de información del usuario */}
+        <div style={{ 
+          backgroundColor: '#ffffff', 
+          padding: '16px', 
+          borderRadius: '8px', 
+          marginBottom: '24px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        }}>
+          <p style={{ color: '#475569', fontSize: '14px', margin: '0' }}>
+            <strong>Usuario:</strong> {user?.nombre || 'No definido'} | 
+            <strong>Rol:</strong> {user?.role || 'No definido'} | 
+            <strong>Estado:</strong> {isAuthenticated ? 'Autenticado' : 'No autenticado'}
           </p>
         </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl text-center border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white text-xl font-semibold">✓</span>
+        
+        {/* Estadísticas */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+          gap: '20px', 
+          marginBottom: '32px' 
+        }}>
+          <div style={{ 
+            backgroundColor: '#ffffff', 
+            padding: '24px', 
+            borderRadius: '12px', 
+            textAlign: 'center',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              backgroundColor: '#10b981', 
+              borderRadius: '12px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              margin: '0 auto 16px auto'
+            }}>
+              <span style={{ color: '#ffffff', fontSize: '20px', fontWeight: '600' }}>✓</span>
             </div>
-            <h3 className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wide mb-2">Accesos Permitidos</h3>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">15</p>
+            <h3 style={{ color: '#374151', margin: '0 0 8px 0', fontSize: '14px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Accesos Permitidos</h3>
+            <p style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', margin: '0' }}>15</p>
           </div>
           
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl text-center border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white text-xl font-semibold">✕</span>
+          <div style={{ 
+            backgroundColor: '#ffffff', 
+            padding: '24px', 
+            borderRadius: '12px', 
+            textAlign: 'center',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              backgroundColor: '#ef4444', 
+              borderRadius: '12px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              margin: '0 auto 16px auto'
+            }}>
+              <span style={{ color: '#ffffff', fontSize: '20px', fontWeight: '600' }}>✕</span>
             </div>
-            <h3 className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wide mb-2">Accesos Denegados</h3>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">3</p>
+            <h3 style={{ color: '#374151', margin: '0 0 8px 0', fontSize: '14px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Accesos Denegados</h3>
+            <p style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', margin: '0' }}>3</p>
           </div>
           
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl text-center border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white text-xl font-semibold">#</span>
+          <div style={{ 
+            backgroundColor: '#ffffff', 
+            padding: '24px', 
+            borderRadius: '12px', 
+            textAlign: 'center',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              backgroundColor: '#3b82f6', 
+              borderRadius: '12px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              margin: '0 auto 16px auto'
+            }}>
+              <span style={{ color: '#ffffff', fontSize: '20px', fontWeight: '600' }}>#</span>
             </div>
-            <h3 className="text-slate-600 dark:text-slate-400 text-sm font-medium uppercase tracking-wide mb-2">Total de Accesos</h3>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">18</p>
+            <h3 style={{ color: '#374151', margin: '0 0 8px 0', fontSize: '14px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total de Accesos</h3>
+            <p style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', margin: '0' }}>18</p>
           </div>
         </div>
         
         {/* Lista de accesos recientes */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-          <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white m-0">
+        <div style={{ 
+          backgroundColor: '#ffffff', 
+          borderRadius: '12px', 
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden'
+        }}>
+          <div style={{ 
+            padding: '20px 24px', 
+            borderBottom: '1px solid #e2e8f0',
+            backgroundColor: '#f8fafc'
+          }}>
+            <h2 style={{ 
+              fontSize: '18px', 
+              fontWeight: '600', 
+              color: '#1e293b', 
+              margin: '0'
+            }}>
               Actividad Reciente
             </h2>
           </div>
           
-          <div className="p-0">
-            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-slate-700">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-slate-100 dark:bg-slate-600 rounded-lg flex items-center justify-center">
-                  <span className="text-slate-500 dark:text-slate-400 text-base">👤</span>
+          <div style={{ padding: '0' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              padding: '16px 24px', 
+              borderBottom: '1px solid #f1f5f9'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  backgroundColor: '#f1f5f9', 
+                  borderRadius: '8px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center'
+                }}>
+                  <span style={{ color: '#64748b', fontSize: '16px' }}>👤</span>
                 </div>
                 <div>
-                  <p className="text-slate-900 dark:text-white text-sm font-medium m-0">Juan Pérez</p>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs m-0">Aula 203 • Hace 5 min</p>
+                  <p style={{ color: '#1e293b', fontSize: '14px', fontWeight: '500', margin: '0' }}>Juan Pérez</p>
+                  <p style={{ color: '#64748b', fontSize: '12px', margin: '0' }}>Aula 203 • Hace 5 min</p>
                 </div>
               </div>
-              <span className="text-green-600 dark:text-green-400 font-semibold text-xs bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded uppercase tracking-wide">
-                Permitido
-              </span>
+              <span style={{ 
+                color: '#10b981', 
+                fontWeight: '600', 
+                fontSize: '12px',
+                backgroundColor: '#ecfdf5',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>Permitido</span>
             </div>
             
-            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-slate-700">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-slate-100 dark:bg-slate-600 rounded-lg flex items-center justify-center">
-                  <span className="text-slate-500 dark:text-slate-400 text-base">👤</span>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              padding: '16px 24px', 
+              borderBottom: '1px solid #f1f5f9'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  backgroundColor: '#f1f5f9', 
+                  borderRadius: '8px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center'
+                }}>
+                  <span style={{ color: '#64748b', fontSize: '16px' }}>👤</span>
                 </div>
                 <div>
-                  <p className="text-slate-900 dark:text-white text-sm font-medium m-0">María García</p>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs m-0">Laboratorio • Hace 12 min</p>
+                  <p style={{ color: '#1e293b', fontSize: '14px', fontWeight: '500', margin: '0' }}>María García</p>
+                  <p style={{ color: '#64748b', fontSize: '12px', margin: '0' }}>Laboratorio • Hace 12 min</p>
                 </div>
               </div>
-              <span className="text-red-600 dark:text-red-400 font-semibold text-xs bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded uppercase tracking-wide">
-                Denegado
-              </span>
+              <span style={{ 
+                color: '#ef4444', 
+                fontWeight: '600', 
+                fontSize: '12px',
+                backgroundColor: '#fef2f2',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>Denegado</span>
             </div>
             
-            <div className="flex justify-between items-center px-6 py-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-slate-100 dark:bg-slate-600 rounded-lg flex items-center justify-center">
-                  <span className="text-slate-500 dark:text-slate-400 text-base">👤</span>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              padding: '16px 24px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  backgroundColor: '#f1f5f9', 
+                  borderRadius: '8px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center'
+                }}>
+                  <span style={{ color: '#64748b', fontSize: '16px' }}>👤</span>
                 </div>
                 <div>
-                  <p className="text-slate-900 dark:text-white text-sm font-medium m-0">Carlos López</p>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs m-0">Oficina • Hace 18 min</p>
+                  <p style={{ color: '#1e293b', fontSize: '14px', fontWeight: '500', margin: '0' }}>Carlos López</p>
+                  <p style={{ color: '#64748b', fontSize: '12px', margin: '0' }}>Oficina • Hace 18 min</p>
                 </div>
               </div>
-              <span className="text-green-600 dark:text-green-400 font-semibold text-xs bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded uppercase tracking-wide">
-                Permitido
-              </span>
+              <span style={{ 
+                color: '#10b981', 
+                fontWeight: '600', 
+                fontSize: '12px',
+                backgroundColor: '#ecfdf5',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>Permitido</span>
             </div>
           </div>
         </div>
         
         {/* Footer con timestamp */}
-        <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
-          <p className="text-slate-500 dark:text-slate-400 text-sm m-0">
+        <div style={{ 
+          marginTop: '24px', 
+          padding: '16px', 
+          backgroundColor: '#ffffff', 
+          borderRadius: '8px',
+          border: '1px solid #e2e8f0',
+          textAlign: 'center'
+        }}>
+          <p style={{ color: '#64748b', fontSize: '14px', margin: '0' }}>
             Última actualización: {new Date().toLocaleString('es-ES', {
               year: 'numeric',
               month: 'long',

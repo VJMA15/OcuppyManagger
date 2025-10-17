@@ -35,7 +35,7 @@ const guardiaNavLinks = [
         icon: Package
       },
       {
-        label: "Reportes",
+        label: "Historial",
         path: "/guardia/reportes",
         icon: BarChart3
       }

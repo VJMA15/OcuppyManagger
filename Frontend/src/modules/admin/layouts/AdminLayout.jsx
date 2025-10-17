@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AdminHeader } from '@/components/admin/AdminHeader';
+import AdminHeader from '@/components/admin/AdminHeader';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 const AdminLayout = ({ children }) => {
