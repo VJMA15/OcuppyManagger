@@ -1,12 +1,13 @@
 [build]
   base = "Frontend"
   publish = "dist"
-  command = "npm ci && npm run build"
+  command = "npm install --no-optional && npm run build"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "16"
   NPM_FLAGS = "--no-optional --no-audit --no-fund"
   ROLLUP_SKIP_NODEJS_RESOLUTION = "true"
+  SKIP_INSTALL_DEPS = "true"
 
 [[redirects]]
   from = "/*"
