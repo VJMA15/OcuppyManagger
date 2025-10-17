@@ -45,5 +45,9 @@ export default defineConfig({
         include: ['lodash-es'],
         exclude: []
     },
-
+    build: {
+        rollupOptions: {
+            external: ['@rollup/rollup-linux-x64-gnu']
+        }
+    }
 });
